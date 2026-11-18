@@ -12,6 +12,7 @@ import {
   Dialog,
   DialogClose,
   DialogDescription,
+  DialogAction,
   DialogFooter,
   DialogHeader,
   DialogPanel,
@@ -206,7 +207,7 @@ function QuitStep({
         <Button variant="outline" onClick={onCancel}>
           {translateWebSource(translationLocale, "Cancel")}
         </Button>
-        <Button onClick={onRechecked}>{t("browserImport.quit.confirm")}</Button>
+        <DialogAction onClick={onRechecked}>{t("browserImport.quit.confirm")}</DialogAction>
       </DialogFooter>
     </>
   );
@@ -601,7 +602,7 @@ function BlockedStep({
         <Button variant="outline" onClick={onClose}>
           {t("common.close")}
         </Button>
-        {onRetry ? <Button onClick={onRetry}>{t("common.retry")}</Button> : null}
+        {onRetry ? <DialogAction onClick={onRetry}>{t("common.retry")}</DialogAction> : null}
       </DialogFooter>
     </>
   );

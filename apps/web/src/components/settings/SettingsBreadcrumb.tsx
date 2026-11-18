@@ -1,3 +1,5 @@
+import { msg } from "gt-react";
+
 import {
   WorkspaceBreadcrumb,
   WorkspaceBreadcrumbItem,
@@ -9,8 +11,8 @@ import { SETTINGS_SECTION_LABELS } from "./settingsSearch";
 
 const SETTINGS_BREADCRUMB_LABELS: Readonly<Record<string, string>> = {
   ...SETTINGS_SECTION_LABELS,
-  "/settings/diagnostics": "Diagnostics",
-  "/settings/open-source-licenses": "Open source licenses",
+  "/settings/diagnostics": msg("Diagnostics"),
+  "/settings/open-source-licenses": msg("Open source licenses"),
 };
 
 function settingsBreadcrumbLabel(pathname: string): string | null {

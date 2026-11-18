@@ -4,7 +4,7 @@ import {
   type WorktreeSubmodules,
   managedRuntimeModeDenial,
 } from "@t3tools/contracts";
-import { createModelSelection } from "@t3tools/shared/model";
+import { createModelSelection, pickModelSelection } from "@t3tools/shared/model";
 import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -12,13 +12,8 @@ import { useClientSettings } from "../../hooks/useSettings";
 import {
   defaultModelSelectionsAreMixed,
   getCustomModelOptionsByInstance,
-  resolveEffectiveDefaultModelSelection,
 } from "../../modelSelection";
-import {
-  providerInstanceEntriesFor,
-  resolveDefaultProviderModelSelection,
-  resolveProjectDefaultProviderModelSelection,
-} from "../../providerInstances";
+import { providerInstanceEntriesFor } from "../../providerInstances";
 import { useEnvironmentProviders, useEnvironments } from "../../state/environments";
 import { firstManagedDenial } from "../../state/managedPolicy";
 import { EMPTY_SERVER_PROVIDERS } from "../../state/server";
@@ -32,6 +27,7 @@ import { toastManager } from "../ui/toast";
 import { Switch } from "../ui/switch";
 import { translateWebSource } from "../../i18n/messages";
 import { useI18n } from "../../i18n/WebI18nContext";
+import { resolveDefaultModelSettingsPresentation } from "./ProjectDefaultsSettings.logic";
 import type { ProjectSettingsCategory } from "./ProjectSettingsPanel";
 import { searchableSetting } from "./settingsSearch";
 import { useSettingsScope } from "./SettingsScopeContext";
@@ -72,14 +68,14 @@ export function ProjectDefaultsSettings({ category }: { category: ProjectSetting
     (representative?.serverConfig
       ? providersByEnvironment.get(representative.environmentId)
       : undefined) ?? EMPTY_SERVER_PROVIDERS;
-  const storedSelection =
-    settings.defaultModelSelection === null
-      ? resolveProjectDefaultProviderModelSelection(providers, settings, target?.projectId ?? null)
-      : resolveDefaultProviderModelSelection(providers, settings.defaultModelSelection);
-  const selection = storedSelection
-    ? resolveEffectiveDefaultModelSelection(settings, providers, storedSelection)
-    : null;
   const entries = providerInstanceEntriesFor(providers, settings, target?.projectId ?? null);
+  const presentation = resolveDefaultModelSettingsPresentation({
+    entries,
+    providers,
+    settings,
+    projectId: target?.projectId ?? null,
+  });
+  const selection = presentation.selection;
   const modelOptions = getCustomModelOptionsByInstance(
     settings,
     providers,
@@ -155,7 +151,8 @@ export function ProjectDefaultsSettings({ category }: { category: ProjectSetting
       status={
         mixedModel
           ? `${automaticModel ? "Automatic defaults differ." : "Defaults differ."} Select one environment or choose a shared model to edit effort.`
-          : effortDisabledReason
+          : ((presentation.providerNote ? translate(presentation.providerNote) : null) ??
+            effortDisabledReason)
       }
       resetAction={
         settings.defaultModelSelection !== null ? (
@@ -163,7 +160,7 @@ export function ProjectDefaultsSettings({ category }: { category: ProjectSetting
         ) : null
       }
       control={
-        selection && activeEntry ? (
+        selection ? (
           <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
             <ProviderModelPicker
               environmentId={representative?.environmentId ?? null}
@@ -185,10 +182,10 @@ export function ProjectDefaultsSettings({ category }: { category: ProjectSetting
                   });
               }}
               onInstanceModelChange={(instanceId, model) =>
-                setModel(createModelSelection(instanceId, model))
+                setModel(pickModelSelection(mixedModel ? null : selection, instanceId, model))
               }
             />
-            {!mixedModel && !effortDisabledReason ? (
+            {!mixedModel && !presentation.providerNote && !effortDisabledReason && activeEntry ? (
               <TraitsPicker
                 provider={activeEntry.driverKind}
                 models={activeEntry.models}
@@ -304,7 +301,13 @@ export function ProjectDefaultsSettings({ category }: { category: ProjectSetting
                   });
                   return;
                 }
-                updateSettings({ fallbackModelSelection: createModelSelection(instanceId, model) });
+                updateSettings({
+                  fallbackModelSelection: pickModelSelection(
+                    mixedFallback ? null : settings.fallbackModelSelection,
+                    instanceId,
+                    model,
+                  ),
+                });
               }}
             />
             {settings.fallbackModelSelection !== null && fallbackEntry && !mixedFallback ? (
@@ -449,7 +452,7 @@ export function ProjectDefaultsSettings({ category }: { category: ProjectSetting
             }
             control={
               <Switch
-                aria-label={translate(translate("Default automatic pull"))}
+                aria-label={translate("Default automatic pull")}
                 mixed={mixedAutoPull}
                 checked={mixedAutoPull ? false : settings.defaultAutoPull}
                 onCheckedChange={(enabled) => updateSettings({ defaultAutoPull: enabled })}

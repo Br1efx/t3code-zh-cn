@@ -541,8 +541,6 @@ export function PullRequestDetailPanel({
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
   const { copyToClipboard: copyReference } = useCopyToClipboard<string>({
     target: `${terminology.singular} reference`,
-    onCopy: (label) =>
-      toastManager.add({ type: "success", title: t("pullRequests.detail.copied", { label }) }),
     onError: (error, label) =>
       toastManager.add({
         type: "error",
@@ -1022,10 +1020,10 @@ export function PullRequestDetailPanel({
       worktreePath: prepared.value.worktreePath,
       envMode: prepared.value.worktreePath === null ? "local" : "worktree",
     }).then(
-      (session) => session !== null,
-      () => false,
+      (session) => session,
+      () => null,
     );
-    if (!pointed) {
+    if (pointed === null) {
       setHandoff(null);
       // Sending after failed rebinding would use the previous checkout.
       toastManager.update(toastId, {
@@ -1037,6 +1035,13 @@ export function PullRequestDetailPanel({
       });
       return;
     }
+    // The draft carries the pull request until its first send makes it a thread, which links it.
+    useComposerDraftStore.getState().setDraftThreadContext(pointed.draftId, {
+      checkoutPullRequest: {
+        url: prepared.value.pullRequest.url,
+        branch: prepared.value.branch,
+      },
+    });
     setHandoff(null);
     if (task === null) {
       toastManager.update(
@@ -1057,7 +1062,9 @@ export function PullRequestDetailPanel({
       );
       return;
     }
-    await openThreadWithTask(projectRef, task, opened);
+    // The task goes on the checkout draft: if the user typed into `opened` while the
+    // checkout ran, that is no longer the draft the user is looking at.
+    await openThreadWithTask(projectRef, task, pointed);
     toastManager.update(
       toastId,
       prepared.value.isOnPullRequestHead
@@ -1205,6 +1212,7 @@ export function PullRequestDetailPanel({
         state: detail.state,
         isDraft: detail.isDraft,
         finding,
+        inThisThread: attachTarget !== null,
       }),
     );
   };
@@ -1225,6 +1233,7 @@ export function PullRequestDetailPanel({
         comments: detail.comments,
         checks: checksStale ? [] : detail.checks,
         commentsTruncated: detail.commentsTruncated,
+        inThisThread: attachTarget !== null,
       }),
     );
   };
@@ -1237,6 +1246,7 @@ export function PullRequestDetailPanel({
         url: handoffSummary.url,
         headBranch: handoffSummary.headBranch,
         baseBranch: handoffSummary.baseBranch,
+        inThisThread: attachTarget !== null,
       }),
     });
   };
@@ -1662,7 +1672,6 @@ export function PullRequestDetailPanel({
                     pullRequestKey={pullRequestKey}
                     detail={detail}
                     canWriteSourceControl={canWriteSourceControl}
-                    onSaved={refreshDetail}
                   />
                 }
                 author={

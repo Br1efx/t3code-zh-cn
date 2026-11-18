@@ -29,9 +29,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  UPSTREAM_VERSION: 0.1.9
-  CLIENT_VERSION: 0.1.9-zh.1
-  T3CODE_DESKTOP_UPDATE_REPOSITORY: Michaelihc/t3code-zh-cn
+  UPSTREAM_VERSION: 0.1.10
+  CLIENT_VERSION: 0.1.10-zh.1
+  T3CODE_DESKTOP_UPDATE_REPOSITORY: Br1efx/t3code-zh-cn
   CI: "true"
   CSC_IDENTITY_AUTO_DISCOVERY: "false"
   T3CODE_DESKTOP_SIGNED: "false"
@@ -54,8 +54,8 @@ jobs:
           EXPECTED_SHA: ${{ inputs.expected_sha }}
         with:
           script: |
-            if (context.repo.owner !== 'Michaelihc' || context.repo.repo !== 't3code-zh-cn') {
-              throw new Error('This workflow is scoped to Michaelihc/t3code-zh-cn.');
+            if (context.repo.owner !== 'Br1efx' || context.repo.repo !== 't3code-zh-cn') {
+              throw new Error('This workflow is scoped to Br1efx/t3code-zh-cn.');
             }
             if (context.payload.repository.private !== false) {
               throw new Error('Standard hosted runners are free for public repositories only.');
@@ -449,9 +449,9 @@ jobs:
     timeout-minutes: 120
     env:
       APP_VARIANT: community
-      T3CODE_MOBILE_VERSION: 0.1.9-zh.1
+      T3CODE_MOBILE_VERSION: 0.1.10-zh.1
       # Candidate only. A publishable versionCode must exceed the installed release.
-      T3CODE_MOBILE_VERSION_CODE: "10901"
+      T3CODE_MOBILE_VERSION_CODE: "11001"
       T3CODE_MOBILE_UPDATES_ENABLED: "0"
       EXPO_NO_GIT_STATUS: "1"
       EXPO_NO_TELEMETRY: "1"

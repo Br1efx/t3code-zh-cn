@@ -1,14 +1,14 @@
 # T3 Code — Simplified Chinese, stable upstream
 
-This unofficial fork adds a Simplified Chinese interface to **official stable T3 Code releases**. The current source includes upstream **v0.1.9** (`24e77473ecf41bc1f7142529c7911c1c1aae1d76`) and the Chinese community maintenance branch from [ZhiweiXiao98/t3code](https://github.com/ZhiweiXiao98/t3code).
+This unofficial fork adds a natural, beginner-friendly Simplified Chinese interface to **official stable T3 Code releases**. The current source includes upstream **v0.1.10** (`7d32075e3757ded707914e2450c3e392a9665765`) and builds upon the Chinese community localization from [ZhiweiXiao98/t3code](https://github.com/ZhiweiXiao98/t3code) and [Michaelihc/t3code-zh-cn](https://github.com/Michaelihc/t3code-zh-cn).
 
-[简体中文说明](./README.zh-CN.md) · [Releases](https://github.com/Michaelihc/t3code-zh-cn/releases) · [Validation](https://github.com/Michaelihc/t3code-zh-cn/actions/workflows/client-release.yml)
+[简体中文说明](./README.zh-CN.md) · [Releases](https://github.com/Br1efx/t3code-zh-cn/releases) · [Validation](https://github.com/Br1efx/t3code-zh-cn/actions/workflows/client-release.yml)
 
 ## Use the localized client
 
 Simplified Chinese is selected automatically on first launch. No settings change is needed. English and system-language selection are available under **Settings → General → Language**. Model names, commands, paths, terminal output, and agent replies keep their original text.
 
-Download the [Windows x64 installer (0.1.9-zh.1)](https://github.com/Michaelihc/t3code-zh-cn/releases/download/v0.1.9-zh.1/T3-Code-0.1.9-zh.1-x64.exe), or read the [release notes and checksums](https://github.com/Michaelihc/t3code-zh-cn/releases/tag/v0.1.9-zh.1). This is an unsigned community prerelease based on official stable v0.1.9. The Windows application name remains **T3 Code (Beta)**. Updates use manual downloads.
+Download the [Windows x64 installer (0.1.10-zh.1)](https://github.com/Br1efx/t3code-zh-cn/releases/download/v0.1.10-zh.1/T3-Code-0.1.10-zh.1-x64.exe), or read the [release notes and checksums](https://github.com/Br1efx/t3code-zh-cn/releases/tag/v0.1.10-zh.1). This is an unsigned community prerelease based on official stable v0.1.10. The Windows application name remains **T3 Code (Beta)**. Updates use manual downloads.
 
 Installers and `npx t3` from the official T3 website install the official English version.
 
@@ -25,7 +25,7 @@ Desktop and locally served web clients are localized. The inherited Android sour
 
 ## Run from source
 
-Use Node.js `^24.13.1` and [Vite+](https://viteplus.dev/), with the package manager pinned in `package.json`:
+Use Node.js and [Vite+](https://viteplus.dev/), with the package manager pinned in `package.json`:
 
 ```sh
 vp install --frozen-lockfile
@@ -42,4 +42,4 @@ For general T3 Code guidance, see the [upstream project](https://github.com/ping
 
 ## Credits and license
 
-T3 Code is developed by [T3 Tools and its contributors](https://github.com/pingdotgg/t3code). Simplified Chinese localization originates from [ZhiweiXiao98/t3code](https://github.com/ZhiweiXiao98/t3code). This fork preserves their commit history and [MIT license](./LICENSE).
+T3 Code is developed by [T3 Tools and its contributors](https://github.com/pingdotgg/t3code). Simplified Chinese localization originates from [ZhiweiXiao98/t3code](https://github.com/ZhiweiXiao98/t3code) and [Michaelihc/t3code-zh-cn](https://github.com/Michaelihc/t3code-zh-cn). This fork preserves their commit history and [MIT license](./LICENSE).

@@ -1,7 +1,11 @@
 import { pipe } from "effect/Function";
 import { useI18n } from "../../i18n/WebI18nContext";
 import { translateWebSource } from "../../i18n/messages";
-import { ACP_REGISTRY_MAX_AGENTS, AuthProvidersManageScope } from "@t3tools/contracts";
+import {
+  ACP_REGISTRY_MAX_AGENTS,
+  ACP_REGISTRY_SEARCH_QUERY_MAX_LENGTH,
+  AuthProvidersManageScope,
+} from "@t3tools/contracts";
 import { readEnvironmentScope, useEnvironmentScope } from "../../state/session";
 import {
   isAtomCommandInterrupted,
@@ -92,7 +96,11 @@ export function useAcpRegistrySearch(environmentId: EnvironmentId, enabled: bool
     prepareError,
     type: (text: string) => {
       setPrepareError(null);
-      setInput({ text, submitted: submittedQuery, typedAt: Date.now() });
+      setInput({
+        text: text.slice(0, ACP_REGISTRY_SEARCH_QUERY_MAX_LENGTH),
+        submitted: submittedQuery,
+        typedAt: Date.now(),
+      });
     },
     submit: () => {
       const trimmed = input.text.trim();
@@ -171,6 +179,7 @@ export function AcpRegistrySearchStep({
           </InputGroupAddon>
           <InputGroupInput
             aria-label={translateWebSource(sourceLocale, "Search ACP Registry")}
+            maxLength={ACP_REGISTRY_SEARCH_QUERY_MAX_LENGTH}
             disabled={preparingId !== null}
             onChange={(event) => registry.type(event.currentTarget.value)}
             placeholder={translateWebSource(sourceLocale, "Search agents…")}

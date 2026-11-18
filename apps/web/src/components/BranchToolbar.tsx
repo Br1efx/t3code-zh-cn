@@ -123,15 +123,7 @@ function showWorkspaceContextMenu(
       if (action !== "copy-path") return;
       const clipboardPath = formatFilePathForClipboard(workspacePath);
       void writeTextToClipboard(clipboardPath, "workspace path").then(
-        (didCopy) => {
-          if (didCopy) {
-            toastManager.add({
-              type: "success",
-              title: tx("Path copied"),
-              description: clipboardPath,
-            });
-          }
-        },
+        undefined,
         (error: unknown) => {
           toastManager.add(
             stackedThreadToast({
