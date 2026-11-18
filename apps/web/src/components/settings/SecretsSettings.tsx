@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import type { EnvironmentId, SecretProviderConfig, SecretProviderId } from "@t3tools/contracts";
@@ -37,6 +38,7 @@ const SECRET_PROVIDER_KINDS: Readonly<
 };
 
 export function SecretsSettingsPanel() {
+  const { locale: i18nLocale } = useI18n();
   const { scope, environment } = useSettingsScope();
   const connected = environment?.connection.phase === "connected";
   return (
@@ -46,7 +48,9 @@ export function SecretsSettingsPanel() {
       environment.serverConfig.secretProviderSettings !== true ? (
         <SettingsSection {...searchableSetting("secret-providers")}>
           <p className="px-4 py-3 text-sm text-muted-foreground">
-            Update T3 Code on {environment.label} to manage its secret providers.
+            {localizeWebString(i18nLocale, "Update T3 Code on ")}
+            {environment.label}
+            {localizeWebString(i18nLocale, " to manage its secret providers.")}
           </p>
         </SettingsSection>
       ) : connected ? (
@@ -58,7 +62,10 @@ export function SecretsSettingsPanel() {
       ) : (
         <SettingsSection {...searchableSetting("secret-providers")}>
           <p className="px-4 py-3 text-sm text-muted-foreground">
-            Connect an environment to manage the secret providers its provider variables read from.
+            {translateWebSource(
+              i18nLocale,
+              "Connect an environment to manage the secret providers its provider variables read from.",
+            )}
           </p>
         </SettingsSection>
       )}
@@ -113,7 +120,10 @@ function EnvironmentSecretProviders({
       >
         {projectScoped ? (
           <p className="px-4 pt-3 text-xs text-muted-foreground">
-            Environment-wide setting. Select an environment to change it.
+            {translateWebSource(
+              translationLocale,
+              "Environment-wide setting. Select an environment to change it.",
+            )}
           </p>
         ) : null}
         {entries.length === 0 ? (

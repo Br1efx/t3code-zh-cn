@@ -252,7 +252,7 @@ export function GuestPage() {
         <GuestSession shareId={shareId} />
       ) : (
         <Notice
-          title="This link has ended or is not valid"
+          title={translateWebSource(translationLocale, "This link has ended or is not valid")}
           detail="Ask the owner for a new link. Each link works in one browser."
         />
       )}
@@ -321,7 +321,12 @@ function GuestSession({ shareId }: { readonly shareId: string }) {
   }, [shareId]);
 
   if (stream.ended || (rejected && stream.view !== null)) {
-    return <Notice title="This link has ended" detail="The owner stopped sharing this thread." />;
+    return (
+      <Notice
+        title={translateWebSource(translationLocale, "This link has ended")}
+        detail="The owner stopped sharing this thread."
+      />
+    );
   }
   if (stream.view !== null) {
     if (stream.projection === null)
@@ -338,7 +343,7 @@ function GuestSession({ shareId }: { readonly shareId: string }) {
   if (!rejected) return <Notice title={translateWebSource(translationLocale, "Connecting...")} />;
   return (
     <Notice
-      title="This link has ended or is not valid"
+      title={translateWebSource(translationLocale, "This link has ended or is not valid")}
       detail="Ask the owner for a new link. Each link works in one browser."
     />
   );
@@ -360,6 +365,7 @@ function NameForm({
   readonly credential: string;
   readonly onJoined: () => void;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -375,9 +381,11 @@ function NameForm({
   };
   return (
     <form className="m-auto flex w-full max-w-xs flex-col gap-3 p-6" onSubmit={submit}>
-      <h1 className="text-base font-medium">Join a shared thread</h1>
+      <h1 className="text-base font-medium">
+        {translateWebSource(i18nLocale, "Join a shared thread")}
+      </h1>
       <label className="flex flex-col gap-1.5 text-sm" htmlFor="guest-name">
-        Your name
+        {translateWebSource(i18nLocale, "Your name")}
         <Input
           id="guest-name"
           autoFocus
@@ -396,7 +404,10 @@ function NameForm({
         Join
       </Button>
       <p className="text-xs text-muted-foreground">
-        The owner sees your name and approves each message before the agent gets it.
+        {translateWebSource(
+          i18nLocale,
+          "The owner sees your name and approves each message before the agent gets it.",
+        )}
       </p>
     </form>
   );
@@ -729,7 +740,10 @@ function GuestComposer({
       }}
     >
       {files.length > 0 ? (
-        <ul className="flex flex-wrap gap-2" aria-label="Attached files">
+        <ul
+          className="flex flex-wrap gap-2"
+          aria-label={translateWebSource(translationLocale, "Attached files")}
+        >
           {files.map((staged) => (
             <li
               key={staged.key}
@@ -780,7 +794,7 @@ function GuestComposer({
           type="file"
           multiple
           hidden
-          aria-label="Files to attach"
+          aria-label={translateWebSource(translationLocale, "Files to attach")}
           onChange={(event) => {
             addFiles(Array.from(event.target.files ?? []));
             // The same file can be picked again after it is removed.
@@ -800,12 +814,12 @@ function GuestComposer({
           </p>
         ) : (
           <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-            The owner approves each message
+            {translateWebSource(translationLocale, "The owner approves each message")}
           </p>
         )}
         <button
           type="submit"
-          aria-label="Send"
+          aria-label={translateWebSource(translationLocale, "Send")}
           disabled={sending || (text.trim() === "" && files.length === 0)}
           className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-message-action text-message-action-foreground shadow-xs hover:bg-message-action-hover focus-visible:outline-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-64"
         >

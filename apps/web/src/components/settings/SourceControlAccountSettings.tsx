@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "../../i18n/messages";
 import { useI18n } from "../../i18n/WebI18nContext";
 import type { EnvironmentId, SourceControlProviderAuth } from "@t3tools/contracts";
@@ -26,6 +27,7 @@ function RedactedLogin(props: {
   readonly revealed: boolean;
   readonly label?: string;
 }) {
+  const { locale: i18nLocale } = useI18n();
   return props.revealed ? (
     <span className="min-w-0 truncate font-mono text-2xs">{props.account}</span>
   ) : (
@@ -33,7 +35,9 @@ function RedactedLogin(props: {
       <span className="select-none blur-xs" aria-hidden>
         {redactedPlaceholder(props.account)}
       </span>
-      <span className="sr-only">{props.label ?? "Hidden account"}</span>
+      <span className="sr-only">
+        {props.label ?? translateWebSource(i18nLocale, "Hidden account")}
+      </span>
     </span>
   );
 }
@@ -88,8 +92,11 @@ export function SourceControlAccountSettings({
     return (
       <p className="text-xs text-muted-foreground">
         {translateWebSource(translationLocale, "Sign in with")}{" "}
-        <code className="rounded bg-muted px-1 py-px text-2xs">{credentials.loginCommand}</code> on
-        the server host, then rescan to choose accounts here.
+        <code className="rounded bg-muted px-1 py-px text-2xs">{credentials.loginCommand}</code>
+        {localizeWebString(
+          sourceLocale,
+          " on the server host, then rescan to choose accounts here.",
+        )}
       </p>
     );
   }
@@ -99,8 +106,9 @@ export function SourceControlAccountSettings({
       <div className="flex items-center justify-between gap-3">
         <p className="max-w-2xl text-xs leading-relaxed text-muted-foreground">
           {translateWebSource(translationLocale, "Choose which")}{" "}
-          <code className="rounded bg-muted px-1 py-px text-2xs">{cliName}</code> login each {label}{" "}
-          host uses, or turn a host off.
+          <code className="rounded bg-muted px-1 py-px text-2xs">{cliName}</code>
+          {localizeWebString(sourceLocale, " login each ")}
+          {label} {translateWebSource(sourceLocale, "host uses, or turn a host off.")}
         </p>
         <Button
           size="icon-xs"
@@ -204,7 +212,12 @@ export function SourceControlAccountSettings({
             {stalePin ? (
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-warning">
-                  The chosen login is no longer signed in, so the active {cliName} login is used.
+                  {localizeWebString(
+                    sourceLocale,
+                    "The chosen login is no longer signed in, so the active ",
+                  )}
+                  {cliName}
+                  {localizeWebString(sourceLocale, " login is used.")}
                 </p>
                 <Button
                   size="xs"
@@ -223,7 +236,8 @@ export function SourceControlAccountSettings({
               >
                 <RedactedLogin revealed={revealed} account={entry.account} />
                 <span>
-                  can't be used: {entry.error ?? `${cliName} reports this login as invalid.`}
+                  {localizeWebString(sourceLocale, "can't be used: ")}
+                  {entry.error ?? `${cliName} reports this login as invalid.`}
                 </span>
               </p>
             ))}

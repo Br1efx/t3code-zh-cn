@@ -89,7 +89,7 @@ export function ThreadFindBar(props: ThreadFindBarProps) {
         size="lg"
         onContextMenu={(event) => event.stopPropagation()}
         role="search"
-        aria-label="Find in thread"
+        aria-label={translateWebSource(translationLocale, "Find in thread")}
         aria-busy={props.status === "loading" || props.counting === true}
         className="w-full"
       >
@@ -98,8 +98,8 @@ export function ThreadFindBar(props: ThreadFindBarProps) {
           type="search"
           size="sm"
           value={props.query}
-          aria-label="Find in thread"
-          placeholder="Find in thread"
+          aria-label={translateWebSource(translationLocale, "Find in thread")}
+          placeholder={translateWebSource(translationLocale, "Find in thread")}
           maxLength={200}
           spellCheck={false}
           autoComplete="off"

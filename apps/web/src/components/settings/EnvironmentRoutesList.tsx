@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "../../i18n/messages";
 import { useI18n } from "../../i18n/WebI18nContext";
 import {
@@ -176,7 +177,7 @@ function SortableRouteRow({
         {address !== null ? (
           <p className="truncate text-2xs text-muted-foreground">
             {address}
-            {isLearned(route) ? " · found automatically" : ""}
+            {isLearned(route) ? localizeWebString(sourceLocale, " · found automatically") : ""}
           </p>
         ) : null}
       </div>

@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { ChevronDownIcon, ChevronUpIcon, XIcon } from "lucide-react";
 import { Button } from "../ui/button";
@@ -12,6 +14,7 @@ interface PreviewFindBarProps {
 }
 
 export function PreviewFindBar({ tabId, focusRequestId, onClose }: PreviewFindBarProps) {
+  const { locale: i18nLocale } = useI18n();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [query, setQuery] = useState("");
   const [result, setResult] = useState<{ active: number; matches: number } | null>(null);
@@ -85,7 +88,7 @@ export function PreviewFindBar({ tabId, focusRequestId, onClose }: PreviewFindBa
         variant="popover"
         size="lg"
         role="search"
-        aria-label="Find in page"
+        aria-label={translateWebSource(i18nLocale, "Find in page")}
         className="w-full"
       >
         <InputGroupInput
@@ -93,8 +96,8 @@ export function PreviewFindBar({ tabId, focusRequestId, onClose }: PreviewFindBa
           type="search"
           size="sm"
           value={query}
-          aria-label="Find in page"
-          placeholder="Find in page"
+          aria-label={translateWebSource(i18nLocale, "Find in page")}
+          placeholder={translateWebSource(i18nLocale, "Find in page")}
           maxLength={200}
           spellCheck={false}
           autoComplete="off"

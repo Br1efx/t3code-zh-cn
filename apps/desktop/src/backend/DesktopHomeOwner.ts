@@ -89,8 +89,22 @@ export const readLiveHomeOwner = Effect.fn("DesktopHomeOwner.readLiveHomeOwner")
   );
 });
 
-export const homeOwnedMessage = (owner: Option.Option<HomeOwner>): string =>
-  Option.match(owner, {
+export const homeOwnedMessage = (
+  owner: Option.Option<HomeOwner>,
+  locale: "en" | "zh-CN" = "en",
+): string => {
+  if (locale === "zh-CN") {
+    return Option.match(owner, {
+      onNone: () =>
+        "另一个 T3 Code 程序或后台服务正在占用当前数据目录。请先退出已打开的 T3 Code（或关闭旧版后台服务），再重新打开本软件。",
+      onSome: (owner) => {
+        const kind = owner.serviceManaged ? "T3 Code 后台服务" : "另一个 T3 Code 程序";
+        const version = owner.serverVersion ? `，版本 ${owner.serverVersion}` : "";
+        return `${kind}正在占用当前数据目录（进程号 ${owner.pid}，端口 ${owner.port}${version}）。请先退出该程序或停止后台服务，然后再重新打开 T3 Code。`;
+      },
+    });
+  }
+  return Option.match(owner, {
     onNone: () =>
       "Another T3 Code server, such as the background service, is using this data directory, or an older background service is set up for it. Stop that server or try `t3 update`. If the older launcher cannot update, run `t3 service uninstall` and optionally reinstall with `t3 service install` from a current CLI. Use `npx t3@latest` if `t3` is missing or outdated, and pass `--base-dir` with the service's T3 home to each command. Then reopen T3 Code. You can also set a separate T3CODE_HOME and pair with the running server.",
     onSome: (owner) => {
@@ -104,3 +118,4 @@ export const homeOwnedMessage = (owner: Option.Option<HomeOwner>): string =>
       return `${kind} is using this T3 home (PID ${owner.pid}, port ${owner.port}${version}). ${stop}, and reopen T3 Code. You can also set a separate T3CODE_HOME and pair with the running server.`;
     },
   });
+};

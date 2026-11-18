@@ -1,6 +1,8 @@
 import { UserButton, useAuth } from "@clerk/react";
 import { LogInIcon, RotateCwIcon } from "lucide-react";
 
+import { translateWebSource } from "~/i18n/messages";
+import { useI18n } from "~/i18n/WebI18nContext";
 import { hasCloudPublicConfig } from "../../cloud/publicConfig";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "../ui/sidebar";
 import { retryClerkLoad, useClerkLoadFailed } from "./clerkLoadFailure";
@@ -20,6 +22,7 @@ export function T3ConnectSidebarAvatar() {
 }
 
 function ConfiguredT3ConnectSidebarAvatar() {
+  const { locale: translationLocale } = useI18n();
   const { isLoaded, isSignedIn } = useAuth();
 
   if (!isLoaded || !isSignedIn) return null;
@@ -37,7 +40,7 @@ function ConfiguredT3ConnectSidebarAvatar() {
       {T3_CONNECT_ACCOUNT_PAGES.map((page) => (
         <UserButton.UserProfilePage
           key={page.url}
-          label={page.label}
+          label={translateWebSource(translationLocale, page.label)}
           labelIcon={page.icon}
           url={page.url}
         >
@@ -49,6 +52,7 @@ function ConfiguredT3ConnectSidebarAvatar() {
 }
 
 function ConfiguredT3ConnectSidebarSignIn() {
+  const { locale: translationLocale } = useI18n();
   const { isLoaded, isSignedIn } = useAuth();
   const loadFailed = useClerkLoadFailed();
   const { openAuthPrompt } = useT3ConnectAuthPrompt();
@@ -59,7 +63,7 @@ function ConfiguredT3ConnectSidebarSignIn() {
         <SidebarMenuItem>
           <SidebarMenuButton onClick={retryClerkLoad}>
             <RotateCwIcon />
-            <span>Retry T3 Connect</span>
+            <span>{translateWebSource(translationLocale, "Retry T3 Connect")}</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
@@ -72,7 +76,7 @@ function ConfiguredT3ConnectSidebarSignIn() {
       <SidebarMenuItem>
         <SidebarMenuButton onClick={openAuthPrompt}>
           <LogInIcon />
-          <span>Sign in to T3 Connect</span>
+          <span>{translateWebSource(translationLocale, "Sign in to T3 Connect")}</span>
         </SidebarMenuButton>
       </SidebarMenuItem>
     </SidebarMenu>

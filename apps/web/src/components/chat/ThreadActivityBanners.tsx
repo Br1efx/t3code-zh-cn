@@ -26,6 +26,8 @@ import {
   TriangleAlertIcon,
 } from "lucide-react";
 import { Fragment } from "react";
+import { localizeWebString } from "~/i18n/localizeWebChildren";
+import { useI18n } from "~/i18n/WebI18nContext";
 import { tickTextContent } from "~/lib/tickTextContent";
 import { BackgroundWorkDetails } from "./BackgroundWorkDetails";
 import { Button, InlineButton } from "../ui/button";
@@ -271,6 +273,34 @@ export function backgroundWorkNowItem(input: {
   };
 }
 
+function BranchMismatchTitle(props: {
+  readonly threadBranch: string;
+  readonly currentBranch: string;
+}) {
+  const { locale } = useI18n();
+  return (
+    <span className="flex min-w-0 items-baseline gap-1.5">
+      <span className="shrink-0 font-normal text-muted-foreground">
+        {localizeWebString(locale, "Branch changed from")}
+      </span>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <code className="min-w-0 truncate font-medium text-foreground">
+              {props.threadBranch}
+            </code>
+          }
+        />
+        <TooltipPopup side="top">
+          {locale === "zh-CN"
+            ? `此对话上次在分支 ${props.threadBranch} 上运行，继续发送将在 ${props.currentBranch} 上执行。`
+            : `This thread last ran on ${props.threadBranch}. Sending will continue on ${props.currentBranch}.`}
+        </TooltipPopup>
+      </Tooltip>
+    </span>
+  );
+}
+
 /** The local checkout moved off the branch this thread last ran on. */
 export function branchMismatchBannerItem(input: {
   readonly mismatchKey: string;
@@ -286,22 +316,10 @@ export function branchMismatchBannerItem(input: {
     variant: "info",
     icon: <GitBranchIcon />,
     title: (
-      <span className="flex min-w-0 items-baseline gap-1.5">
-        <span className="shrink-0 font-normal text-muted-foreground">Branch changed from</span>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <code className="min-w-0 truncate font-medium text-foreground">
-                {mismatch.threadBranch}
-              </code>
-            }
-          />
-          <TooltipPopup side="top">
-            This thread last ran on {mismatch.threadBranch}. Sending will continue on{" "}
-            {mismatch.currentBranch}.
-          </TooltipPopup>
-        </Tooltip>
-      </span>
+      <BranchMismatchTitle
+        threadBranch={mismatch.threadBranch}
+        currentBranch={mismatch.currentBranch}
+      />
     ),
     actions: (
       <Button size="xs" variant="ghost" disabled={input.restoreDisabled} onClick={input.onRestore}>

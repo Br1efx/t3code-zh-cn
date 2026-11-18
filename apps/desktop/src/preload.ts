@@ -87,6 +87,15 @@ if (!primaryPasteEnabled) {
   );
 }
 
+function resolvePreloadFallbackZhCn(): boolean {
+  try {
+    const systemLocale = ipcRenderer.sendSync(IpcChannels.GET_SYSTEM_LOCALE_CHANNEL);
+    return typeof systemLocale === "string" && /^zh(?:-|$)/i.test(systemLocale.trim());
+  } catch {
+    return false;
+  }
+}
+
 function unwrapEnsureSshEnvironmentResult(result: unknown) {
   if (
     typeof result === "object" &&
@@ -97,7 +106,9 @@ function unwrapEnsureSshEnvironmentResult(result: unknown) {
     const message =
       "message" in result && typeof result.message === "string"
         ? result.message
-        : "SSH authentication cancelled.";
+        : resolvePreloadFallbackZhCn()
+          ? "已取消 SSH 登录验证。"
+          : "SSH authentication cancelled.";
     throw new Error(message);
   }
   return result as Awaited<ReturnType<DesktopBridge["ensureSshEnvironment"]>>;

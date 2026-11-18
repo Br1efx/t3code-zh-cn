@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useStableCallback } from "~/hooks/useStableCallback";
@@ -113,7 +114,8 @@ export function VoiceInputSetup(props: {
                   <div className="flex items-baseline justify-between gap-3">
                     <h3 className="min-w-0 truncate font-medium">{model.name}</h3>
                     <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                      {Math.round(model.size / 1024 / 1024)} MB
+                      {Math.round(model.size / 1024 / 1024)}
+                      {localizeWebString(translationLocale, " MB")}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">

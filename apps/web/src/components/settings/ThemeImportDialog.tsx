@@ -126,9 +126,10 @@ function ThemeJsonEditor({
         id={id}
         onChange={(event) => onChange(event.currentTarget.value)}
         onScroll={syncScroll}
-        placeholder={
-          '{\n  "version": 1,\n  "name": "Aurora",\n  "appearance": "light",\n  "colors": { ... }\n}'
-        }
+        placeholder={translateWebSource(
+          translationLocale,
+          '{\n  "version": 1,\n  "name": "Aurora",\n  "appearance": "light",\n  "colors": { ... }\n}',
+        )}
         spellCheck={false}
         value={value}
       />
@@ -428,7 +429,7 @@ function ThemeImportBody({
       <div className="flex items-center gap-3" aria-hidden>
         <div className="h-px flex-1 bg-border" />
         <span className="text-muted-foreground text-2xs uppercase tracking-wider">
-          or import a file
+          {translateWebSource(translationLocale, "or import a file")}
         </span>
         <div className="h-px flex-1 bg-border" />
       </div>
@@ -517,7 +518,8 @@ function ThemeImportBody({
                   {translateWebSource(translationLocale, "Theme file")}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {fileName ?? "Drop T3 Code or VS Code .json files"}
+                  {fileName ??
+                    translateWebSource(translationLocale, "Drop T3 Code or VS Code .json files")}
                 </p>
               </div>
               {chooseButton()}

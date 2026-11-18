@@ -453,8 +453,10 @@ function ProjectDetail({
   const checkoutChoices = (
     <SettingsSection title="Checkouts">
       <p className="px-3 py-2.5 text-xs text-muted-foreground sm:px-4">
-        Grouping rule decides how each checkout joins project groups in the sidebar. Changing it can
-        move a checkout to a different project.
+        {translateWebSource(
+          translationLocale,
+          "Grouping rule decides how each checkout joins project groups in the sidebar. Changing it can move a checkout to a different project.",
+        )}
       </p>
       {Array.from(checkoutsByEnvironment, ([environmentId, members]) => {
         if (checkoutsByEnvironment.size === 1) {
@@ -539,8 +541,14 @@ function ProjectDetail({
           {!canEditGroup ? (
             <p className="px-3 py-2 text-sm text-muted-foreground sm:px-4">
               {group.memberProjects.length > 1
-                ? "Shared settings require permission to change every checkout in this group."
-                : "This connection cannot change this project."}
+                ? translateWebSource(
+                    translationLocale,
+                    "Shared settings require permission to change every checkout in this group.",
+                  )
+                : translateWebSource(
+                    translationLocale,
+                    "This connection cannot change this project.",
+                  )}
             </p>
           ) : null}
           <SettingsRow
@@ -644,7 +652,7 @@ function ProjectDetail({
                         checked ? "Failed to pin project" : "Failed to unpin project",
                       )
                     }
-                    aria-label="Pin project"
+                    aria-label={translateWebSource(translationLocale, "Pin project")}
                   />
                 }
               />

@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
+import {
+  localizeOptionalWebAttr,
+  localizeWebChildren,
+  localizeWebString,
+} from "~/i18n/localizeWebChildren";
+import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
 
@@ -14,6 +20,10 @@ export function TimelineSystemDivider(props: {
   readonly actionLabel?: string;
   readonly onAction?: () => void;
 }) {
+  const { locale } = useI18n();
+  const localizedLabel = localizeWebString(locale, props.label);
+  const localizedDetail = localizeWebChildren(locale, props.detail);
+  const localizedActionLabel = localizeOptionalWebAttr(locale, props.actionLabel);
   const Icon = props.icon;
   const content = (
     <>
@@ -24,19 +34,19 @@ export function TimelineSystemDivider(props: {
         )}
       >
         {Icon ? <Icon className="size-3 shrink-0 self-center" /> : null}
-        {props.label}
+        {localizedLabel}
       </span>
-      {props.detail ? (
+      {localizedDetail ? (
         <span
           className={cn(
             "min-w-0 opacity-70",
             props.wrapDetail ? "ml-1.5 wrap-anywhere" : "inline-flex items-center",
-            typeof props.detail === "string" &&
+            typeof localizedDetail === "string" &&
               (props.wrapDetail ? "whitespace-pre-wrap" : "max-w-80 truncate"),
           )}
         >
           {props.showDetailSeparator === false ? null : "·\u00a0"}
-          {props.detail}
+          {localizedDetail}
         </span>
       ) : null}
     </>
@@ -56,7 +66,7 @@ export function TimelineSystemDivider(props: {
             render={
               <button
                 type="button"
-                aria-label={props.actionLabel}
+                aria-label={localizedActionLabel}
                 onClick={props.onAction}
                 className={cn(
                   "min-w-0 cursor-pointer rounded-full border border-border/70 bg-background px-2.5 py-1 transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70",

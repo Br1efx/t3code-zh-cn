@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { pipe } from "effect/Function";
@@ -123,7 +124,7 @@ function PendingLinkRequest(props: {
       <div className="flex min-w-0 flex-col gap-1">
         <p className="text-sm font-medium text-foreground">
           {picksMachine(item)
-            ? "Link a machine to this environment"
+            ? translateWebSource(translationLocale, "Link a machine to this environment")
             : `Link ${target} to this environment`}
         </p>
         {item.reason.trim() ? <p className="text-sm text-muted-foreground">{item.reason}</p> : null}
@@ -150,7 +151,10 @@ function PendingLinkRequest(props: {
         </div>
       ) : (
         <p className="text-xs text-muted-foreground">
-          Only a session that manages access here can answer this.
+          {translateWebSource(
+            translationLocale,
+            "Only a session that manages access here can answer this.",
+          )}
         </p>
       )}
       <LinkRequestDialog
@@ -300,7 +304,11 @@ function LinkRequestDialog(props: {
     >
       <WizardPopup>
         <WizardHeader
-          title={pickMachine ? "Link a machine" : `Link ${targetName}`}
+          title={
+            pickMachine
+              ? translateWebSource(translationLocale, "Link a machine")
+              : `Link ${targetName}`
+          }
           description="Agents here can then launch, message and wait on threads there. Revoke it in that machine's Sharing & access."
         >
           {steps.length > 1 && !useExisting ? (
@@ -343,7 +351,9 @@ function LinkRequestDialog(props: {
                 ) : null}
                 {asksAddress ? (
                   <label className="block space-y-1.5">
-                    <span className="block text-xs font-medium text-foreground">Address</span>
+                    <span className="block text-xs font-medium text-foreground">
+                      {translateWebSource(translationLocale, "Address")}
+                    </span>
                     <Input
                       value={address}
                       onChange={(event) => setAddress(event.target.value)}
@@ -354,8 +364,12 @@ function LinkRequestDialog(props: {
                     />
                     {target.kind === "machine" ? (
                       <span className="block text-xs text-muted-foreground">
-                        This app has no address for {target.label} that another machine can reach.
-                        Enter its https or Tailscale address.
+                        {localizeWebString(translationLocale, "This app has no address for ")}
+                        {target.label}
+                        {localizeWebString(
+                          translationLocale,
+                          " that another machine can reach. Enter its https or Tailscale address.",
+                        )}
                       </span>
                     ) : null}
                   </label>
@@ -384,8 +398,12 @@ function LinkRequestDialog(props: {
                           spellCheck={false}
                         />
                         <span className="block text-xs text-muted-foreground">
-                          Create a link on {targetName}: Settings → Sharing & access → Authorized
-                          clients → Create link, then paste its code here.
+                          {localizeWebString(translationLocale, "Create a link on ")}
+                          {targetName}
+                          {translateWebSource(
+                            translationLocale,
+                            ": Settings → Sharing & access → Authorized clients → Create link, then paste its code here.",
+                          )}
                         </span>
                       </label>
                     )}
@@ -396,8 +414,12 @@ function LinkRequestDialog(props: {
             )}
             {useExisting ? (
               <p className="text-xs text-muted-foreground">
-                This environment is already linked to {targetName}. The agent can use that link as
-                it is; change its access in Settings → Environments.
+                {localizeWebString(translationLocale, "This environment is already linked to ")}
+                {targetName}
+                {translateWebSource(
+                  translationLocale,
+                  ". The agent can use that link as it is; change its access in Settings → Environments.",
+                )}
               </p>
             ) : null}
             {error !== null ? (
@@ -474,7 +496,9 @@ function MachinePicker(props: {
         ))}
         <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-sm">
           <Radio value={ANOTHER_ADDRESS} />
-          <span className="min-w-0 flex-1 font-medium">Another address…</span>
+          <span className="min-w-0 flex-1 font-medium">
+            {translateWebSource(translationLocale, "Another address…")}
+          </span>
         </label>
       </RadioGroup>
     </div>

@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
@@ -240,7 +241,8 @@ export function QueuedRunsControl({
       className="relative mx-auto flex w-full max-w-(--chat-content-max-width) flex-col gap-2 pb-4"
     >
       <span className="sr-only" aria-live="polite">
-        {items.length} queued
+        {items.length}
+        {localizeWebString(translationLocale, " queued")}
       </span>
       <ol className="flex flex-col items-end gap-3" id={queueListId}>
         {visibleItems.map((item, position) => {
@@ -301,7 +303,9 @@ export function QueuedRunsControl({
                 ) : null}
                 {isEditing ? (
                   <>
-                    <span className="px-1 text-foreground">Editing in the composer</span>
+                    <span className="px-1 text-foreground">
+                      {translateWebSource(translationLocale, "Editing in the composer")}
+                    </span>
                     <Button
                       size="xs"
                       variant="ghost"
@@ -380,7 +384,9 @@ export function QueuedRunsControl({
             onPointerDown={(event) => event.preventDefault()}
             onClick={() => setShowAll((value) => !value)}
           >
-            {showAll ? "Show fewer" : `Show all ${items.length} queued`}
+            {showAll
+              ? translateWebSource(translationLocale, "Show fewer")
+              : `Show all ${items.length} queued`}
             <ChevronDownIcon
               aria-hidden
               className={cn(
@@ -444,7 +450,9 @@ function QueuedMessage(props: {
   return (
     <>
       {attribution === "t3code" ? (
-        <p className="me-1 text-2xs text-muted-foreground/70">Sent by T3 Code</p>
+        <p className="me-1 text-2xs text-muted-foreground/70">
+          {translateWebSource(translationLocale, "Sent by T3 Code")}
+        </p>
       ) : null}
       {presentation?.guestName === undefined ? null : (
         <GuestMessageName name={presentation.guestName} />
@@ -537,7 +545,7 @@ function QueuedMessage(props: {
                   />
                 }
               >
-                Open automation
+                {translateWebSource(translationLocale, "Open automation")}
               </InlineButton>
             ) : null}
             <TimelineRowTimestamp

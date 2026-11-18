@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { translateWebSource } from "~/i18n/messages";
 import { ArrowDownIcon, ArrowUpIcon, PencilIcon, PlusIcon, StarIcon, XIcon } from "lucide-react";
@@ -364,7 +365,9 @@ export function ProviderModelsSection({
             </Button>
           ) : null}
           <span className="text-xs text-muted-foreground">
-            {models.length} model{models.length === 1 ? "" : "s"}
+            {models.length}
+            {localizeWebString(translationLocale, " model")}
+            {models.length === 1 ? "" : "s"}
             {favoriteCount > 0
               ? ` · ${favoriteCount} favorite${favoriteCount === 1 ? "" : "s"}`
               : ""}
@@ -510,7 +513,7 @@ const ProviderModelRow = memo(function ProviderModelRow({
   readonly onToggleEdit: (slug: string) => void;
   readonly onRemove: (slug: string) => void;
 }) {
-  const { t } = useI18n();
+  const { locale: i18nLocale, t } = useI18n();
   const { locale: translationLocale } = useI18n();
   const capLabels = describeModelCapabilities(model, flagMissingReasoning);
   const nameClassName = cn("text-xs", isHidden ? "text-muted-foreground" : "text-foreground/90");
@@ -573,7 +576,9 @@ const ProviderModelRow = memo(function ProviderModelRow({
           </TooltipPopup>
         </Tooltip>
         {model.isCustom ? (
-          <span className="shrink-0 text-2xs text-muted-foreground/70">custom</span>
+          <span className="shrink-0 text-2xs text-muted-foreground/70">
+            {translateWebSource(i18nLocale, "custom")}
+          </span>
         ) : null}
       </span>
       <span className="text-2xs text-muted-foreground/70">

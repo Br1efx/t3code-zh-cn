@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { translateWebSource } from "~/i18n/messages";
 import { RefreshIcon } from "~/components/ui/refresh-icon";
@@ -95,6 +96,7 @@ function FileSearchField({
   ref: Ref<HTMLInputElement>;
   value: string;
 }) {
+  const { locale: i18nLocale } = useI18n();
   return (
     <InputGroup variant="ghost" className="h-7 min-w-0 flex-1">
       <InputGroupInput
@@ -104,7 +106,7 @@ function FileSearchField({
         size="sm"
         value={props.value}
         aria-label={props.ariaLabel}
-        placeholder="Search files"
+        placeholder={translateWebSource(i18nLocale, "Search files")}
         data-workspace-focus-default
         spellCheck={false}
         onChange={(event) => props.onValueChange(event.target.value)}
@@ -589,12 +591,13 @@ export default function FileBrowserPanel({
           onClick={handleRefresh}
           className="p-4 text-left text-xs leading-relaxed text-destructive"
         >
-          {error ?? pathSearch.error} Click to retry.
+          {error ?? pathSearch.error}
+          {localizeWebString(translationLocale, " Click to retry.")}
         </button>
       ) : null}
       {query.trim() && pathSearch.truncated && !pathSearch.isPending ? (
         <div className="px-3 py-1 text-xs text-muted-foreground">
-          More matches available. Refine your search.
+          {translateWebSource(translationLocale, "More matches available. Refine your search.")}
         </div>
       ) : null}
       {(!ready || pathSearch.isPending) && (
@@ -606,7 +609,7 @@ export default function FileBrowserPanel({
               : "px-3 py-1 text-xs text-muted-foreground"
           }
         >
-          Loading files…
+          {translateWebSource(translationLocale, "Loading files…")}
         </div>
       )}
       {hasNoSearchMatches ? (

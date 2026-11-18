@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useAtomValue } from "@effect/atom-react";
@@ -133,7 +134,7 @@ export function ThreadAutomationsPanel(props: {
   return (
     <ThreadDetailsSection
       headingId="thread-details-automations-heading"
-      title="Automations"
+      title={translateWebSource(translationLocale, "Automations")}
       data-thread-automations-panel
       actions={
         <Tooltip>
@@ -143,7 +144,7 @@ export function ThreadAutomationsPanel(props: {
                 size="icon-xs"
                 variant="ghost"
                 part="icon"
-                aria-label="Manage scheduled tasks"
+                aria-label={translateWebSource(translationLocale, "Manage scheduled tasks")}
                 onClick={() =>
                   void navigate({
                     to: "/settings/scheduled-tasks",
@@ -249,7 +250,8 @@ export function ThreadAutomationsPanel(props: {
       {/* Kept last: the details card treats a section whose last child is empty as empty. */}
       {tasksQuery.error !== null ? (
         <p className="px-2.5 py-1.5 text-2xs text-destructive">
-          Could not load automations: {tasksQuery.error}
+          {localizeWebString(translationLocale, "Could not load automations: ")}
+          {tasksQuery.error}
         </p>
       ) : null}
     </ThreadDetailsSection>

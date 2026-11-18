@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { type ServerLifecycleWelcomePayload } from "@t3tools/contracts";
@@ -117,13 +118,17 @@ export const Route = createRootRoute({
 });
 
 function RootRouteNotFoundView() {
+  const { locale: i18nLocale } = useI18n();
   return (
     <main className="flex min-h-0 min-w-0 flex-1 items-center justify-center p-6">
       <div className="flex max-w-sm flex-col items-center gap-4 text-center">
-        <h1 className="text-lg font-medium text-foreground">Page not found</h1>
+        <h1 className="text-lg font-medium text-foreground">
+          {translateWebSource(i18nLocale, "Page not found")}
+        </h1>
         <p className="text-sm text-muted-foreground">
-          This link doesn't point to a page in {APP_DISPLAY_NAME}. Go home to choose a project or
-          start a thread.
+          {localizeWebString(i18nLocale, "This link doesn't point to a page in ")}
+          {APP_DISPLAY_NAME}
+          {translateWebSource(i18nLocale, ". Go home to choose a project or start a thread.")}
         </p>
         <Button render={<Link to="/" replace />}>Go home</Button>
       </div>

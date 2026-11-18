@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "../../i18n/messages";
 import { useI18n } from "../../i18n/WebI18nContext";
 import { useAtomValue } from "@effect/atom-react";
@@ -932,6 +933,7 @@ function ScheduledTaskThreadLink({
   readonly environmentId: EnvironmentId;
   readonly threadId: ThreadId;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const ref = scopeThreadRef(environmentId, threadId);
   const title = useQuietThreadShell(ref)?.title.trim();
   return (
@@ -940,7 +942,7 @@ function ScheduledTaskThreadLink({
       params={buildThreadRouteParams(ref)}
       className="max-w-64 truncate underline underline-offset-2 hover:text-foreground"
     >
-      {title || "Open thread"}
+      {title || translateWebSource(i18nLocale, "Open thread")}
     </Link>
   );
 }
@@ -1029,7 +1031,11 @@ function WebhookDeliveriesDialog({
                 </p>
               ) : null}
               <DeliveryBlock
-                title={selected.pendingWindow ? "Scheduled run" : "Prompt sent to the agent"}
+                title={
+                  selected.pendingWindow
+                    ? translateWebSource(sourceLocale, "Scheduled run")
+                    : translateWebSource(sourceLocale, "Prompt sent to the agent")
+                }
               >
                 {selected.renderedPrompt ??
                   (selected.pendingWindow
@@ -1052,8 +1058,14 @@ function WebhookDeliveriesDialog({
                   {selected.query}
                 </DeliveryBlock>
               ) : null}
-              <DeliveryBlock title={selected.bodyTruncated ? "Body (truncated)" : "Body"}>
-                {selected.body || "(empty)"}
+              <DeliveryBlock
+                title={
+                  selected.bodyTruncated
+                    ? translateWebSource(sourceLocale, "Body (truncated)")
+                    : translateWebSource(sourceLocale, "Body")
+                }
+              >
+                {selected.body || translateWebSource(sourceLocale, "(empty)")}
               </DeliveryBlock>
             </div>
           ) : selectedId !== null ? null : deliveries === null ? (
@@ -1216,15 +1228,22 @@ function WebhookEndpointField({
 }
 
 function WebhookDeliveryMode({ environmentId }: { readonly environmentId: EnvironmentId }) {
+  const { locale: i18nLocale } = useI18n();
   const cloudLink = usePrimaryCloudLinkState();
   if (cloudLink.target?.environmentId !== environmentId || cloudLink.data === null) return null;
   return (
     <p className="text-xs text-muted-foreground">
       {cloudLink.data.holdWebhooksWhileOffline
-        ? "Held for up to 24 hours while this environment is offline. "
-        : "Forwarded live. Requests fail while this environment is offline. "}
+        ? localizeWebString(
+            i18nLocale,
+            "Held for up to 24 hours while this environment is offline. ",
+          )
+        : localizeWebString(
+            i18nLocale,
+            "Forwarded live. Requests fail while this environment is offline. ",
+          )}
       <Link to="/settings/access" className="underline underline-offset-2">
-        Change in Sharing & access
+        {translateWebSource(i18nLocale, "Change in Sharing & access")}
       </Link>
     </p>
   );
@@ -1383,7 +1402,11 @@ function ScheduledTaskDestination({
                 ? "scheduled-task-destination-thread"
                 : "scheduled-task-destination"
             }
-            aria-label={onThreadModeChange ? "Destination thread" : undefined}
+            aria-label={
+              onThreadModeChange
+                ? translateWebSource(translationLocale, "Destination thread")
+                : undefined
+            }
             disabled={disabled}
             render={<Button variant="outline" size="sm" />}
             className="w-full justify-between"
@@ -1395,20 +1418,23 @@ function ScheduledTaskDestination({
           <ComboboxPopup align="start" side="bottom" className="w-80">
             <ComboboxSearchInput
               aria-label={translateWebSource(translationLocale, "Search threads")}
-              placeholder="Search all threads..."
+              placeholder={translateWebSource(translationLocale, "Search all threads...")}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
-            <ComboboxEmpty>No threads found.</ComboboxEmpty>
+            <ComboboxEmpty>
+              {translateWebSource(translationLocale, "No threads found.")}
+            </ComboboxEmpty>
             <ComboboxList className="max-h-72">
               {items.map((value, index) => (
                 <ComboboxItem key={value} index={index} value={value}>
                   <span className="block truncate">
                     {value === NEW_THREAD_DESTINATION
-                      ? "New thread each run"
+                      ? translateWebSource(translationLocale, "New thread each run")
                       : value === threadId
                         ? currentLabel
-                        : threads.find((row) => row.id === value)?.title || "Untitled thread"}
+                        : threads.find((row) => row.id === value)?.title ||
+                          translateWebSource(translationLocale, "Untitled thread")}
                   </span>
                 </ComboboxItem>
               ))}
@@ -1419,7 +1445,9 @@ function ScheduledTaskDestination({
       <div className="space-y-1 text-sm">
         <p className="text-muted-foreground">{detail}</p>
         {threadMode !== "new_thread" ? (
-          <p className="text-muted-foreground">Deleting the thread also deletes this task.</p>
+          <p className="text-muted-foreground">
+            {translateWebSource(translationLocale, "Deleting the thread also deletes this task.")}
+          </p>
         ) : null}
       </div>
     </Field>
@@ -2040,7 +2068,10 @@ function ScheduledTaskEditorForm({
                   />
                 </Field>
                 <p className="text-xs text-muted-foreground">
-                  Requests with the same key run only once within 7 days.
+                  {translateWebSource(
+                    translationLocale,
+                    "Requests with the same key run only once within 7 days.",
+                  )}
                 </p>
                 <Field
                   label={translateWebSource(sourceLocale, "Coalesce key")}
@@ -2078,8 +2109,10 @@ function ScheduledTaskEditorForm({
                   />
                 </Field>
                 <p className="text-xs text-muted-foreground">
-                  Coalescing runs the latest payload once when the window from the first delivery
-                  closes. Empty keys run normally.
+                  {translateWebSource(
+                    translationLocale,
+                    "Coalescing runs the latest payload once when the window from the first delivery closes. Empty keys run normally.",
+                  )}
                 </p>
                 <div className="flex items-center justify-between gap-4">
                   <div className="min-w-0 space-y-1">

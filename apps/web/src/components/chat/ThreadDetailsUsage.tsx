@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import type {
@@ -102,7 +103,7 @@ export function ThreadDetailsContext({ usage }: { readonly usage: ContextWindowS
   return (
     <ThreadDetailsSection
       headingId="thread-details-context-heading"
-      title="Context window"
+      title={translateWebSource(translationLocale, "Context window")}
       showHeading={false}
     >
       <div className="grid grid-cols-[auto_minmax(3rem,1fr)_auto] gap-x-3 text-xs">
@@ -125,8 +126,10 @@ export function ThreadDetailsContext({ usage }: { readonly usage: ContextWindowS
               </span>
               {maxTokens !== null ? (
                 <span className="text-muted-foreground">
-                  {usage.usedTokens.toLocaleString("en-US")} of {maxTokens.toLocaleString("en-US")}{" "}
-                  tokens
+                  {usage.usedTokens.toLocaleString("en-US")}
+                  {localizeWebString(translationLocale, " of ")}
+                  {maxTokens.toLocaleString("en-US")}{" "}
+                  {translateWebSource(translationLocale, "tokens")}
                 </span>
               ) : null}
               {threshold !== null && threshold > 0 ? (
@@ -149,6 +152,7 @@ function LimitRow({
   readonly window: ServerProviderUsageWindow;
   readonly now: number;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const timestampFormat = usePrimarySettings((settings) => settings.timestampFormat);
   const left = remainingPercent(window);
   const pace = paceOf(window, now);
@@ -163,11 +167,13 @@ function LimitRow({
       tooltip={
         <>
           <span className="text-foreground">
-            {window.label}: {left}% left
+            {window.label}: {left}
+            {translateWebSource(i18nLocale, "% left")}
           </span>
           {window.resetsAt && resetsAt > now ? (
             <span className="text-muted-foreground">
-              Resets in {formatDuration(resetsAt - now)} ·{" "}
+              {localizeWebString(i18nLocale, "Resets in ")}
+              {formatDuration(resetsAt - now)} ·{" "}
               {formatUpcomingTimestamp(window.resetsAt, timestampFormat, now)}
             </span>
           ) : null}

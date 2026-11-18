@@ -1,4 +1,7 @@
 /* oxlint-disable react/no-unstable-nested-components -- These callbacks return overlays, and are invoked as render functions. */
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import {
@@ -17,6 +20,7 @@ export default function Presentation(props: {
   onDetails: (text: string) => void;
   onError: (cause: unknown) => void;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const { onError, bytes: source, onDetails } = props;
   const [opened, setOpened] = useState<Opened>();
   const [page, setPage] = useState(0);
@@ -103,7 +107,10 @@ export default function Presentation(props: {
           <ChevronLeftIcon className="size-3.5" />
         </FileSurfaceAction>
         <span className="flex-1 text-center text-xs tabular-nums" aria-live="polite">
-          Slide {page + 1} of {opened.slides.length}
+          {localizeWebString(i18nLocale, "Slide ")}
+          {page + 1}
+          {localizeWebString(i18nLocale, " of ")}
+          {opened.slides.length}
         </span>
         <FileSurfaceAction
           label="Next slide"
@@ -130,7 +137,7 @@ export default function Presentation(props: {
                 role="status"
                 className="absolute inset-0 flex items-center justify-center bg-background/80 p-4 text-xs text-foreground"
               >
-                This slide could not be drawn.
+                {translateWebSource(i18nLocale, "This slide could not be drawn.")}
               </p>
             ) : null}
           </>
@@ -139,11 +146,11 @@ export default function Presentation(props: {
           const slide = opened.slides[index];
           return slide?.notes || slide?.hidden ? (
             <div className="space-y-1 text-xs text-muted-foreground">
-              {slide.hidden ? <p>Hidden slide</p> : null}
+              {slide.hidden ? <p>{translateWebSource(i18nLocale, "Hidden slide")}</p> : null}
               {slide.notes ? (
                 <p
                   role="note"
-                  aria-label="Speaker notes"
+                  aria-label={translateWebSource(i18nLocale, "Speaker notes")}
                   className="select-text whitespace-pre-wrap break-words"
                 >
                   {slide.notes}

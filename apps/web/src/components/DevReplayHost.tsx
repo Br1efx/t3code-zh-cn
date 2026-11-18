@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import { useAtomValue } from "@effect/atom-react";
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { squashAtomCommandFailure } from "@t3tools/client-runtime/state/runtime";
@@ -24,6 +26,7 @@ const DEV_REPLAY_INSTANCE_ID = ProviderInstanceId.make("devReplay");
  * opens a picker, and `window.t3dev.replay(scenario)` does the same from the console.
  */
 export function DevReplayHost() {
+  const { locale: i18nLocale } = useI18n();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const environmentId = usePrimaryEnvironmentId();
@@ -130,7 +133,10 @@ export function DevReplayHost() {
         <DialogPanel>
           {scenarios.length === 0 || project === undefined ? (
             <p className="text-sm text-muted-foreground">
-              Needs a project and the Replay (dev) provider, which dev servers start.
+              {translateWebSource(
+                i18nLocale,
+                "Needs a project and the Replay (dev) provider, which dev servers start.",
+              )}
             </p>
           ) : (
             <div className="flex flex-col items-start gap-1">

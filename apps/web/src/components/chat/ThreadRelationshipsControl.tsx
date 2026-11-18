@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useAtomValue } from "@effect/atom-react";
@@ -121,7 +122,7 @@ function ThreadLineageRowList(props: {
     <>
       {/* ScrollArea's max-height viewport measures badly inside this scrolling panel. */}
       <ul
-        aria-label="Related threads"
+        aria-label={translateWebSource(translationLocale, "Related threads")}
         className="m-0 max-h-[13.5rem] list-none overflow-y-auto p-0 has-data-workflow-expanded:max-h-[min(28rem,55dvh)]"
       >
         {props.children}
@@ -134,7 +135,8 @@ function ThreadLineageRowList(props: {
         >
           <PlusIcon aria-hidden className="size-4 shrink-0" />
           {translateWebSource(translationLocale, "Show")}{" "}
-          {Math.min(props.hiddenCount, THREAD_LINEAGE_PAGE_COUNT)} more
+          {Math.min(props.hiddenCount, THREAD_LINEAGE_PAGE_COUNT)}
+          {localizeWebString(translationLocale, " more")}
         </button>
       ) : null}
     </>
@@ -270,6 +272,7 @@ function RemoteSubagentRow(props: {
   readonly provider: ServerProvider | undefined;
   readonly anyInstanceBadge: boolean;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const navigate = useNavigate();
   const environment = useEnvironment(props.agent.remoteChild.environmentId);
   const { remoteChild } = props.agent;
@@ -318,7 +321,10 @@ function RemoteSubagentRow(props: {
           <span
             className={`flex max-w-1/2 shrink-0 gap-1 text-2xs ${failed ? "text-destructive" : "text-muted-foreground"}`}
           >
-            <span className="truncate">on {remoteChild.label}</span>
+            <span className="truncate">
+              {localizeWebString(i18nLocale, "on ")}
+              {remoteChild.label}
+            </span>
             <span className="shrink-0">· {threadRelationshipStatusLabel(status)}</span>
           </span>
         </TooltipTrigger>
@@ -346,6 +352,7 @@ function DelegatedFromRow(props: {
   readonly fallbackLabel: string | undefined;
   readonly anyInstanceBadge: boolean;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const navigate = useNavigate();
   const router = useRouter();
   const { delegatedFrom } = props;
@@ -414,7 +421,8 @@ function DelegatedFromRow(props: {
           </span>
           {label ? (
             <span className="max-w-1/2 shrink-0 truncate text-2xs text-muted-foreground">
-              on {label}
+              {localizeWebString(i18nLocale, "on ")}
+              {label}
             </span>
           ) : null}
         </TooltipTrigger>
@@ -439,6 +447,7 @@ export function ThreadRelationshipsPanel(props: {
   readonly showLineage: boolean;
   readonly showSideChats: boolean;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const ref = scopeThreadRef(props.environmentId, props.threadId);
   const projection = useQuietThreadProjection(ref)?.projection ?? null;
   const providersByEnvironment = useEnvironmentProviders();
@@ -925,7 +934,7 @@ export function ThreadRelationshipsPanel(props: {
                     aria-label={
                       parentTitle
                         ? `Merge back to ${parentTitle}`
-                        : "Merge back to source conversation"
+                        : translateWebSource(i18nLocale, "Merge back to source conversation")
                     }
                     aria-disabled={!canMerge || busyAction !== null || undefined}
                     onClick={() => void merge()}
@@ -988,7 +997,11 @@ export function ThreadRelationshipsPanel(props: {
       {lineageVisible ? (
         <ThreadDetailsSection
           headingId="thread-details-lineage-heading"
-          title={runningCount > 0 ? `Lineage · ${runningCount} running` : "Lineage"}
+          title={
+            runningCount > 0
+              ? `Lineage · ${runningCount} running`
+              : translateWebSource(i18nLocale, "Lineage")
+          }
           // A lone "Previous agents" row names itself; the heading returns for status or actions.
           showHeading={
             runningCount > 0 ||
@@ -1008,7 +1021,7 @@ export function ThreadRelationshipsPanel(props: {
                       size="icon-xs"
                       variant="ghost"
                       part="icon"
-                      aria-label="More thread actions"
+                      aria-label={translateWebSource(i18nLocale, "More thread actions")}
                       disabled={busyAction !== null}
                     />
                   }
@@ -1060,7 +1073,11 @@ export function ThreadRelationshipsPanel(props: {
       {sideChatsVisible ? (
         <ThreadDetailsSection
           headingId="thread-details-side-chats-heading"
-          title={runningSideChats > 0 ? `Side chats · ${runningSideChats} running` : "Side chats"}
+          title={
+            runningSideChats > 0
+              ? `Side chats · ${runningSideChats} running`
+              : translateWebSource(i18nLocale, "Side chats")
+          }
           data-thread-side-chats-panel
         >
           <ThreadLineageGroup

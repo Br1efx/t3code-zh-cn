@@ -33,6 +33,7 @@ import * as DesktopLocalEnvironmentAuth from "../../backend/DesktopLocalEnvironm
 import * as DesktopEnvironment from "../../app/DesktopEnvironment.ts";
 import * as DesktopManagedPolicy from "../../app/DesktopManagedPolicy.ts";
 import * as DesktopPrimaryPaste from "../../app/DesktopPrimaryPaste.ts";
+import { isZhCn, resolveCurrentDesktopLocale } from "../../i18n/DesktopLocale.ts";
 import * as DesktopAppSettings from "../../settings/DesktopAppSettings.ts";
 import * as DesktopWslBackend from "../../wsl/DesktopWslBackend.ts";
 import * as DesktopWslEnvironment from "../../wsl/DesktopWslEnvironment.ts";
@@ -303,13 +304,14 @@ export const pickProjectFavicon = DesktopIpc.makeIpcMethod({
     if (!(yield* appSettings.get).localEnvironmentEnabled) {
       return null;
     }
+    const locale = yield* resolveCurrentDesktopLocale;
     const paths = yield* dialog.pickFiles({
       owner: yield* electronWindow.focusedMainOrFirst,
       defaultPath: Option.fromNullishOr(initialPath),
       multiple: false,
       filters: [
         {
-          name: "Images",
+          name: isZhCn(locale) ? "图片文件" : "Images",
           extensions: PROJECT_FAVICON_EXTENSIONS.map((extension) => extension.slice(1)),
         },
       ],
@@ -561,10 +563,11 @@ export const pickThemeFiles = DesktopIpc.makeIpcMethod({
     const defaultPath = yield* fileSystem
       .exists(extensionsDir)
       .pipe(Effect.orElseSucceed(() => false));
+    const locale = yield* resolveCurrentDesktopLocale;
     const paths = yield* dialog.pickFiles({
       owner: yield* electronWindow.focusedMainOrFirst,
       defaultPath: defaultPath ? Option.some(extensionsDir) : Option.none(),
-      filters: [{ name: "JSON", extensions: ["json"] }],
+      filters: [{ name: isZhCn(locale) ? "JSON 主题文件" : "JSON", extensions: ["json"] }],
       multiple: true,
     });
     if (paths.length === 0) {

@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import {
@@ -93,10 +94,13 @@ export function SourceControlTokenSettings({
         <p className="max-w-2xl text-xs leading-relaxed text-muted-foreground">
           {translateWebSource(translationLocale, "A token saved here is used before")}{" "}
           <code className="rounded bg-muted px-1 py-px text-2xs">{credentials.tokenEnvVar}</code>{" "}
-          and the{" "}
-          <code className="rounded bg-muted px-1 py-px text-2xs">{credentials.cliName}</code> login,
-          so {definition.label} works without the {credentials.cliLabel}. Give it{" "}
-          {credentials.tokenAccess}.{" "}
+          {translateWebSource(translationLocale, "and the")}{" "}
+          <code className="rounded bg-muted px-1 py-px text-2xs">{credentials.cliName}</code>
+          {localizeWebString(translationLocale, " login, so ")}
+          {definition.label}
+          {localizeWebString(translationLocale, " works without the ")}
+          {credentials.cliLabel}
+          {translateWebSource(translationLocale, ". Give it")} {credentials.tokenAccess}.{" "}
           {normalizedHost || defaultHost ? (
             <InlineButton
               render={

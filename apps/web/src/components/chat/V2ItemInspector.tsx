@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import type { ToolCallDiffTarget } from "../../diffPanelStore";
@@ -166,7 +167,10 @@ function ToolOutput(props: ToolOutputState) {
       {translateWebSource(translationLocale, "Loading output…")}
     </div>
   ) : props.error ? (
-    <div className="text-destructive">Couldn&apos;t load output: {props.error}</div>
+    <div className="text-destructive">
+      {localizeWebString(translationLocale, "Couldn't load output: ")}
+      {props.error}
+    </div>
   ) : props.empty && props.images.length === 0 ? (
     <div className="text-muted-foreground italic">
       {translateWebSource(translationLocale, "No output.")}
@@ -201,6 +205,7 @@ function ToolCallBody(
     readonly outputSlot?: ReactNode;
   },
 ) {
+  const { locale: i18nLocale } = useI18n();
   const call = toolCallLines({ command: props.command, args: props.args });
   return (
     <div className={cn("space-y-1.5", monoClassName)}>
@@ -227,13 +232,17 @@ function ToolCallBody(
       {call.argsText ? <StructuredValue value={call.argsText} highlightJson /> : null}
       {props.outputSlot ?? <ToolOutput {...props} />}
       {props.exitCode !== undefined && props.exitCode !== 0 ? (
-        <div className="text-destructive">exit {props.exitCode}</div>
+        <div className="text-destructive">
+          {localizeWebString(i18nLocale, "exit ")}
+          {props.exitCode}
+        </div>
       ) : null}
     </div>
   );
 }
 
 export const V2ItemInspector = memo(function V2ItemInspector(props: V2ItemInspectorProps) {
+  const { locale: i18nLocale } = useI18n();
   // Command rows stream their output, including the final output, from the server.
   const environmentStreamsOutput = useCommandOutputStreaming(props.environmentId);
   const streamsOutput =
@@ -374,7 +383,7 @@ export const V2ItemInspector = memo(function V2ItemInspector(props: V2ItemInspec
                   </a>
                 ) : (
                   <p className="font-medium text-foreground">
-                    {result.title ?? result.url ?? "Search result"}
+                    {result.title ?? result.url ?? translateWebSource(i18nLocale, "Search result")}
                   </p>
                 )}
                 {result.snippet ? <p className="text-muted-foreground">{result.snippet}</p> : null}

@@ -1,3 +1,6 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { ThreadHoverCardPopup } from "../ThreadHoverCard";
 import { AgentElapsed } from "./AgentElapsed";
 import { projectedSubagentsToRuntime } from "@t3tools/client-runtime/state/subagentRuntime";
@@ -78,6 +81,7 @@ export function V2LifecycleRow(props: {
   readonly runs: ReadonlyArray<HandoffTimelineRun>;
   readonly onOpenThread: (threadId: ThreadId) => void;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const { item } = props;
   if (item.type === "run_interrupt_result") {
     return (
@@ -120,7 +124,7 @@ export function V2LifecycleRow(props: {
             <MessageSquareIcon className="size-4 text-secondary-label" aria-hidden />
           </span>
           <span className="min-w-0 flex-1 truncate text-sm font-medium">
-            {item.title ?? "Created thread"}
+            {item.title ?? translateWebSource(i18nLocale, "Created thread")}
           </span>
           <Button
             size="xs"
@@ -137,13 +141,18 @@ export function V2LifecycleRow(props: {
       <WorkLogRow
         data-v2-item-type={item.type}
         icon={<T3Wordmark className="size-4 text-icon-muted" aria-hidden />}
-        label={<>Created thread{item.title ? ` · ${item.title}` : ""}</>}
+        label={
+          <>
+            {translateWebSource(i18nLocale, "Created thread")}
+            {item.title ? ` · ${item.title}` : ""}
+          </>
+        }
         trailing={
           <InlineButton
             aria-label={`Open ${item.title ?? "created thread"}`}
             onClick={() => props.onOpenThread(item.targetThreadId)}
           >
-            Open chat
+            {translateWebSource(i18nLocale, "Open chat")}
           </InlineButton>
         }
       />
@@ -415,6 +424,7 @@ function SubagentTimelineLink(props: {
     readonly timestamp: string;
   };
 }) {
+  const { locale: i18nLocale } = useI18n();
   const agent = useAtomValue(
     environmentThreadDetails.threadAtom(props.parentRef),
     (thread) => thread?.projection.subagents.find((agent) => agent.id === props.subagentId) ?? null,
@@ -463,7 +473,10 @@ function SubagentTimelineLink(props: {
             {props.title}
           </span>
           {remote !== undefined ? (
-            <span className="shrink-0 text-xs text-muted-foreground">on {remote.label}</span>
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {localizeWebString(i18nLocale, "on ")}
+              {remote.label}
+            </span>
           ) : null}
         </span>
         <span

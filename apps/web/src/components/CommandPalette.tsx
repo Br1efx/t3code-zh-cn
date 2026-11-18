@@ -1131,7 +1131,11 @@ function OpenCommandPaletteDialog(props: {
               }
             />
             <TooltipPopup align="end" side="left">
-              {disabledHint ?? "Open Settings -> Source control to configure this provider."}
+              {disabledHint ??
+                translateWebSource(
+                  translationLocale,
+                  "Open Settings -> Source control to configure this provider.",
+                )}
             </TooltipPopup>
           </Tooltip>
         </span>
@@ -3014,7 +3018,9 @@ function OpenCommandPaletteDialog(props: {
   ) : isThreadSearchPending && !isLinkedThreadSearch && !isBrowsing ? (
     // In the footer, so the list keeps its height while message results may
     // still arrive below it.
-    <span className="text-muted-foreground text-xs">Searching messages…</span>
+    <span className="text-muted-foreground text-xs">
+      {translateWebSource(translationLocale, "Searching messages…")}
+    </span>
   ) : null;
 
   return (

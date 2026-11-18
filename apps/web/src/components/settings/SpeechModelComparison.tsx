@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import type { EnvironmentSpeechModel, SpeechBenchmarkTier } from "@t3tools/contracts";
 
 import { languageLabel } from "./SpeechLanguageSelect";
@@ -55,6 +57,7 @@ export function ModelBenchmarks({
   /** Plain facts, such as language count and size, shown after the scores. */
   facts: readonly string[];
 }) {
+  const { locale: i18nLocale } = useI18n();
   const data = model.benchmark;
   const seconds = data?.secondsPer30s[tier];
   const visible = !data
@@ -74,7 +77,8 @@ export function ModelBenchmarks({
             {score ? (
               <>
                 <strong className="font-medium text-foreground">{score.grade}</strong> (
-                {score.errorPercent}% error)
+                {score.errorPercent}
+                {translateWebSource(i18nLocale, "% error)")}
               </>
             ) : (
               "not benchmarked"
@@ -83,7 +87,7 @@ export function ModelBenchmarks({
         );
       })}
       <span>
-        Speed:{" "}
+        {translateWebSource(i18nLocale, "Speed:")}{" "}
         {tier === "cpu" && data && data.secondsPer30s.cpu === undefined ? (
           "update server"
         ) : seconds == null ? (

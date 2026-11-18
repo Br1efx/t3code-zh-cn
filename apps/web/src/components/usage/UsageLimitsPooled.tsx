@@ -322,6 +322,7 @@ function RedeemableSegment({
 }: Omit<Parameters<typeof SegmentTriggers>[0], "redeem"> & {
   readonly redeemAt: NonNullable<LimitAccount["redeem"]>;
 }) {
+  const { locale: translationLocale } = useI18n();
   const redeem = useResetCredit(redeemAt.environmentId);
   return (
     <>
@@ -337,7 +338,9 @@ function RedeemableSegment({
       {redeem.busy || redeem.status ? (
         <span role="status" className="col-span-full text-xs text-muted-foreground">
           <AccountName account={props.account} className="font-medium text-foreground" />{" "}
-          {redeem.busy ? "Using reset credit…" : redeem.status}
+          {redeem.busy
+            ? translateWebSource(translationLocale, "Using reset credit…")
+            : redeem.status}
         </span>
       ) : null}
     </>
@@ -536,6 +539,7 @@ function PoolBar({
   readonly color: string;
   readonly now: number;
 }) {
+  const { locale: translationLocale } = useI18n();
   const restores = new Map(pool.resets.map((reset) => [reset.member.account.key, reset]));
   return (
     <div className="@container/pool min-w-0">
@@ -566,7 +570,7 @@ function PoolBar({
                 account={member.account}
                 className="hidden min-w-0 truncate @2xl/pool:inline-flex"
               />
-              $0 cap
+              {translateWebSource(translationLocale, "$0 cap")}
             </div>
           ) : null,
         )}

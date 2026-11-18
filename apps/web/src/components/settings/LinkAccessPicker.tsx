@@ -1,3 +1,6 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { AuthMcpClientAccess } from "@t3tools/contracts";
 import { useId } from "react";
 
@@ -14,12 +17,13 @@ export function LinkAccessPicker({
   readonly onChange: (access: AuthMcpClientAccess) => void;
   readonly disabled?: boolean;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const labelId = useId();
   const selected = accessConfig[value];
   return (
     <div className="space-y-1.5">
       <span id={labelId} className="block text-xs font-medium">
-        What agents here may do there
+        {translateWebSource(i18nLocale, "What agents here may do there")}
       </span>
       <Select
         value={value}
@@ -54,9 +58,11 @@ export function LinkAccessPicker({
         </SelectPopup>
       </Select>
       <p className="text-xs text-muted-foreground">
-        {selected.description} An agent never gets more access there than its own mode here. Below
-        full access, it can change only threads this link started, not that machine's own threads,
-        projects or settings.
+        {selected.description}
+        {localizeWebString(
+          i18nLocale,
+          " An agent never gets more access there than its own mode here. Below full access, it can change only threads this link started, not that machine's own threads, projects or settings.",
+        )}
       </p>
     </div>
   );

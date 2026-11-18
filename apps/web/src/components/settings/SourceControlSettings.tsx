@@ -508,7 +508,7 @@ export function SourceControlSettingsPanel() {
             {credentials.appSignIn && item.appSignIn === true ? (
               <div className="flex items-center gap-3 text-2xs text-muted-foreground">
                 <span aria-hidden className="h-px flex-1 bg-border" />
-                Or use your own credentials
+                {translateWebSource(translationLocale, "Or use your own credentials")}
                 <span aria-hidden className="h-px flex-1 bg-border" />
               </div>
             ) : null}
@@ -572,7 +572,10 @@ export function SourceControlSettingsPanel() {
           title={translateWebSource(translationLocale, "Server environment")}
         >
           <p className="px-4 py-3 text-sm text-muted-foreground">
-            Connect an environment to inspect its version control tools and hosting integrations.
+            {translateWebSource(
+              translationLocale,
+              "Connect an environment to inspect its version control tools and hosting integrations.",
+            )}
           </p>
         </SettingsSection>
       ) : isInitialScanPending ? (
@@ -581,7 +584,9 @@ export function SourceControlSettingsPanel() {
             title={`Version Control${environmentSuffix}`}
             headerAction={scanButton}
           />
-          <SourceControlSectionSkeleton title="Source control providers" />
+          <SourceControlSectionSkeleton
+            title={translateWebSource(translationLocale, "Source control providers")}
+          />
         </>
       ) : hasDiscoveryItems ? (
         <>

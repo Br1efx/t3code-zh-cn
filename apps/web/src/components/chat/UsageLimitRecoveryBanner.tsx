@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import {
   type OrchestrationV2LimitRecovery,
   type OrchestrationV2LimitRecoveryUpdate,
@@ -100,6 +102,7 @@ export function usageLimitRecoveryBannerItem(props: RecoveryProps): ComposerBann
 }
 
 function RecoveryActions({ runId, resetAt, recovery, snoozedUntil, onChange }: RecoveryProps) {
+  const { locale: i18nLocale } = useI18n();
   const [pending, setPending] = useState(false);
 
   const scheduled =
@@ -141,14 +144,22 @@ function RecoveryActions({ runId, resetAt, recovery, snoozedUntil, onChange }: R
   return (
     <span className="flex flex-wrap items-center gap-x-3 gap-y-1 px-1">
       <InlineButton touchTarget="padded" disabled={pending} onClick={() => void toggle("resume")}>
-        {pending ? "Saving..." : scheduled ? "Cancel auto-resume" : "Resume at reset"}
+        {pending
+          ? translateWebSource(i18nLocale, "Saving...")
+          : scheduled
+            ? translateWebSource(i18nLocale, "Cancel auto-resume")
+            : translateWebSource(i18nLocale, "Resume at reset")}
       </InlineButton>
       <InlineButton
         touchTarget="padded"
         disabled={pending || (!snoozed && resetPassed)}
         onClick={() => void toggle("snooze")}
       >
-        {pending ? "Saving..." : snoozed ? "Wake now" : "Snooze until reset"}
+        {pending
+          ? translateWebSource(i18nLocale, "Saving...")
+          : snoozed
+            ? translateWebSource(i18nLocale, "Wake now")
+            : translateWebSource(i18nLocale, "Snooze until reset")}
       </InlineButton>
     </span>
   );

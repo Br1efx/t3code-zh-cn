@@ -569,7 +569,10 @@ export function PublishRepositoryDialog(props: PublishRepositoryDialogProps) {
       <WizardPopup>
         <WizardHeader
           title={translateWebSource(translationLocale, "Publish repository")}
-          description="Pick where to host it, then point us at a repo to push to."
+          description={translateWebSource(
+            translationLocale,
+            "Pick where to host it, then point us at a repo to push to.",
+          )}
         >
           <WizardSteps
             steps={publishWizardSteps}
@@ -630,7 +633,10 @@ export function PublishRepositoryDialog(props: PublishRepositoryDialogProps) {
                         />
                         <TooltipPopup side="top" align="end">
                           {readiness.hint ??
-                            "Open Settings -> Source control to configure this provider."}
+                            translateWebSource(
+                              translationLocale,
+                              "Open Settings -> Source control to configure this provider.",
+                            )}
                         </TooltipPopup>
                       </Tooltip>
                     </div>
@@ -816,7 +822,9 @@ export function PublishRepositoryDialog(props: PublishRepositoryDialogProps) {
                 className="flex items-center gap-2 rounded-md border border-input bg-muted/40 px-3 py-2 text-xs text-muted-foreground dark:border-transparent dark:bg-white/[0.035]"
               >
                 <Spinner size="sm" aria-hidden />
-                Publishing repository to {publishProviderLabel}...
+                {translationLocale === "zh-CN"
+                  ? `正在将仓库发布到 ${publishProviderLabel}…`
+                  : `Publishing repository to ${publishProviderLabel}...`}
               </div>
             ) : null}
             {publishError && !publishRepositoryAction.isPending ? (
@@ -846,8 +854,12 @@ export function PublishRepositoryDialog(props: PublishRepositoryDialogProps) {
                   </h3>
                   <p className="max-w-xs text-pretty text-xs text-muted-foreground">
                     {publishResult.status === "pushed"
-                      ? `${publishResult.branch} is now live on ${publishProviderLabel}.`
-                      : `Remote "${publishResult.remoteName}" is set up. Make a commit and push it to share your code.`}
+                      ? translationLocale === "zh-CN"
+                        ? `${publishResult.branch} 已推送到 ${publishProviderLabel}。`
+                        : `${publishResult.branch} is now live on ${publishProviderLabel}.`
+                      : translationLocale === "zh-CN"
+                        ? `远端 "${publishResult.remoteName}" 已设置完成，提交并推送后即可分享代码。`
+                        : `Remote "${publishResult.remoteName}" is set up. Make a commit and push it to share your code.`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 rounded-lg border border-input bg-muted/40 px-3 py-2 dark:border-transparent dark:bg-white/[0.035]">
@@ -864,7 +876,9 @@ export function PublishRepositoryDialog(props: PublishRepositoryDialogProps) {
                     void openLink(publishResult.repository.url).catch(() => undefined);
                   }}
                 >
-                  Open on {publishProviderLabel}
+                  {translationLocale === "zh-CN"
+                    ? `在 ${publishProviderLabel} 上打开`
+                    : `Open on ${publishProviderLabel}`}
                 </Button>
               </>
             ) : (
@@ -1553,12 +1567,15 @@ export default function GitActionsControl({
       ) : null}
       {isDetachedHead && (
         <p className="px-2 py-1.5 text-xs text-warning">
-          Detached HEAD: create and check out a branch to enable push and{" "}
-          {changeRequestTerminology.singular} actions.
+          {translationLocale === "zh-CN"
+            ? `游离 HEAD 状态：请先新建并切换到分支，才能推送或管理${changeRequestTerminology.singular}。`
+            : `Detached HEAD: create and check out a branch to enable push and ${changeRequestTerminology.singular} actions.`}
         </p>
       )}
       {isCleanAndBehind && (
-        <p className="px-2 py-1.5 text-xs text-warning">Behind upstream. Pull/rebase first.</p>
+        <p className="px-2 py-1.5 text-xs text-warning">
+          {translateWebSource(translationLocale, "Behind upstream. Pull/rebase first.")}
+        </p>
       )}
       {gitStatusError && <p className="px-2 py-1.5 text-xs text-destructive">{gitStatusError}</p>}
     </>
@@ -1579,7 +1596,10 @@ export default function GitActionsControl({
         >
           <GitBranchPlusIcon className="size-3.5" aria-hidden />
           <span className={cn("ml-0.5", THREAD_DETAILS_PANEL_LABEL_CLASS)}>
-            {initAction.isPending ? "Initializing..." : "Initialize Git"}
+            {translateWebSource(
+              translationLocale,
+              initAction.isPending ? "Initializing..." : "Initialize Git",
+            )}
           </span>
         </ThreadDetailsControl>
       ) : quietEmptyDraft || (compact && !gitActionProgress && !visibleInlineSuccess) ? null : (
@@ -1732,7 +1752,7 @@ export default function GitActionsControl({
         >
           <FileDiffIcon className={THREAD_DETAILS_PANEL_ICON_CLASS} aria-hidden />
           <span className="flex min-w-0 flex-1 items-baseline gap-1.5">
-            <span className="shrink-0">Changes</span>
+            <span className="shrink-0">{translateWebSource(translationLocale, "Changes")}</span>
             {changesBaseLabel ? (
               <Tooltip>
                 <TooltipTrigger
@@ -1795,9 +1815,14 @@ export default function GitActionsControl({
                 </span>
                 <span className="flex items-center justify-between gap-2">
                   <span className="font-medium">
-                    {gitStatusForActions?.refName ?? "(detached HEAD)"}
+                    {gitStatusForActions?.refName ??
+                      translateWebSource(translationLocale, "(detached HEAD)")}
                   </span>
-                  {isDefaultRef && <span className="text-right text-warning">Default branch</span>}
+                  {isDefaultRef && (
+                    <span className="text-right text-warning">
+                      {translateWebSource(translationLocale, "Default branch")}
+                    </span>
+                  )}
                 </span>
               </div>
               <div className="space-y-1">
@@ -1819,7 +1844,9 @@ export default function GitActionsControl({
                     </span>
                     {!allSelected && !isEditingFiles && (
                       <span className="text-muted-foreground">
-                        ({selectedFiles.length} of {allFiles.length})
+                        {translationLocale === "zh-CN"
+                          ? `（已选 ${selectedFiles.length} / ${allFiles.length}）`
+                          : `(${selectedFiles.length} of ${allFiles.length})`}
                       </span>
                     )}
                   </div>
@@ -1829,12 +1856,12 @@ export default function GitActionsControl({
                       size="xs"
                       onClick={() => setIsEditingFiles((prev) => !prev)}
                     >
-                      {isEditingFiles ? "Done" : "Edit"}
+                      {translateWebSource(translationLocale, isEditingFiles ? "Done" : "Edit")}
                     </Button>
                   )}
                 </div>
                 {!gitStatusForActions || allFiles.length === 0 ? (
-                  <p className="font-medium">none</p>
+                  <p className="font-medium">{translateWebSource(translationLocale, "none")}</p>
                 ) : (
                   <div className="space-y-2">
                     <div className="h-44 rounded-lg bg-card ring-1 ring-black/5 dark:bg-white/[0.025] dark:ring-white/5">
@@ -1867,7 +1894,11 @@ export default function GitActionsControl({
                                   type="button"
                                   className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left enabled:cursor-pointer"
                                   disabled={!canOperateThread || workingTreeRoot === null}
-                                  aria-label={`Open ${file.path} in editor`}
+                                  aria-label={
+                                    translationLocale === "zh-CN"
+                                      ? `在编辑器中打开 ${file.path}`
+                                      : `Open ${file.path} in editor`
+                                  }
                                   onClick={() => openChangedFileInEditor(file.path)}
                                 >
                                   <StartTruncatedPath
@@ -1976,7 +2007,8 @@ export default function GitActionsControl({
         <DialogPopup className="max-w-xl">
           <DialogHeader>
             <DialogTitle>
-              {pendingDefaultBranchActionCopy?.title ?? "Run action on default branch?"}
+              {pendingDefaultBranchActionCopy?.title ??
+                translateWebSource(translationLocale, "Run action on default branch?")}
             </DialogTitle>
             <DialogDescription>{pendingDefaultBranchActionCopy?.description}</DialogDescription>
             {featureBranchUnavailableReason && (
@@ -1999,7 +2031,8 @@ export default function GitActionsControl({
               onClick={() => continuePendingDefaultBranchAction(false)}
               disabled={!canWriteSourceControl}
             >
-              {pendingDefaultBranchActionCopy?.continueLabel ?? "Continue"}
+              {pendingDefaultBranchActionCopy?.continueLabel ??
+                translateWebSource(translationLocale, "Continue")}
             </Button>
             <Button
               className="w-full max-w-full sm:w-auto"
@@ -2007,7 +2040,7 @@ export default function GitActionsControl({
               onClick={() => continuePendingDefaultBranchAction(true)}
               disabled={!canChangeThreadBranch || featureBranchUnavailableReason !== null}
             >
-              Check out feature branch & continue
+              {translateWebSource(translationLocale, "Check out feature branch & continue")}
             </Button>
           </DialogFooter>
         </DialogPopup>

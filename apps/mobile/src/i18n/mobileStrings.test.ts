@@ -6,13 +6,13 @@ describe("mobile strings", () => {
   it("translates the new commit, linking, webhook, and preview controls", () => {
     const messages = {
       "Cancel commit": "取消提交",
-      "Commit on a new branch": "提交到新分支",
-      "Link pull request": "关联拉取请求",
+      "Commit on a new branch": "新建分支并提交",
+      "Link pull request": "关联合并请求",
       "Back to document": "返回文档",
-      "Render math": "渲染数学公式",
-      "Replay key template": "重放去重键模板",
-      "Coalesce window (seconds, 10–3600)": "合并窗口（秒，10–3600）",
-      "Resume queue": "恢复队列",
+      "Render math": "显示数学公式",
+      "Replay key template": "防重复键模板",
+      "Coalesce window (seconds, 10–3600)": "合并等待时间（秒，10–3600）",
+      "Resume queue": "恢复发送队列",
     };
     for (const [source, translated] of Object.entries(messages)) {
       expect(localizeMobileString(source, "zh-CN")).toBe(translated);
@@ -22,13 +22,13 @@ describe("mobile strings", () => {
 
   it("translates the new commit counts and quota pace without changing account names", () => {
     expect(localizeMobileString("3 of 8 selected · +1.2k −30", "zh-CN")).toBe(
-      "已选择 3 / 8 个文件 · +1.2k −30",
+      "已勾选 3 / 8 个文件 · +1.2k −30",
     );
     expect(
       localizeMobileString("Segment 2, Work Mac, 80% left, 62% of the window left", "zh-CN"),
-    ).toBe("区段 2，Work Mac，剩余 80%，额度周期剩余 62%");
+    ).toBe("第 2 段，Work Mac，额度剩余 80%，本周期时间剩余 62%");
     expect(localizeMobileString("Segment 2, Work Mac, 80% left", "zh-CN")).toBe(
-      "区段 2，Work Mac，剩余 80%",
+      "第 2 段，Work Mac，额度剩余 80%",
     );
   });
 
@@ -41,9 +41,9 @@ describe("mobile strings", () => {
       "Create project": "创建项目",
       "Add existing project": "添加已有项目",
       "No project": "不关联项目",
-      "Start a task without a project": "创建不关联项目的任务",
+      "Start a task without a project": "不关联项目直接开始对话",
       "Start without a project": "不关联项目并开始",
-      "What should we work on?": "我们来做些什么？",
+      "What should we work on?": "今天想做点什么？",
       "Choose a project": "选择项目",
       "Opens the project picker": "打开项目选择器",
     };
@@ -76,11 +76,13 @@ describe("mobile strings", () => {
 
   it("translates incremental usage progress and preserves environment names and errors", () => {
     expect(localizeMobileString("Updating Codex…", "zh-CN")).toBe("正在更新 Codex…");
-    expect(localizeMobileString("Updating 2 providers…", "zh-CN")).toBe("正在更新 2 个服务提供方…");
-    expect(localizeMobileString("Updating 3 environments…", "zh-CN")).toBe("正在更新 3 个环境…");
+    expect(localizeMobileString("Updating 2 providers…", "zh-CN")).toBe("正在更新 2 个 AI 服务…");
+    expect(localizeMobileString("Updating 3 environments…", "zh-CN")).toBe(
+      "正在更新 3 台运行设备…",
+    );
     expect(localizeMobileString("Updating Work Mac…", "zh-CN")).toBe("正在更新 Work Mac…");
     expect(localizeMobileString("EACCES: /private/usage. Showing saved totals.", "zh-CN")).toBe(
-      "EACCES: /private/usage. 正在显示已保存的总计。",
+      "EACCES: /private/usage. 正在显示上次保存的汇总。",
     );
     expect(localizeMobileString("Updating 2 providers…", "en")).toBe("Updating 2 providers…");
   });
@@ -93,26 +95,26 @@ describe("mobile strings", () => {
         undefined,
         "zh-CN",
       ),
-    ).toMatchObject({ title: "无法切换机器", message: "尚未同步到此设备，请重试。" });
+    ).toMatchObject({ title: "无法切换运行设备", message: "尚未同步到此设备，请重试。" });
     expect(localizeMobileString("Created without a first commit", "zh-CN")).toBe(
       "项目已创建，但未完成首次提交",
     );
     expect(localizeMobileString("Could not start without a project", "zh-CN")).toBe(
       "无法在不关联项目的情况下启动",
     );
-    expect(localizeMobileString("Environment: Work Mac", "zh-CN")).toBe("环境：Work Mac");
-    expect(localizeMobileString("on Settings", "zh-CN")).toBe("在 Settings 上");
+    expect(localizeMobileString("Environment: Work Mac", "zh-CN")).toBe("运行设备：Work Mac");
+    expect(localizeMobileString("on Settings", "zh-CN")).toBe("位于 Settings");
   });
 
   it("translates the new shared usage and Cursor access copy", () => {
     expect(localizeMobileString("ChatGPT shared usage", "zh-CN")).toBe("ChatGPT 共享用量");
-    expect(localizeMobileString("Manage usage", "zh-CN")).toBe("管理用量");
+    expect(localizeMobileString("Manage usage", "zh-CN")).toBe("管理用量统计");
     expect(localizeMobileString("Enable Cursor usage from Work Mac", "zh-CN")).toBe(
-      "启用 Work Mac 的 Cursor 用量统计",
+      "开启 Work Mac 的 Cursor 用量统计",
     );
-    expect(localizeMobileString("Enable on Work Mac", "zh-CN")).toBe("在 Work Mac 上启用");
+    expect(localizeMobileString("Enable on Work Mac", "zh-CN")).toBe("在 Work Mac 上开启");
     expect(localizeMobileString("no known rates · 20K tokens", "zh-CN")).toBe(
-      "暂无已知费率 · 20K 个令牌",
+      "暂无定价 · 20K Token",
     );
   });
 
@@ -124,50 +126,54 @@ describe("mobile strings", () => {
 
   it("translates fixed messages while preserving surrounding whitespace", () => {
     expect(localizeMobileString("  Settings ", "zh-CN")).toBe("  设置 ");
-    expect(localizeMobileString("No conversation yet", "zh-CN")).toBe("还没有对话");
-    expect(localizeMobileString("Add Environment", "zh-CN")).toBe("添加环境");
-    expect(localizeMobileString("Scan QR Code", "zh-CN")).toBe("扫描二维码");
+    expect(localizeMobileString("No conversation yet", "zh-CN")).toBe("还没有对话内容");
+    expect(localizeMobileString("Add Environment", "zh-CN")).toBe("添加运行设备");
+    expect(localizeMobileString("Scan QR Code", "zh-CN")).toBe("扫码配对");
   });
 
   it("translates dynamic thread states", () => {
     expect(localizeMobileString('No threads matching "docs".', "zh-CN")).toBe(
-      "没有与“docs”匹配的任务。",
+      "没有找到包含“docs”的对话。",
     );
     expect(localizeMobileString("Show more (3 settled hidden)", "zh-CN")).toBe(
-      "显示更多（已隐藏 3 个已收起任务）",
+      "展开更多（已折叠 3 条已办结对话）",
     );
     expect(
       localizeMobileString(
         "This session is 2h 5m old and uses 250,000 tokens. Compact it before continuing?",
         "zh-CN",
       ),
-    ).toBe("此会话已有 2 小时 5 分钟，当前使用 250,000 个令牌。是否先压缩再继续？");
+    ).toBe(
+      "这条对话距今已有 2 小时 5 分钟，累计占用了 250,000 Token。要先压缩早期上下文再继续吗？",
+    );
     expect(localizeMobileString("Recording 1:04", "zh-CN")).toBe("正在录音 1:04");
     expect(localizeMobileString("Base branch: main", "zh-CN")).toBe("基础分支：main");
-    expect(localizeMobileString("Switches to a new worktree", "zh-CN")).toBe("切换到新工作树");
+    expect(localizeMobileString("Switches to a new worktree", "zh-CN")).toBe(
+      "切换到新建的独立目录",
+    );
     expect(localizeMobileString("New thread on feature/mobile", "zh-CN")).toBe(
-      "基于 feature/mobile 新建任务",
+      "在 feature/mobile 分支新建对话",
     );
   });
 
   it("translates attachment and voice input controls", () => {
-    expect(localizeMobileString("Photo Library", "zh-CN")).toBe("照片图库");
+    expect(localizeMobileString("Photo Library", "zh-CN")).toBe("手机相册");
     expect(localizeMobileString("Choose Files", "zh-CN")).toBe("选择文件");
     expect(localizeMobileString("Preparing", "zh-CN")).toBe("正在准备");
-    expect(localizeMobileString("Transcribing", "zh-CN")).toBe("正在转写");
+    expect(localizeMobileString("Transcribing", "zh-CN")).toBe("正在识别语音");
   });
 
   it("translates usage limits and provider setup states", () => {
-    expect(localizeMobileString("82% used", "zh-CN")).toBe("已使用 82%");
+    expect(localizeMobileString("82% used", "zh-CN")).toBe("已用 82%");
     expect(localizeMobileString("in 2h 5m", "zh-CN")).toBe("2 小时 5 分钟后");
-    expect(localizeMobileString("Dismiss usage limits", "zh-CN")).toBe("关闭用量限额");
+    expect(localizeMobileString("Dismiss usage limits", "zh-CN")).toBe("关闭订阅额度提示");
     expect(localizeMobileString("ahead of pace · resets in 2h 5m", "zh-CN")).toBe(
-      "用量偏快 · 2 小时 5 分钟后重置",
+      "消耗偏快 · 2 小时 5 分钟后重置",
     );
     expect(localizeMobileString("2 reset credits banked · next expires in 3d 4h", "zh-CN")).toBe(
-      "有 2 个重置额度 · 下一额度将在 3 天 4 小时后过期",
+      "可用重置额度 2 次 · 下张将在 3 天 4 小时后过期",
     );
-    expect(localizeMobileString("Set up Antigravity", "zh-CN")).toBe("设置 Antigravity");
+    expect(localizeMobileString("Set up Antigravity", "zh-CN")).toBe("配置 Antigravity");
     expect(localizeMobileString("Enabled. Installed 1.2.3", "zh-CN")).toBe("已启用 · 已安装 1.2.3");
   });
 
@@ -175,7 +181,7 @@ describe("mobile strings", () => {
     expect(localizeMobileString("Loading image…", "zh-CN")).toBe("正在加载图片…");
     expect(
       localizeMobileString("Feedback sent to OpenAI.\n\nThread ID: `feedback-123`", "zh-CN"),
-    ).toBe("反馈已发送给 OpenAI。\n\n任务 ID：`feedback-123`");
+    ).toBe("反馈已发送给 OpenAI。\n\n对话编号：`feedback-123`");
   });
 
   it("translates alert titles, messages, and button labels", () => {
@@ -187,8 +193,8 @@ describe("mobile strings", () => {
         "zh-CN",
       ),
     ).toEqual({
-      title: "没有打开的 PR",
-      message: "此分支没有打开的 Pull Request。",
+      title: "暂无合并请求",
+      message: "当前分支还没有开启中的合并请求 (PR)。",
       buttons: [{ text: "取消" }, { text: "确认" }],
     });
   });

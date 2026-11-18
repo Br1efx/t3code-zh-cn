@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useAtomValue } from "@effect/atom-react";
@@ -314,12 +315,17 @@ function LinkEnvironmentAction({ environmentId }: { readonly environmentId: Envi
             ) : null}
             {machine?.linked ? (
               <p className="text-xs text-muted-foreground">
-                Already linked. Linking again renews it with the access you pick.
+                {translateWebSource(
+                  translationLocale,
+                  "Already linked. Linking again renews it with the access you pick.",
+                )}
               </p>
             ) : null}
             {needsAddress ? (
               <label className="block space-y-1.5">
-                <span className="block text-xs font-medium text-foreground">Address</span>
+                <span className="block text-xs font-medium text-foreground">
+                  {translateWebSource(translationLocale, "Address")}
+                </span>
                 <Input
                   value={address}
                   onChange={(event) => {
@@ -335,8 +341,12 @@ function LinkEnvironmentAction({ environmentId }: { readonly environmentId: Envi
                 />
                 {machine !== null ? (
                   <span className="block text-xs text-muted-foreground">
-                    This app has no address for {machine.label} that another machine can reach.
-                    Enter its https or Tailscale address.
+                    {localizeWebString(translationLocale, "This app has no address for ")}
+                    {machine.label}
+                    {localizeWebString(
+                      translationLocale,
+                      " that another machine can reach. Enter its https or Tailscale address.",
+                    )}
                   </span>
                 ) : null}
               </label>
@@ -360,8 +370,12 @@ function LinkEnvironmentAction({ environmentId }: { readonly environmentId: Envi
                 />
                 {machine !== null ? (
                   <span className="block text-xs text-muted-foreground">
-                    Create a link on {machine.label}: Settings → Sharing & access → Authorized
-                    clients → Create link, then paste its code here.
+                    {localizeWebString(translationLocale, "Create a link on ")}
+                    {machine.label}
+                    {translateWebSource(
+                      translationLocale,
+                      ": Settings → Sharing & access → Authorized clients → Create link, then paste its code here.",
+                    )}
                   </span>
                 ) : null}
               </label>

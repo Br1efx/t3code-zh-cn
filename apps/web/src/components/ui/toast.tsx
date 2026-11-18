@@ -34,6 +34,8 @@ import {
 } from "./toast.logic";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "./tooltip";
 import { useThreadRouteTarget } from "~/hooks/useThreadRouteTarget";
+import { localizeWebChildren, localizeWebString } from "~/i18n/localizeWebChildren";
+import { useI18n } from "~/i18n/WebI18nContext";
 
 export type ThreadToastData = {
   threadRef?: ScopedThreadRef | null;
@@ -143,8 +145,9 @@ function handleToastDismissClick(
 }
 
 function CopyErrorButton({ text }: { text: string }) {
+  const { locale } = useI18n();
   const { copyToClipboard, isCopied } = useCopyToClipboard({ target: "error-message" });
-  const label = isCopied ? "Copied error" : "Copy error";
+  const label = localizeWebString(locale, isCopied ? "Copied error" : "Copy error");
 
   return (
     <Tooltip>
@@ -176,9 +179,10 @@ function ToastExpandableSection({
   children: ReactNode;
   labels: { expand?: string; collapse?: string };
 }) {
+  const { locale } = useI18n();
   const [open, setOpen] = useState(false);
-  const expandLabel = labels.expand ?? "Show details";
-  const collapseLabel = labels.collapse ?? "Hide details";
+  const expandLabel = localizeWebString(locale, labels.expand ?? "Show details");
+  const collapseLabel = localizeWebString(locale, labels.collapse ?? "Hide details");
 
   return (
     <div className="min-w-0">
@@ -206,12 +210,15 @@ function ToastDescriptionAndExpandable({
   toastType,
 }: {
   toastData: ThreadToastData | undefined;
-  toastDescription: unknown;
+  toastDescription: ReactNode;
   toastType: unknown;
 }) {
+  const { locale } = useI18n();
   const expandableContent = toastData?.expandableContent;
   const labels = toastData?.expandableLabels ?? {};
   const descriptionTrigger = toastData?.expandableDescriptionTrigger ?? false;
+  const localizedDescription =
+    toastDescription !== undefined ? localizeWebChildren(locale, toastDescription) : undefined;
   const descriptionClassName = cn(
     "min-w-0 select-text wrap-break-word text-muted-foreground",
     errorDescriptionClampClass(toastType, toastDescription),
@@ -219,20 +226,26 @@ function ToastDescriptionAndExpandable({
   const [open, setOpen] = useState(false);
 
   if (!expandableContent) {
-    return <Toast.Description className={descriptionClassName} data-slot="toast-description" />;
+    return (
+      <Toast.Description className={descriptionClassName} data-slot="toast-description">
+        {localizedDescription}
+      </Toast.Description>
+    );
   }
 
   if (!descriptionTrigger) {
     return (
       <>
-        <Toast.Description className={descriptionClassName} data-slot="toast-description" />
+        <Toast.Description className={descriptionClassName} data-slot="toast-description">
+          {localizedDescription}
+        </Toast.Description>
         <ToastExpandableSection labels={labels}>{expandableContent}</ToastExpandableSection>
       </>
     );
   }
 
-  const expandLabel = labels.expand ?? "Show details";
-  const collapseLabel = labels.collapse ?? "Hide details";
+  const expandLabel = localizeWebString(locale, labels.expand ?? "Show details");
+  const collapseLabel = localizeWebString(locale, labels.collapse ?? "Hide details");
 
   const toggle = () => setOpen((v) => !v);
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -270,7 +283,9 @@ function ToastDescriptionAndExpandable({
                 "underline-offset-2 decoration-muted-foreground/60 group-hover:underline",
               )}
               data-slot="toast-description"
-            />
+            >
+              {localizedDescription}
+            </Toast.Description>
           </div>
           {open ? (
             <ChevronUpIcon
@@ -344,7 +359,8 @@ function deriveToastBodyDescriptor(toast: {
 interface ToastBodyContentProps extends ToastBodyDescriptor {
   readonly actionProps: { readonly children?: ReactNode } | undefined;
   readonly toastData: ThreadToastData | undefined;
-  readonly toastDescription: unknown;
+  readonly toastTitle: ReactNode;
+  readonly toastDescription: ReactNode;
   readonly toastType: unknown;
 }
 
@@ -357,14 +373,18 @@ function ToastBodyContent({
   secondaryActionVariant,
   hasTrailingControls,
   toastData,
+  toastTitle,
   toastDescription,
   toastType,
 }: ToastBodyContentProps) {
+  const { locale } = useI18n();
   const additionalActions = toastData?.additionalActions ?? [];
   const secondaryActionProps = toastData?.secondaryActionProps;
   const leadingIcon = toastData?.leadingIcon;
   const { className: secondaryActionClassName, ...secondaryActionRest } =
     secondaryActionProps ?? {};
+  const localizedTitle =
+    toastTitle !== undefined ? localizeWebChildren(locale, toastTitle) : undefined;
 
   return (
     <>
@@ -395,7 +415,9 @@ function ToastBodyContent({
               <Icon className="in-data-[type=error]:text-destructive in-data-[type=info]:text-info in-data-[type=success]:text-success in-data-[type=warning]:text-warning in-data-[type=loading]:opacity-80" />
             </div>
           ) : null}
-          <Toast.Title className="min-w-0 wrap-break-word font-medium" data-slot="toast-title" />
+          <Toast.Title className="min-w-0 wrap-break-word font-medium" data-slot="toast-title">
+            {localizedTitle}
+          </Toast.Title>
         </div>
         <ToastDescriptionAndExpandable
           toastData={toastData}
@@ -435,7 +457,7 @@ function ToastBodyContent({
               className={cn(buttonVariants({ size: "xs", variant: actionVariant }), "shrink-0")}
               data-slot="toast-action"
             >
-              {actionProps?.children}
+              {localizeWebChildren(locale, actionProps?.children)}
             </Toast.Action>
           ) : null}
         </div>
@@ -563,6 +585,7 @@ function ToastProvider({ children, position = "top-right", ...props }: ToastProv
 }
 
 function Toasts({ position }: { position: ToastPosition }) {
+  const { locale } = useI18n();
   const { toasts } = Toast.useToastManager<ThreadToastData>();
   const activeThreadRef = useActiveThreadRefFromRoute();
   const isTop = position.startsWith("top");
@@ -672,7 +695,7 @@ function Toasts({ position }: { position: ToastPosition }) {
               />
               <div className={toastCornerDismissClass}>
                 <button
-                  aria-label="Dismiss notification"
+                  aria-label={localizeWebString(locale, "Dismiss notification")}
                   className={toastCornerOrbClass}
                   data-slot="toast-close"
                   onClick={() =>
@@ -700,6 +723,7 @@ function Toasts({ position }: { position: ToastPosition }) {
                   actionProps={toast.actionProps}
                   toastData={toast.data}
                   toastDescription={toast.description}
+                  toastTitle={toast.title}
                   toastType={toast.type}
                 />
               </Toast.Content>
@@ -721,6 +745,7 @@ function AnchoredToastProvider({ children, ...props }: Toast.Provider.Props) {
 }
 
 function AnchoredToasts() {
+  const { locale } = useI18n();
   const { toasts } = Toast.useToastManager<ThreadToastData>();
   const activeThreadRef = useActiveThreadRefFromRoute();
 
@@ -757,13 +782,17 @@ function AnchoredToasts() {
                 >
                   {tooltipStyle ? (
                     <Toast.Content className="pointer-events-auto px-2 py-1">
-                      <Toast.Title data-slot="toast-title" />
+                      <Toast.Title data-slot="toast-title">
+                        {toast.title !== undefined
+                          ? localizeWebChildren(locale, toast.title)
+                          : undefined}
+                      </Toast.Title>
                     </Toast.Content>
                   ) : (
                     <>
                       <div className={toastCornerDismissClass}>
                         <button
-                          aria-label="Dismiss notification"
+                          aria-label={localizeWebString(locale, "Dismiss notification")}
                           className={toastCornerOrbClass}
                           data-slot="toast-close"
                           onClick={() =>
@@ -795,6 +824,7 @@ function AnchoredToasts() {
                           actionProps={toast.actionProps}
                           toastData={toast.data}
                           toastDescription={toast.description}
+                          toastTitle={toast.title}
                           toastType={toast.type}
                         />
                       </Toast.Content>

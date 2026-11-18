@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { ProcessSignalActions } from "./ProcessSignalActions";
 import { AuthEnvironmentMaintainScope } from "@t3tools/contracts";
@@ -318,7 +319,10 @@ function AggregateCard({
           {label}
         </div>
         <div className="rounded-md bg-muted/55 px-1.5 py-0.5 font-mono text-3xs tabular-nums text-muted-foreground/70">
-          {aggregate.processCount} {aggregate.processCount === 1 ? "process" : "processes"}
+          {aggregate.processCount}{" "}
+          {aggregate.processCount === 1
+            ? translateWebSource(translationLocale, "process")
+            : translateWebSource(translationLocale, "processes")}
         </div>
       </div>
       <div className="mt-3.5 grid grid-cols-2 gap-x-4 gap-y-2.5">
@@ -421,9 +425,10 @@ function HistoryWindowSelector({
   selectedWindowMs: number;
   onSelect: (windowMs: number) => void;
 }) {
+  const { locale: i18nLocale } = useI18n();
   return (
     <ToggleGroup
-      aria-label="Resource history period"
+      aria-label={translateWebSource(i18nLocale, "Resource history period")}
       variant="segmented"
       value={[String(selectedWindowMs)]}
       onValueChange={(next) => {
@@ -928,7 +933,7 @@ function ResourceTelemetryDiagnosticsBody({
 }: {
   environmentId: EnvironmentId | null;
 }) {
-  const { t } = useI18n();
+  const { locale: i18nLocale, t } = useI18n();
   const { locale: translationLocale } = useI18n();
   const registry = useContext(RegistryContext);
   const [windowMs, setWindowMs] = useState(15 * 60_000);
@@ -1437,7 +1442,10 @@ function ResourceTelemetryDiagnosticsBody({
         headerAction={
           snapshot ? (
             <span className="text-3xs text-muted-foreground/55">
-              Identity: <span className="font-mono">PID + start time</span>
+              {localizeWebString(i18nLocale, "Identity: ")}
+              <span className="font-mono">
+                {translateWebSource(i18nLocale, "PID + start time")}
+              </span>
             </span>
           ) : null
         }

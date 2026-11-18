@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { translateWebSource } from "~/i18n/messages";
 
@@ -148,7 +149,7 @@ export function McpConsent({
   readonly environmentLabel?: string | undefined;
   readonly footer?: ReactNode;
 }) {
-  const { t } = useI18n();
+  const { locale: i18nLocale, t } = useI18n();
   const { locale: sourceLocale } = useI18n();
   const tx = (source: string) => translateWebSource(sourceLocale, source);
   const { locale: translationLocale } = useI18n();
@@ -284,7 +285,10 @@ export function McpConsent({
       <dl className="mt-4 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
         <dt className="text-muted-foreground">{translateWebSource(translationLocale, "App")}</dt>
         <dd className="min-w-0 break-words">
-          {details.clientName} <span className="text-muted-foreground">· name set by the app</span>
+          {details.clientName}{" "}
+          <span className="text-muted-foreground">
+            {translateWebSource(i18nLocale, "· name set by the app")}
+          </span>
         </dd>
         <dt className="text-muted-foreground">
           {translateWebSource(translationLocale, "Access goes to")}
@@ -294,12 +298,12 @@ export function McpConsent({
           {redirectsToThisComputer(details.redirectHost) ? (
             <span className="font-normal text-muted-foreground">
               {" "}
-              on the computer that opened this page
+              {translateWebSource(i18nLocale, "on the computer that opened this page")}
             </span>
           ) : (
             <span className="font-normal text-muted-foreground">
               {" "}
-              · whoever runs it gets this access
+              {translateWebSource(i18nLocale, "· whoever runs it gets this access")}
             </span>
           )}
         </dd>
@@ -337,7 +341,8 @@ export function McpConsent({
                 translationLocale,
                 "Get one from Use T3 Code in another app (MCP), Settings → Sharing & access, or",
               )}{" "}
-              <code>t3 auth pairing create</code> on this machine.
+              <code>t3 auth pairing create</code>
+              {localizeWebString(i18nLocale, " on this machine.")}
             </p>
           </div>
         ) : null}

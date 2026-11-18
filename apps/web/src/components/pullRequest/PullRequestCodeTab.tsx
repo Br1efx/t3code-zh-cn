@@ -328,7 +328,11 @@ function FileViewedToggle({
         onClick={(event) => event.stopPropagation()}
       >
         <Checkbox
-          aria-label={stale ? "Changed" : "Viewed"}
+          aria-label={
+            stale
+              ? translateWebSource(translationLocale, "Changed")
+              : translateWebSource(translationLocale, "Viewed")
+          }
           checked={viewed}
           onCheckedChange={(next, details) =>
             viewedFiles.setFileViewed(
@@ -351,7 +355,7 @@ function FileViewedToggle({
             </TooltipPopup>
           </Tooltip>
         ) : (
-          <span className="@max-xs:hidden">Viewed</span>
+          <span className="@max-xs:hidden">{translateWebSource(translationLocale, "Viewed")}</span>
         )}
       </label>
     </span>
@@ -1449,7 +1453,9 @@ function PullRequestCodeTab({
                 {filePaths.filter(isFileViewed).length} / {files.length}
               </span>
               <span className="truncate">
-                {viewedFilesStore === "environment" ? `viewed in ${APP_BASE_NAME}` : "viewed"}
+                {viewedFilesStore === "environment"
+                  ? `viewed in ${APP_BASE_NAME}`
+                  : translateWebSource(translationLocale, "viewed")}
               </span>
               {viewedFilesStore === "environment" ? (
                 <Tooltip>
@@ -1544,7 +1550,7 @@ function PullRequestCodeTab({
                 <DropdownMenuTrigger
                   render={<Button size="icon-sm" variant="ghost" />}
                   className="@lg:hidden"
-                  aria-label="Diff options"
+                  aria-label={translateWebSource(translationLocale, "Diff options")}
                 />
               }
             >
@@ -1830,7 +1836,9 @@ function PullRequestCodeTab({
   if (items.length === 0 && nextCursor === null) {
     return withToolbar(
       <p className="px-4 py-5 text-sm text-muted-foreground">
-        {commit === null ? `This ${term} has no file changes.` : "This commit has no file changes."}
+        {commit === null
+          ? `This ${term} has no file changes.`
+          : translateWebSource(translationLocale, "This commit has no file changes.")}
       </p>,
     );
   }

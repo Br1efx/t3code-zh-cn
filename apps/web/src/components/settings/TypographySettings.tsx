@@ -258,6 +258,7 @@ function FontSmoothingRow() {
 }
 
 function WordWrapRow() {
+  const { locale: i18nLocale } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   return (
@@ -276,7 +277,10 @@ function WordWrapRow() {
         <Switch
           checked={settings.wordWrap}
           onCheckedChange={(checked) => updateSettings({ wordWrap: Boolean(checked) })}
-          aria-label="Wrap code, diffs, and file previews by default"
+          aria-label={translateWebSource(
+            i18nLocale,
+            "Wrap code, diffs, and file previews by default",
+          )}
         />
       }
     />
@@ -301,6 +305,7 @@ function SeparateFontsRow({
   readonly checked: boolean;
   readonly onCheckedChange: (checked: boolean) => void;
 }) {
+  const { locale: i18nLocale } = useI18n();
   return (
     <SettingsRow
       {...searchableSetting("separate-fonts")}
@@ -309,7 +314,7 @@ function SeparateFontsRow({
         <Switch
           checked={checked}
           onCheckedChange={(next) => onCheckedChange(Boolean(next))}
-          aria-label="Separate fonts"
+          aria-label={translateWebSource(i18nLocale, "Separate fonts")}
         />
       }
     />

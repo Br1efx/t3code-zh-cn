@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import type { CSSProperties } from "react";
@@ -294,7 +295,11 @@ export function AppearanceSettingsPanel() {
                     updateSettings({ chatWidth: value });
                 }}
               >
-                <SelectTrigger size="sm" className="w-full min-w-0" aria-label="Chat width">
+                <SelectTrigger
+                  size="sm"
+                  className="w-full min-w-0"
+                  aria-label={translateWebSource(translationLocale, "Chat width")}
+                >
                   <SelectValue>{CHAT_WIDTH_LABELS[settings.chatWidth]}</SelectValue>
                 </SelectTrigger>
                 <SelectPopup align="end" alignItemWithTrigger={false}>
@@ -331,7 +336,11 @@ export function AppearanceSettingsPanel() {
                     updateSettings({ effortDisplay: value });
                 }}
               >
-                <SelectTrigger size="sm" className="w-full min-w-0" aria-label="Effort display">
+                <SelectTrigger
+                  size="sm"
+                  className="w-full min-w-0"
+                  aria-label={translateWebSource(translationLocale, "Effort display")}
+                >
                   <SelectValue>{EFFORT_DISPLAY_LABELS[settings.effortDisplay]}</SelectValue>
                 </SelectTrigger>
                 <SelectPopup align="end" alignItemWithTrigger={false}>
@@ -393,10 +402,11 @@ export function AppearanceSettingsPanel() {
                     className="min-w-16 rounded-md bg-muted px-2 py-1 text-center font-mono text-xs font-medium tabular-nums text-foreground"
                     htmlFor="panel-animation-duration"
                   >
-                    {settings.panelAnimationDurationMs} ms
+                    {settings.panelAnimationDurationMs}
+                    {localizeWebString(translationLocale, " ms")}
                   </output>
                   <input
-                    aria-label="Panel animation duration"
+                    aria-label={translateWebSource(translationLocale, "Panel animation duration")}
                     className="settings-slider min-w-0 flex-1"
                     id="panel-animation-duration"
                     max={MAX_PANEL_ANIMATION_DURATION_MS}
@@ -498,7 +508,10 @@ export function AppearanceSettingsPanel() {
                 onCheckedChange={(checked) =>
                   updateSettings({ persistComposerContextStrip: Boolean(checked) })
                 }
-                aria-label="Keep composer context visible in active threads"
+                aria-label={translateWebSource(
+                  translationLocale,
+                  "Keep composer context visible in active threads",
+                )}
               />
             }
           />

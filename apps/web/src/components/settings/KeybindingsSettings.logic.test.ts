@@ -226,7 +226,7 @@ describe("KeybindingsSettings.logic", () => {
         ] satisfies ResolvedKeybindingsConfig,
         localizedChineseCommandLabel,
       ),
-      "新建任务",
+      "对话：新建对话",
       localizedChineseCommandLabel,
     );
 
@@ -367,7 +367,7 @@ describe("KeybindingsSettings.logic", () => {
         },
         localizedChineseCommandLabel,
       ),
-    ).toEqual(["聊天：新建本地任务"]);
+    ).toEqual(["对话：在本地项目目录新建对话"]);
   });
 
   it.each([

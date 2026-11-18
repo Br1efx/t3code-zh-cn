@@ -371,8 +371,8 @@ function SidebarThreadTooltip({
             <CircleAlertIcon className="size-3 shrink-0 stroke-current" />
             <div className="min-w-0 truncate">
               {thread.runtime.lastErrorClass === "usage_limit"
-                ? "Usage limit reached"
-                : "Error occurred"}
+                ? translateWebSource(translationLocale, "Usage limit reached")
+                : translateWebSource(translationLocale, "Error occurred")}
             </div>
           </div>
         ) : null}
@@ -1122,7 +1122,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
         render={
           <span
             role="img"
-            aria-label="Unsent draft"
+            aria-label={translateWebSource(translationLocale, "Unsent draft")}
             data-testid={`sidebar-draft-indicator-${thread.id}`}
             className="inline-flex shrink-0 items-center"
           />
@@ -1142,7 +1142,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
           render={
             <button
               type="button"
-              aria-label="Unpin thread"
+              aria-label={translateWebSource(translationLocale, "Unpin thread")}
               onClick={handleUnpinClick}
               className="group/unpin inline-flex cursor-pointer items-center rounded-sm text-muted-foreground/65 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
             />
@@ -1161,7 +1161,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
       </Tooltip>
     ) : (
       <PinIcon
-        aria-label="Pinned"
+        aria-label={translateWebSource(translationLocale, "Pinned")}
         role="img"
         className="size-3 shrink-0 text-muted-foreground/65"
       />
@@ -1297,7 +1297,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               {multiline ? null : terminalStatusIcon}
               {isRegeneratingTitle ? (
                 <span role="status" className="sr-only">
-                  Regenerating title
+                  {translateWebSource(translationLocale, "Regenerating title")}
                 </span>
               ) : null}
               {sortable?.isDragging ? (
@@ -1328,12 +1328,17 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                           render={
                             <button
                               type="button"
-                              aria-label="Dismiss Woke notification"
+                              aria-label={translateWebSource(
+                                translationLocale,
+                                "Dismiss Woke notification",
+                              )}
                               onClick={handleAcknowledgeWokeClick}
                               className="inline-flex cursor-pointer items-center gap-1 rounded-sm text-xs font-medium text-warning-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                             >
                               <AlarmClockIcon aria-hidden className="size-3" />
-                              <span role="status">Woke</span>
+                              <span role="status">
+                                {translateWebSource(translationLocale, "Woke")}
+                              </span>
                             </button>
                           }
                         />
@@ -1366,7 +1371,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                     !props.snoozeSupported ? null : (
                       <button
                         type="button"
-                        aria-label="Wake thread now"
+                        aria-label={translateWebSource(translationLocale, "Wake thread now")}
                         onClick={handleUnsnoozeClick}
                         onPointerDown={handleActionPointerDown}
                         className={cn(
@@ -1383,7 +1388,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                         render={
                           <button
                             type="button"
-                            aria-label="Un-settle thread"
+                            aria-label={translateWebSource(translationLocale, "Un-settle thread")}
                             onClick={handleUnsettleClick}
                             onPointerDown={handleActionPointerDown}
                             className={cn(
@@ -1516,7 +1521,10 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                             render={
                               <button
                                 type="button"
-                                aria-label="Dismiss Woke notification"
+                                aria-label={translateWebSource(
+                                  translationLocale,
+                                  "Dismiss Woke notification",
+                                )}
                                 onClick={handleAcknowledgeWokeClick}
                                 className={cn(
                                   "inline-flex cursor-pointer items-center gap-1 rounded-sm font-medium outline-none hover:underline focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
@@ -1578,7 +1586,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                             render={
                               <button
                                 type="button"
-                                aria-label="Discard draft"
+                                aria-label={translateWebSource(translationLocale, "Discard draft")}
                                 onClick={handleDiscardDraftClick}
                                 className="inline-flex cursor-pointer items-center rounded-md bg-transparent px-1.5 text-xs text-muted-foreground hover:text-foreground"
                               />
@@ -1612,7 +1620,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                             }
                           >
                             <CheckIcon className="size-3.5" />
-                            Settle
+                            {translateWebSource(translationLocale, "Settle")}
                           </TooltipTrigger>
                           <TooltipPopup>
                             {translateWebSource(translationLocale, "Settle thread")}
@@ -1630,7 +1638,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               {title}
               {isRegeneratingTitle ? (
                 <span role="status" className="sr-only">
-                  Regenerating title
+                  {translateWebSource(translationLocale, "Regenerating title")}
                 </span>
               ) : null}
               {titleLineIcons}

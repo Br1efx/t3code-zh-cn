@@ -26,6 +26,7 @@ import type { RemoteT3RunnerOptions } from "@t3tools/ssh/tunnel";
 import serverPackageJson from "../../server/package.json" with { type: "json" };
 
 import * as DesktopIpc from "./ipc/DesktopIpc.ts";
+import * as DesktopLocale from "./i18n/DesktopLocale.ts";
 import * as ElectronApp from "./electron/ElectronApp.ts";
 import * as ElectronDialog from "./electron/ElectronDialog.ts";
 import * as ElectronMenu from "./electron/ElectronMenu.ts";
@@ -162,16 +163,20 @@ const layerDesktopFoundation = Layer.mergeAll(
   DesktopShutdown.layer,
   DesktopLegacyLocalStorage.layer,
   DesktopAppSettings.layer,
-  DesktopClientSettings.layer,
   DesktopConnectionCatalogStore.layer.pipe(Layer.provideMerge(DesktopSavedEnvironments.layer)),
   DesktopAssets.layer,
   DesktopPrimaryPaste.layer,
   DesktopObservability.layer,
   DesktopRendererHistory.layer,
-).pipe(Layer.provideMerge(layerDesktopEnvironment));
+).pipe(
+  Layer.provideMerge(DesktopLocale.layer),
+  Layer.provideMerge(DesktopClientSettings.layer),
+  Layer.provideMerge(layerDesktopEnvironment),
+);
 
 const layerDesktopSsh = layerDesktopSshEnvironment.pipe(
   Layer.provideMerge(DesktopSshPasswordPrompts.layer()),
+  Layer.provideMerge(layerDesktopFoundation),
 );
 
 const layerDesktopServerExposure = DesktopServerExposure.layer.pipe(
@@ -234,6 +239,7 @@ const layerDesktopApplication = Layer.mergeAll(
       Layer.provide(DesktopUpdatePolicy.layer),
       // The same layer as the foundation's, so the policy is still read once.
       Layer.provide(DesktopManagedPolicy.layer),
+      Layer.provide(layerDesktopFoundation),
     ),
   ),
   // Updates closes the same tunnels the SSH IPC opens before quitAndInstall.

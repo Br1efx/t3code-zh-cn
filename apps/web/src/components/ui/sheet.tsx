@@ -1,3 +1,4 @@
+import { localizeWebChildren } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog";
@@ -142,23 +143,29 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function SheetTitle({ className, ...props }: SheetPrimitive.Title.Props) {
+function SheetTitle({ className, children, ...props }: SheetPrimitive.Title.Props) {
+  const { locale } = useI18n();
   return (
     <SheetPrimitive.Title
       className={cn("font-semibold text-xl leading-snug", className)}
       data-slot="sheet-title"
       {...props}
-    />
+    >
+      {localizeWebChildren(locale, children)}
+    </SheetPrimitive.Title>
   );
 }
 
-function SheetDescription({ className, ...props }: SheetPrimitive.Description.Props) {
+function SheetDescription({ className, children, ...props }: SheetPrimitive.Description.Props) {
+  const { locale } = useI18n();
   return (
     <SheetPrimitive.Description
       className={cn("text-muted-foreground text-sm", className)}
       data-slot="sheet-description"
       {...props}
-    />
+    >
+      {localizeWebChildren(locale, children)}
+    </SheetPrimitive.Description>
   );
 }
 

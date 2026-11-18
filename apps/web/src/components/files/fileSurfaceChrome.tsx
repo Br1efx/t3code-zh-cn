@@ -1,3 +1,4 @@
+import { localizeWebChildren, localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import type { ReactNode } from "react";
@@ -105,21 +106,23 @@ export function FileSurfaceAction(props: {
 }
 
 export function FileSurfaceNotice(props: { readonly children: ReactNode }) {
+  const { locale } = useI18n();
   return (
     <div
       role="status"
       className="shrink-0 border-b border-warning/20 bg-warning-surface px-3 py-1.5 text-2xs text-warning-foreground"
     >
-      {props.children}
+      {localizeWebChildren(locale, props.children)}
     </div>
   );
 }
 
 export function FileSurfaceLoading(props: { readonly className?: string }) {
+  const { locale: i18nLocale } = useI18n();
   return (
     <div
       role="status"
-      aria-label="Loading file"
+      aria-label={translateWebSource(i18nLocale, "Loading file")}
       className={cn(
         "flex min-h-0 flex-1 items-center justify-center text-muted-foreground",
         props.className,
@@ -140,7 +143,7 @@ export function FileSurfaceFailure(props: {
       role="alert"
       className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 text-center text-xs leading-relaxed"
     >
-      <p className="text-destructive">{props.message}</p>
+      <p className="text-destructive">{localizeWebString(translationLocale, props.message)}</p>
       {props.onRetry ? (
         <button
           type="button"

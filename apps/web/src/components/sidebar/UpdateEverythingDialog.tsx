@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useAtomValue } from "@effect/atom-react";
@@ -191,7 +192,9 @@ function UpdateEverythingDialogContent({
                     </span>
                   ) : null}
                   {row.app === "this-app" ? (
-                    <span className="block text-muted-foreground text-xs">restarts last</span>
+                    <span className="block text-muted-foreground text-xs">
+                      {translateWebSource(translationLocale, "restarts last")}
+                    </span>
                   ) : null}
                 </span>
                 <span role="cell">
@@ -214,7 +217,8 @@ function UpdateEverythingDialogContent({
             <Collapsible>
               <CollapsibleTrigger className="flex items-center gap-1 text-muted-foreground text-xs hover:text-foreground data-panel-open:[&_svg]:rotate-90">
                 <ChevronRightIcon className="size-3.5 transition-transform" aria-hidden />
-                {skipped.length} skipped
+                {skipped.length}
+                {localizeWebString(translationLocale, " skipped")}
               </CollapsibleTrigger>
               <CollapsiblePanel>
                 <div className="grid grid-cols-[minmax(0,max-content)_1fr] gap-x-3 gap-y-0.5 pt-1.5 ps-4.5 text-muted-foreground text-xs">
@@ -258,6 +262,12 @@ function UpdateEverythingDialogContent({
 }
 
 function RunningThreads({ environmentId }: { readonly environmentId: EnvironmentId }) {
+  const { locale: i18nLocale } = useI18n();
   const count = useAtomValue(runningThreadCountAtom(environmentId));
-  return count > 0 ? <span className="whitespace-nowrap text-warning">{count} running</span> : null;
+  return count > 0 ? (
+    <span className="whitespace-nowrap text-warning">
+      {count}
+      {localizeWebString(i18nLocale, " running")}
+    </span>
+  ) : null;
 }

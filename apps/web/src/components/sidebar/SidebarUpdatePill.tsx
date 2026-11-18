@@ -568,7 +568,7 @@ function SidebarUpdateControl() {
         {showReleaseNotesPopover && state ? (
           <PopoverPopup
             align="center"
-            aria-label="Update release notes"
+            aria-label={translateWebSource(translationLocale, "Update release notes")}
             initialFocus={false}
             onKeyDownCapture={(event) => {
               if (

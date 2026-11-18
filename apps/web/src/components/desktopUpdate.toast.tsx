@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import type { DesktopBridge, DesktopUpdateState } from "@t3tools/contracts";
 import { ArrowRightIcon } from "lucide-react";
 
@@ -26,6 +28,7 @@ function ReleaseNotesLink({
   shell: DesktopUpdateShell;
   releaseUrl: string;
 }) {
+  const { locale: i18nLocale } = useI18n();
   return (
     <button
       className="ml-2 inline cursor-pointer text-muted-foreground underline decoration-dotted underline-offset-4 transition-colors hover:text-foreground"
@@ -34,7 +37,7 @@ function ReleaseNotesLink({
       }}
       type="button"
     >
-      Read more
+      {translateWebSource(i18nLocale, "Read more")}
       <ArrowRightIcon
         aria-hidden
         className="ml-1 inline size-3 -rotate-45 align-[-0.125em]"

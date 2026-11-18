@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { Spinner } from "~/components/ui/spinner";
@@ -358,7 +359,7 @@ export function ProviderEnvironmentSection(props: {
   readonly secretSources?: ReadonlyArray<SecretSource>;
   readonly environmentId?: EnvironmentId | undefined;
 }) {
-  const { t } = useI18n();
+  const { locale: i18nLocale, t } = useI18n();
   const { locale: translationLocale } = useI18n();
   const [storedDraft, setDraft] = useState(() =>
     seedRowsDraft(props.environment, toEnvironmentDraftRows),
@@ -558,7 +559,7 @@ export function ProviderEnvironmentSection(props: {
                     className="min-w-0 flex-1"
                     value={variable.valueRedacted ? "" : variable.value}
                     onCommit={(value) => updateVariable(variable.id, { value })}
-                    placeholder="value"
+                    placeholder={translateWebSource(i18nLocale, "value")}
                     configured={variable.valueRedacted === true}
                     spellCheck={false}
                     aria-label={`Environment variable value ${index + 1}`}
@@ -582,7 +583,7 @@ export function ProviderEnvironmentSection(props: {
                       }
                       onCommit={(value) => updateVariable(variable.id, { value })}
                       autoComplete="off"
-                      placeholder="value"
+                      placeholder={translateWebSource(i18nLocale, "value")}
                       spellCheck={false}
                       aria-label={`Environment variable value ${index + 1}`}
                     />,
@@ -597,7 +598,10 @@ export function ProviderEnvironmentSection(props: {
               "Sensitive values are stored separately and never returned to the app.",
             )}{" "}
             {rows.some((row) => row.valueRedacted === true)
-              ? " Enter a new value to rename a saved one or make it plain text."
+              ? localizeWebString(
+                  i18nLocale,
+                  " Enter a new value to rename a saved one or make it plain text.",
+                )
               : null}
           </p>
         </div>
@@ -667,7 +671,9 @@ function ProjectOverrideInheritance({
                   layer.effective ? "text-foreground" : "text-muted-foreground",
                 )}
               >
-                {layer.enabled ? "On" : "Off"}
+                {layer.enabled
+                  ? translateWebSource(translationLocale, "On")
+                  : translateWebSource(translationLocale, "Off")}
                 {layer.effective ? (
                   <CheckIcon aria-hidden className="size-3.5 shrink-0 text-primary" />
                 ) : (
@@ -1111,7 +1117,7 @@ export function ProviderInstanceCard({
           {onRunVersionAction && updateCommand ? (
             <div className="flex items-center gap-2 text-3xs font-medium uppercase tracking-wider text-muted-foreground">
               <span aria-hidden className="h-px flex-1 bg-border" />
-              or, update manually using
+              {translateWebSource(translationLocale, "or, update manually using")}
               <span aria-hidden className="h-px flex-1 bg-border" />
             </div>
           ) : null}
@@ -1320,8 +1326,12 @@ export function ProviderInstanceCard({
       title={translateWebSource(translationLocale, "Driver")}
       description={
         <span>
-          This instance uses <code className="text-foreground">{String(instance.driver)}</code>,
-          which is not available in this build. Its configuration is preserved.
+          {localizeWebString(translationLocale, "This instance uses ")}
+          <code className="text-foreground">{String(instance.driver)}</code>
+          {translateWebSource(
+            translationLocale,
+            ", which is not available in this build. Its configuration is preserved.",
+          )}
         </span>
       }
     />
@@ -1462,8 +1472,10 @@ export function ProviderInstanceCard({
         <SettingsSection title={translateWebSource(translationLocale, "Models")}>
           <div className="px-3 py-3 sm:px-4">
             <p className="mb-3 text-xs text-muted-foreground">
-              Model preferences and custom models are saved on the selected environment and shared
-              across connected devices.
+              {translateWebSource(
+                translationLocale,
+                "Model preferences and custom models are saved on the selected environment and shared across connected devices.",
+              )}
             </p>
             <ProviderModelsSection
               canManageCustomModels={!readOnly}

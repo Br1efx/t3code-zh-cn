@@ -204,7 +204,10 @@ export function PullRequestStackMenu({
               ) : null}
               {mergeHasClosed || mergeLayers.some((layer) => layer.isDraft) ? (
                 <p className="px-2 py-1 text-xs text-muted-foreground">
-                  Every layer being merged must be open and ready for review.
+                  {translateWebSource(
+                    translationLocale,
+                    "Every layer being merged must be open and ready for review.",
+                  )}
                 </p>
               ) : null}
             </>

@@ -18,7 +18,7 @@ vi.mock("electron", () => ({
 
 vi.mock("react-grab/primitives", () => ({ getElementContext: async () => null }));
 
-const startAnnotation = (): ShadowRoot => {
+const startAnnotation = (locale?: "en" | "zh-CN", sendEnabled = false): ShadowRoot => {
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -27,7 +27,8 @@ const startAnnotation = (): ShadowRoot => {
     },
   );
   using attachShadow = vi.spyOn(Element.prototype, "attachShadow");
-  for (const listener of ipcListeners.get(START_PICK_CHANNEL) ?? []) listener({}, undefined, false);
+  for (const listener of ipcListeners.get(START_PICK_CHANNEL) ?? [])
+    listener({}, undefined, sendEnabled, undefined, locale);
   const shadowRoot = attachShadow.mock.results[0]?.value;
   if (!(shadowRoot instanceof ShadowRoot)) throw new Error("annotation overlay did not start");
   return shadowRoot;
@@ -104,4 +105,20 @@ it("keeps the annotation when Escape dismisses an IME candidate in the comment",
 
   expect(shadowRoot.host.isConnected).toBe(true);
   expect(comment.value).toBe("draft");
+});
+
+it("renders localized Chinese overlay labels when zh-CN locale is passed", () => {
+  const shadowRoot = startAnnotation("zh-CN", true);
+  const buttonTexts = Array.from(shadowRoot.querySelectorAll("button"))
+    .map((button) => button.textContent)
+    .filter(Boolean);
+  expect(buttonTexts).toEqual(
+    expect.arrayContaining(["点选", "框选", "涂鸦", "橡皮擦", "添加标注"]),
+  );
+  const comment = shadowRoot.querySelector("textarea");
+  expect(comment?.placeholder).toBe("说说你想怎么改…");
+  const attach = Array.from(shadowRoot.querySelectorAll("button")).find(
+    (button) => button.textContent === "添加标注",
+  );
+  expect(attach?.title).toContain("智能体");
 });

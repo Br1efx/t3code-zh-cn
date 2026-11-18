@@ -3,6 +3,8 @@ import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
 
+import { localizeOptionalWebAttr, localizeWebChildren } from "~/i18n/localizeWebChildren";
+import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 
 const buttonVariants = cva(
@@ -80,7 +82,8 @@ interface ButtonProps extends useRender.ComponentProps<"button"> {
   size?: ButtonSize;
 }
 
-function Button({ className, variant, size, render, ...props }: ButtonProps) {
+function Button({ className, variant, size, render, children, ...props }: ButtonProps) {
+  const { locale } = useI18n();
   const typeValue: React.ButtonHTMLAttributes<HTMLButtonElement>["type"] = render
     ? undefined
     : "button";
@@ -93,7 +96,12 @@ function Button({ className, variant, size, render, ...props }: ButtonProps) {
 
   return useRender({
     defaultTagName: "button",
-    props: mergeProps<"button">(defaultProps, props),
+    props: mergeProps<"button">(defaultProps, {
+      ...props,
+      "aria-label": localizeOptionalWebAttr(locale, props["aria-label"]),
+      title: localizeOptionalWebAttr(locale, props.title),
+      children: localizeWebChildren(locale, children),
+    }),
     render,
   });
 }
@@ -124,8 +132,10 @@ export function InlineButton({
   tone,
   touchTarget,
   render,
+  children,
   ...props
 }: useRender.ComponentProps<"button"> & VariantProps<typeof inlineButtonVariants>) {
+  const { locale } = useI18n();
   const defaultProps = {
     className: cn(inlineButtonVariants({ tone, touchTarget }), className),
     "data-slot": "inline-button",
@@ -133,7 +143,12 @@ export function InlineButton({
   };
   return useRender({
     defaultTagName: "button",
-    props: mergeProps<"button">(defaultProps, props),
+    props: mergeProps<"button">(defaultProps, {
+      ...props,
+      "aria-label": localizeOptionalWebAttr(locale, props["aria-label"]),
+      title: localizeOptionalWebAttr(locale, props.title),
+      children: localizeWebChildren(locale, children),
+    }),
     render,
   });
 }

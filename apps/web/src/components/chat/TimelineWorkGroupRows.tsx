@@ -1,3 +1,6 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { TimelinePendingApprovalRow } from "./TimelinePendingApprovalRow";
 import { WorkLogButton, WorkLogList, WorkLogRow } from "./WorkLog";
 import type { WorktreeSetupSnapshot } from "@t3tools/contracts";
@@ -76,6 +79,7 @@ export const WorkGroupSection = memo(function WorkGroupSection({
   isExpandedToolGroup: boolean;
   displayLabel?: string | undefined;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const {
     workspaceRoot,
     routeThreadKey,
@@ -109,7 +113,7 @@ export const WorkGroupSection = memo(function WorkGroupSection({
   }
 
   return (
-    <section aria-label="Activity">
+    <section aria-label={translateWebSource(i18nLocale, "Activity")}>
       {nonEmptyEntries.map((workEntry) => (
         <SimpleWorkEntryRow
           key={workEntry.id}
@@ -194,6 +198,7 @@ function ExpandedWorkGroupEntries({
   groupedEntries: ReadonlyArray<TimelineWorkEntry>;
   workspaceRoot: string | undefined;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const {
     workGroupViewState: viewState,
     onToggleWorkEntry,
@@ -329,7 +334,7 @@ function ExpandedWorkGroupEntries({
           onItemSizeChanged={updateExpandedContentHeight}
           tabIndex={0}
           role="region"
-          aria-label="Tool calls"
+          aria-label={translateWebSource(i18nLocale, "Tool calls")}
           data-tool-group-scroll
           style={{ maxHeight: `calc(min(18rem, 50dvh) + ${expandedContentHeight}px)` }}
           className={cn(
@@ -345,6 +350,7 @@ function ExpandedWorkGroupEntries({
 const workEntryKey = (entry: TimelineWorkEntry) => entry.id;
 
 export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "working" }> }) {
+  const { locale: i18nLocale } = useI18n();
   const { isCompacting, isPreparingWorktree, backgroundWorktreeSetup } =
     use(TimelineRowActivityCtx);
   const compacting = row.compacting === true || isCompacting;
@@ -355,7 +361,8 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
     <CompactingLabel createdAt={row.createdAt} />
   ) : row.createdAt ? (
     <>
-      Working for <WorkingTimer createdAt={row.createdAt} />
+      {localizeWebString(i18nLocale, "Working for ")}
+      <WorkingTimer createdAt={row.createdAt} />
     </>
   ) : (
     "Working..."
@@ -379,6 +386,7 @@ export function WorkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: 
 }
 
 function BackgroundWorktreeSetupChip({ snapshot }: { snapshot: WorktreeSetupSnapshot }) {
+  const { locale: i18nLocale } = useI18n();
   const ctx = use(TimelineRowCtx);
   const terminalId = snapshot.setupScript?.terminalId ?? null;
   const openTerminal = ctx.onOpenWorktreeSetupTerminal;
@@ -397,7 +405,7 @@ function BackgroundWorktreeSetupChip({ snapshot }: { snapshot: WorktreeSetupSnap
         }
       >
         <Spinner className="size-3 shrink-0" />
-        <span className="truncate">Background setup</span>
+        <span className="truncate">{translateWebSource(i18nLocale, "Background setup")}</span>
       </PopoverTrigger>
       <PopoverPopup side="bottom" align="end" width="lg" padding="compact">
         <WorktreeSetupCard
@@ -413,12 +421,14 @@ function BackgroundWorktreeSetupChip({ snapshot }: { snapshot: WorktreeSetupSnap
 }
 
 function CompactingLabel({ createdAt }: { createdAt: string | null }) {
+  const { locale: i18nLocale } = useI18n();
   return (
     <span className="inline-flex items-center gap-1.5">
       <Minimize2Icon aria-hidden="true" className="size-3" />
       {createdAt ? (
         <span>
-          Compacting for <WorkingTimer createdAt={createdAt} />
+          {localizeWebString(i18nLocale, "Compacting for ")}
+          <WorkingTimer createdAt={createdAt} />
         </span>
       ) : (
         "Compacting…"
@@ -512,6 +522,7 @@ function LiveActivityContent({
   active?: boolean;
   highlighted?: boolean;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const showTrailingFailureMark =
     failed && iconName !== undefined && !toolIconAcceptsTint(toolIcon);
 
@@ -529,7 +540,9 @@ function LiveActivityContent({
                   : "text-icon-muted",
             )}
             role={announceFailure ? "img" : undefined}
-            aria-label={announceFailure ? "Tool call failed" : undefined}
+            aria-label={
+              announceFailure ? translateWebSource(i18nLocale, "Tool call failed") : undefined
+            }
           >
             <ToolActivityIconView
               icon={toolIcon}

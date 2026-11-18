@@ -234,7 +234,13 @@ export function SnapShotSetupDialog({
       }}
     >
       <WizardPopup showCloseButton={!busy}>
-        <WizardHeader title={desktop ? `Set up snapshots for ${desktop}` : "Set up snapshots"}>
+        <WizardHeader
+          title={
+            desktop
+              ? `Set up snapshots for ${desktop}`
+              : translateWebSource(translationLocale, "Set up snapshots")
+          }
+        >
           <WizardSteps
             steps={SETUP_STEPS.map((item) => item.label)}
             currentStep={stepIndex}
@@ -337,12 +343,18 @@ export function SnapShotSetupDialog({
             )}
             {step === "shortcut" && !accessReady ? (
               <p role="alert" className="text-destructive">
-                Capture needs attention. Go back to check access.
+                {translateWebSource(
+                  translationLocale,
+                  "Capture needs attention. Go back to check access.",
+                )}
               </p>
             ) : null}
             {error ? (
               <p role="alert" className="text-destructive">
-                Couldn't finish this step. Try again or check Advanced for help.
+                {translateWebSource(
+                  translationLocale,
+                  "Couldn't finish this step. Try again or check Advanced for help.",
+                )}
               </p>
             ) : null}
             {details.length > 0 || (step === "access" && (backend === "gnome" || helperBackend)) ? (
@@ -357,7 +369,12 @@ export function SnapShotSetupDialog({
                     </p>
                   ))}
                   {step === "access" && (backend === "gnome" || helperBackend) ? (
-                    <p>Included with T3 Code. No download needed.</p>
+                    <p>
+                      {translateWebSource(
+                        translationLocale,
+                        "Included with T3 Code. No download needed.",
+                      )}
+                    </p>
                   ) : null}
                   {step === "access" && backend === "gnome" && extension?.status === "enabled" ? (
                     <Button
@@ -449,14 +466,14 @@ export function SnapShotSetupDialog({
                 }}
               >
                 {busy
-                  ? "Working…"
+                  ? translateWebSource(translationLocale, "Working…")
                   : macPermissions
-                    ? "Test capture and continue"
+                    ? translateWebSource(translationLocale, "Test capture and continue")
                     : backend === "direct"
-                      ? "Allow capture"
+                      ? translateWebSource(translationLocale, "Allow capture")
                       : !accessReady && !macPermissions
-                        ? "Try again"
-                        : "Continue"}
+                        ? translateWebSource(translationLocale, "Try again")
+                        : translateWebSource(translationLocale, "Continue")}
               </PermissionContinueButton>
             )
           ) : !configShortcut ? (

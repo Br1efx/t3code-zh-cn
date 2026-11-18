@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { DownloadIcon, CopyIcon, CheckIcon, Code2Icon, EyeIcon, Table2Icon } from "lucide-react";
@@ -188,6 +189,7 @@ function WorkspaceImagePreview(props: {
   readonly alt: string;
   readonly workspaceMutationId: string | null;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const resource = workspaceAssetResource({
     kind:
       mediaFileReference(props.absolutePath, props.workspaceRoot).relativePath !== undefined
@@ -216,7 +218,7 @@ function WorkspaceImagePreview(props: {
     return (
       <MediaActions source={actionsSource}>
         <div className="flex min-h-0 flex-1 items-center justify-center px-6 text-center text-xs leading-relaxed text-destructive">
-          Unable to load workspace image.
+          {translateWebSource(i18nLocale, "Unable to load workspace image.")}
         </div>
       </MediaActions>
     );
@@ -244,6 +246,7 @@ export function WorkspaceBrowserPreview(props: {
   readonly title: string;
   readonly workspaceMutationId: string | null;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const pdf = isPdfPreviewFile(props.absolutePath);
   const resource = workspaceAssetResource({
     kind: pdf ? "media-file" : "workspace-file",
@@ -274,7 +277,7 @@ export function WorkspaceBrowserPreview(props: {
   if (assetUrl._tag === "Failure") {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center px-6 text-center text-xs leading-relaxed text-destructive">
-        Unable to load file preview.
+        {translateWebSource(i18nLocale, "Unable to load file preview.")}
       </div>
     );
   }
@@ -1456,13 +1459,14 @@ export default function FilePreviewPanel({
       return (
         <div className="flex min-h-0 flex-1 items-center justify-center gap-2 text-sm text-muted-foreground">
           <Spinner className="size-4" />
-          Checking file access...
+          {translateWebSource(translationLocale, "Checking file access...")}
         </div>
       );
     }
     return (
       <div className="p-4 text-sm text-muted-foreground">
-        {fileAccess.error ?? "This connection cannot read host files."}
+        {fileAccess.error ??
+          translateWebSource(translationLocale, "This connection cannot read host files.")}
       </div>
     );
   }
@@ -1557,7 +1561,10 @@ export default function FilePreviewPanel({
       ) : null}
       {relativePath && !attachment && !isHostFile && !canWriteFiles && !fileAccess.isPending ? (
         <div className="shrink-0 border-b px-3 py-1.5 text-2xs text-muted-foreground">
-          Read-only connection. Unsaved edits are kept until write access returns.
+          {translateWebSource(
+            translationLocale,
+            "Read-only connection. Unsaved edits are kept until write access returns.",
+          )}
         </div>
       ) : null}
       {previewPath &&
@@ -1567,7 +1574,9 @@ export default function FilePreviewPanel({
       file.data?.truncated &&
       (draft || isMarkdown || isMermaid || isHtml) ? (
         <div className="shrink-0 border-b border-warning/20 bg-warning-surface px-3 py-1.5 text-2xs text-warning-foreground">
-          Preview limited to the first 1 MB of a {file.data.byteLength.toLocaleString()} byte file.
+          {localizeWebString(translationLocale, "Preview limited to the first 1 MB of a ")}
+          {file.data.byteLength.toLocaleString()}
+          {localizeWebString(translationLocale, " byte file.")}
         </div>
       ) : null}
       <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -1583,7 +1592,7 @@ export default function FilePreviewPanel({
               tabIndex={-1}
               data-workspace-focus-default
               data-file-content-focus
-              aria-label="File contents"
+              aria-label={translateWebSource(translationLocale, "File contents")}
               className="sr-only"
               onFocus={() => queueMicrotask(focusEditorFromContent)}
             />
@@ -1688,7 +1697,7 @@ export default function FilePreviewPanel({
                 </p>
                 {attemptedPath ? (
                   <p className="text-muted-foreground">
-                    Attempted path
+                    {translateWebSource(translationLocale, "Attempted path")}
                     <code className="block break-all font-mono text-foreground select-all">
                       {attemptedPath}
                     </code>
@@ -1696,11 +1705,14 @@ export default function FilePreviewPanel({
                 ) : null}
                 {!isHostFile ? (
                   <p className="text-muted-foreground">
-                    Workspace folder:{" "}
+                    {translateWebSource(translationLocale, "Workspace folder:")}{" "}
                     <code className="break-all font-mono select-all">
                       {file.readError?.cwd ?? cwd}
                     </code>
-                    . Check the link's path or locate the file in Files.
+                    {translateWebSource(
+                      translationLocale,
+                      ". Check the link's path or locate the file in Files.",
+                    )}
                   </p>
                 ) : null}
               </div>
@@ -1870,7 +1882,9 @@ export function WorkspaceLargeTextPreview(props: {
   return (
     <>
       <div className={FILE_SURFACE_SUBHEADER_CLASS}>
-        <span className="min-w-0 flex-1 text-xs text-muted-foreground">Full file</span>
+        <span className="min-w-0 flex-1 text-xs text-muted-foreground">
+          {translateWebSource(translationLocale, "Full file")}
+        </span>
         <FileSurfaceAction
           label={isCopied ? "Copied" : "Copy contents"}
           onPress={() => {

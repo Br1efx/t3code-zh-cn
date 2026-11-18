@@ -121,7 +121,9 @@ function CustomSnoozeDialog() {
                   setError(null);
                 }}
               >
-                <Toggle value="date">Date and time</Toggle>
+                <Toggle value="date">
+                  {translateWebSource(translationLocale, "Date and time")}
+                </Toggle>
                 <Toggle value="duration">
                   {translateWebSource(translationLocale, "Duration")}
                 </Toggle>
@@ -130,7 +132,9 @@ function CustomSnoozeDialog() {
                 {mode === "date" ? (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="flex min-w-0 flex-col gap-2">
-                      <Label htmlFor={`${id}-date`}>Date</Label>
+                      <Label htmlFor={`${id}-date`}>
+                        {translateWebSource(translationLocale, "Date")}
+                      </Label>
                       <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                         <PopoverTrigger
                           render={
@@ -141,14 +145,17 @@ function CustomSnoozeDialog() {
                             />
                           }
                         >
-                          {date.toLocaleDateString(undefined, {
+                          {date.toLocaleDateString(translationLocale, {
                             month: "short",
                             day: "numeric",
                             year: "numeric",
                           })}
                           <CalendarIcon className="size-4 text-muted-foreground" />
                         </PopoverTrigger>
-                        <PopoverPopup align="start" aria-label="Choose snooze date">
+                        <PopoverPopup
+                          align="start"
+                          aria-label={translateWebSource(translationLocale, "Choose snooze date")}
+                        >
                           <Calendar
                             mode="single"
                             required
@@ -193,18 +200,28 @@ function CustomSnoozeDialog() {
                         setError(null);
                       }}
                     >
-                      <Label htmlFor={`${id}-amount`}>Snooze for</Label>
+                      <Label htmlFor={`${id}-amount`}>
+                        {translateWebSource(translationLocale, "Snooze for")}
+                      </Label>
                       <NumberFieldGroup>
-                        <NumberFieldDecrement aria-label="Decrease duration" />
+                        <NumberFieldDecrement
+                          aria-label={translateWebSource(translationLocale, "Decrease duration")}
+                        />
                         <NumberFieldInput required />
-                        <NumberFieldIncrement aria-label="Increase duration" />
+                        <NumberFieldIncrement
+                          aria-label={translateWebSource(translationLocale, "Increase duration")}
+                        />
                       </NumberFieldGroup>
                     </NumberField>
                     <Label className="flex min-w-0 flex-col items-stretch" htmlFor={`${id}-unit`}>
-                      Unit
+                      {translateWebSource(translationLocale, "Unit")}
                       <Select
                         value={unit}
-                        items={{ minutes: "Minutes", hours: "Hours", days: "Days" }}
+                        items={{
+                          minutes: translateWebSource(translationLocale, "Minutes"),
+                          hours: translateWebSource(translationLocale, "Hours"),
+                          days: translateWebSource(translationLocale, "Days"),
+                        }}
                         onValueChange={(value) => {
                           if (value === "minutes" || value === "hours" || value === "days")
                             setUnit(value);
@@ -227,7 +244,7 @@ function CustomSnoozeDialog() {
             </div>
             {error && (
               <p role="alert" className="text-destructive">
-                {error}
+                {translateWebSource(translationLocale, error)}
               </p>
             )}
           </DialogPanel>
@@ -245,7 +262,7 @@ function CustomSnoozeDialog() {
               }}
             >
               <Settings2Icon />
-              Edit snooze options
+              {translateWebSource(translationLocale, "Edit snooze options")}
             </Button>
             <Button type="button" variant="outline" onClick={() => finish(null)}>
               {translateWebSource(translationLocale, "Cancel")}

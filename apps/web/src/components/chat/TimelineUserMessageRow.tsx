@@ -321,7 +321,9 @@ function AutomationMessageRow({ row }: { row: Extract<TimelineRow, { kind: "mess
         )}
         data-user-message-bubble=""
       >
-        <MessageAuthorHeading>Automation</MessageAuthorHeading>
+        <MessageAuthorHeading>
+          {translateWebSource(translationLocale, "Automation")}
+        </MessageAuthorHeading>
         <FoldedMessageHeader
           icon={CalendarClockIcon}
           label="Automation"
@@ -351,7 +353,7 @@ function AutomationMessageRow({ row }: { row: Extract<TimelineRow, { kind: "mess
                 search={{ environmentId: ctx.activeThreadEnvironmentId, taskId: scheduledTaskId }}
                 className="rounded-sm text-xs text-muted-foreground hover:underline focus-visible:outline-2 focus-visible:outline-ring"
               >
-                Open automation
+                {translateWebSource(translationLocale, "Open automation")}
               </Link>
             ) : null}
             <TimelineRowTimestamp
@@ -860,7 +862,7 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
           className="me-1 text-2xs text-muted-foreground/70"
           data-user-message-attribution="t3code"
         >
-          Sent by T3 Code
+          {translateWebSource(translationLocale, "Sent by T3 Code")}
         </p>
       ) : null}
       {/* The row's heading already names the guest for screen readers. */}
@@ -880,7 +882,9 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
       {mediaAboveText ? (
         <div className="flex max-w-[80%] justify-end">
           {/* The heading leads the media so screen readers reach it before the images. */}
-          <MessageAuthorHeading>You</MessageAuthorHeading>
+          <MessageAuthorHeading>
+            {translateWebSource(translationLocale, "You")}
+          </MessageAuthorHeading>
           {mediaBlock}
         </div>
       ) : null}
@@ -904,7 +908,7 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
             {folded
               ? senderLabel
               : userMessage.guestName === undefined
-                ? "You"
+                ? translateWebSource(translationLocale, "You")
                 : `${userMessage.guestName} (guest)`}
           </MessageAuthorHeading>
         )}
@@ -979,7 +983,9 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
                         <span className="block truncate">{label}</span>
                         {file.downloadable === false || pastedText ? (
                           <span className="block text-xs text-muted-foreground tabular-nums">
-                            {file.downloadable === false ? "Sending…" : formatBytes(file.sizeBytes)}
+                            {file.downloadable === false
+                              ? translateWebSource(translationLocale, "Sending…")
+                              : formatBytes(file.sizeBytes)}
                           </span>
                         ) : null}
                       </span>
@@ -1086,6 +1092,7 @@ function UserMessageIntentMarker({
   readonly intent: "steer" | "promoted_queued_to_steer";
   readonly unread: boolean;
 }) {
+  const { locale: i18nLocale } = useI18n();
   return (
     <Tooltip>
       <TooltipTrigger
@@ -1097,7 +1104,9 @@ function UserMessageIntentMarker({
         }
       >
         <Redo2Icon aria-hidden="true" className="size-3" />
-        {unread ? "Steer · waiting to be read" : "Steer"}
+        {unread
+          ? translateWebSource(i18nLocale, "Steer · waiting to be read")
+          : translateWebSource(i18nLocale, "Steer")}
       </TooltipTrigger>
       <TooltipPopup side="top">
         {unread

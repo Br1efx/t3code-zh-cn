@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "../../i18n/messages";
 import { useI18n } from "../../i18n/WebI18nContext";
 import {
@@ -606,8 +607,10 @@ function InstanceSessionManagement(
                           {provider.providerId}
                         </p>
                         <p className="text-3xs text-muted-foreground">
-                          {provider.current === null ? "Disabled" : "Configured"}
-                          {provider.required ? " · Required" : ""}
+                          {provider.current === null
+                            ? translateWebSource(sourceLocale, "Disabled")
+                            : translateWebSource(sourceLocale, "Configured")}
+                          {provider.required ? localizeWebString(sourceLocale, " · Required") : ""}
                         </p>
                       </div>
                       <div className="flex items-center gap-1">

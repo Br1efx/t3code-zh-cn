@@ -375,9 +375,9 @@ describe("DesktopApplicationMenu", () => {
     }),
   );
   it.effect.each([
-    { label: "重新加载", accelerator: "CmdOrCtrl+R", command: "reload" },
-    { label: "强制重新加载", accelerator: "Shift+CmdOrCtrl+R", command: "forceReload" },
-    { label: "切换开发者工具", accelerator: "Ctrl+Shift+I", command: "toggleDevTools" },
+    { label: "刷新页面", accelerator: "CmdOrCtrl+R", command: "reload" },
+    { label: "强制刷新", accelerator: "Shift+CmdOrCtrl+R", command: "forceReload" },
+    { label: "显示/隐藏开发者工具", accelerator: "Ctrl+Shift+I", command: "toggleDevTools" },
   ] as const)("routes localized $command to the main renderer", ({ label, accelerator, command }) =>
     Effect.gen(function* () {
       const selectedAction = yield* Deferred.make<string>();
@@ -387,7 +387,13 @@ describe("DesktopApplicationMenu", () => {
       yield* configureMenu(selectedAction, applicationMenuTemplate, { appLocale: "zh-CN" });
 
       const template = yield* Deferred.await(applicationMenuTemplate);
-      const viewMenu = template.find((item) => item.label === "视图");
+      const fileMenu = template.find((item) => item.label === "文件");
+      if (!Array.isArray(fileMenu?.submenu)) {
+        throw new Error("Expected localized File menu submenu to be an array.");
+      }
+      assert.isDefined(fileMenu.submenu.find((item) => item.label === "关闭开发者工具"));
+
+      const viewMenu = template.find((item) => item.label === "查看");
       if (!Array.isArray(viewMenu?.submenu)) {
         throw new Error("Expected localized View menu submenu to be an array.");
       }

@@ -1,3 +1,4 @@
+import { translateWebSource } from "~/i18n/messages";
 import { useLegendListRef } from "~/hooks/useLegendListRef";
 import { LegendList, type LegendListRef } from "@legendapp/list/react";
 import { CheckIcon } from "lucide-react";
@@ -99,7 +100,7 @@ export function FontFamilyPicker({
   initialOpen?: boolean;
   onSelect: (family: string) => void;
 }) {
-  const { t } = useI18n();
+  const { locale: i18nLocale, t } = useI18n();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   // Base UI needs an initial closed commit; mounting open loses exit transitionend and leaves the popup
@@ -203,7 +204,7 @@ export function FontFamilyPicker({
       </ComboboxTrigger>
       <ComboboxPopup align="end" className="flex w-72 flex-col">
         <ComboboxSearchInput
-          placeholder="Search fonts…"
+          placeholder={translateWebSource(i18nLocale, "Search fonts…")}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />

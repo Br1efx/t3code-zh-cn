@@ -752,7 +752,11 @@ export function BranchToolbarBranchSelector({
           value={itemValue}
           onClick={() => selectPickerItem(itemValue)}
         >
-          <span className="truncate">Create new ref &quot;{newRefName}&quot;</span>
+          <span className="truncate">
+            {translationLocale === "zh-CN"
+              ? `新建分支 "${newRefName}"`
+              : `Create new ref "${newRefName}"`}
+          </span>
         </ComboboxItem>
       );
     }

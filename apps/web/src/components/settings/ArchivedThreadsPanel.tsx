@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { settingsScopeEnvironmentLabels } from "./settingsScopeAxis";
@@ -205,10 +206,10 @@ export function ArchivedThreadsPanel() {
                   <ArchiveIcon className="size-3.5 text-muted-foreground" />
                 )}
                 {isLoadingArchive
-                  ? "Loading archived threads"
+                  ? translateWebSource(translationLocale, "Loading archived threads")
                   : archiveError
-                    ? "Could not load archived threads"
-                    : "No archived threads"}
+                    ? translateWebSource(translationLocale, "Could not load archived threads")
+                    : translateWebSource(translationLocale, "No archived threads")}
               </span>
             }
             description={
@@ -241,7 +242,7 @@ export function ArchivedThreadsPanel() {
                       {hasMultipleEnvironments ? `${thread.environmentLabel} · ` : null}
                       {translateWebSource(translationLocale, "Archived")}{" "}
                       <RelativeTime timestamp={thread.archivedAt ?? thread.createdAt} />
-                      {" \u00b7 Created "}
+                      {localizeWebString(translationLocale, " · Created ")}
                       <RelativeTime timestamp={thread.createdAt} />
                     </span>
                   }

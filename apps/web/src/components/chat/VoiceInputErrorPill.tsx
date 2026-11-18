@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import { MICROPHONE_PERMISSION_ERROR } from "@t3tools/client-runtime/voice-input";
 import { useNavigate } from "@tanstack/react-router";
 import { CircleAlertIcon, XIcon } from "lucide-react";
@@ -40,6 +42,7 @@ export function VoiceInputErrorPill(props: {
   onRetry(): void;
   onDismiss(): void;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const navigate = useNavigate();
   const message = props.error ?? "Voice input failed";
   const openSettings = props.errorAction === "settings";
@@ -85,7 +88,8 @@ export function VoiceInputErrorPill(props: {
         >
           <CircleAlertIcon aria-hidden className="size-3.5 shrink-0" />
           <span className="truncate">
-            {(props.error && VOICE_ERROR_LABELS[props.error]) || "Voice input failed"}
+            {(props.error && VOICE_ERROR_LABELS[props.error]) ||
+              translateWebSource(i18nLocale, "Voice input failed")}
           </span>
         </TooltipTrigger>
         <TooltipPopup side="top">{message}</TooltipPopup>

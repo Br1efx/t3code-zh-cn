@@ -15,12 +15,12 @@ describe("translateWebMessage", () => {
     ).toBe("Local dev 已保存在此浏览器中。");
   });
 
-  it("interpolates task titles in localized destructive confirmations", () => {
+  it("interpolates thread titles in localized destructive confirmations", () => {
     expect(
       translateWebMessage("zh-CN", "sidebar.confirmDeleteThread", {
         title: "修复登录",
       }),
-    ).toBe("要删除任务“修复登录”吗？");
+    ).toBe("确定要删除对话“修复登录”吗？");
   });
 
   it("keeps provider names and versions unchanged in localized update notices", () => {
@@ -34,7 +34,7 @@ describe("translateWebMessage", () => {
 
   it("localizes the user-facing settings details selected for review", () => {
     expect(translateWebMessage("zh-CN", "settings.general.autoSettleDays.title")).toBe(
-      "自动收起前的无活动天数",
+      "闲置多少天后自动归入已办",
     );
     expect(translateWebMessage("zh-CN", "providers.healthCheck.title")).toBe("健康检查间隔");
     expect(translateWebMessage("zh-CN", "sourceControl.versionControl")).toBe("版本控制");
@@ -49,7 +49,7 @@ describe("translateWebMessage", () => {
     ).toBe("旋转为横向");
     expect(translateWebSource("zh-CN", "No actions configured.")).toBe("尚未配置操作。");
     expect(translateWebSource("zh-CN", "Project agent browser access")).toBe(
-      "项目 Agent 浏览器访问权限",
+      "此项目的智能体浏览器权限",
     );
   });
 
@@ -72,14 +72,14 @@ describe("translateWebMessage", () => {
         method: "squash",
       }),
     ).toBe("将使用 squash 合并 #42。");
-    expect(translateWebMessage("zh-CN", "composer.banner.settledTitle")).toBe("此任务已收起");
+    expect(translateWebMessage("zh-CN", "composer.banner.settledTitle")).toBe("此对话已归入已办");
     expect(translateWebMessage("zh-CN", "contextWindow.title")).toBe("上下文窗口");
     expect(
       translateWebMessage("zh-CN", "composer.compaction.native.question", {
         age: "2 小时 5 分钟",
         tokens: "250,000",
       }),
-    ).toBe("此会话已有 2 小时 5 分钟，当前使用 250,000 个令牌。是否先压缩再继续？");
+    ).toBe("这段对话已开启 2 小时 5 分钟，累计占用 250,000 Token。要先精简压缩上下文再继续吗？");
     expect(translateWebMessage("zh-CN", "providers.config.autoCompactWindow")).toBe(
       "达到以下用量后自动压缩",
     );
@@ -89,7 +89,7 @@ describe("translateWebMessage", () => {
 describe("upstream UI localization", () => {
   it("localizes registry, account, permission and scheduled-task settings", () => {
     expect(translateWebSource("zh-CN", "Search ACP Registry")).toBe("搜索 ACP 注册表");
-    expect(translateWebSource("zh-CN", "Provider sign-in terminal")).toBe("提供商登录终端");
+    expect(translateWebSource("zh-CN", "Provider sign-in terminal")).toBe("AI 服务登录终端");
     expect(translateWebSource("zh-CN", "Scheduled tasks")).toBe("定时任务");
     expect(translateWebSource("zh-CN", "Require signature")).toBe("要求签名");
     expect(translateWebSource("zh-CN", "Not granted")).toBe("未授予");
@@ -141,7 +141,7 @@ describe("v0.0.45 UI localization", () => {
         "zh-CN",
         "Automatically resume interrupted threads after an update, crash, or machine restart on the selected environments.",
       ),
-    ).toBe("在所选环境更新、崩溃或设备重启后，自动恢复被中断的任务。");
+    ).toBe("当所选运行设备完成更新、意外退出或重启电脑后，自动接着运行上次中断的对话。");
     expect(translateWebMessage("zh-CN", "sidebar.working", { count: 3 })).toBe("进行中（3）");
   });
 
@@ -150,5 +150,28 @@ describe("v0.0.45 UI localization", () => {
     expect(translateWebMessage("zh-CN", "composer.messageLabel")).toBe("消息");
     expect(translateWebMessage("zh-CN", "composer.traits.ultrafastModeOn")).toBe("已开启极速模式");
     expect(translateWebMessage("en", "composer.menu.label.commands")).toBe("Commands");
+  });
+});
+
+describe("v0.1.10 beginner-friendly localization & dynamic patterns", () => {
+  it("uses unified beginner-friendly terminology across SnapShots, Labs, PRs, and threads", () => {
+    expect(translateWebSource("zh-CN", "SnapShots")).toBe("快捷截图");
+    expect(translateWebSource("zh-CN", "Labs")).toBe("实验功能");
+    expect(translateWebSource("zh-CN", "Side chat")).toBe("旁路提问");
+    expect(translateWebMessage("zh-CN", "pullRequests.title")).toBe("合并请求 (PR)");
+    expect(translateWebMessage("zh-CN", "sidebar.newThread")).toBe("新建对话");
+    expect(translateWebMessage("zh-CN", "sidebar.settledTitle")).toBe("已办结");
+    expect(translateWebMessage("zh-CN", "sidebar.snoozedTitle")).toBe("已延后");
+  });
+
+  it("translates dynamic English UI patterns while keeping English unchanged", () => {
+    expect(translateWebSource("zh-CN", "Snoozed, 2h left")).toBe("已延后，剩余 2h");
+    expect(translateWebSource("zh-CN", "Settled 3 days ago")).toBe("已于 3 days ago 归入已办");
+    expect(translateWebSource("zh-CN", "3 subagents running")).toBe("3 个子智能体正在运行");
+    expect(translateWebSource("zh-CN", "5 changed files")).toBe("5 个改动文件");
+    expect(translateWebSource("zh-CN", "Step 1 of 2: open device")).toBe(
+      "第 1 / 2 步：启动模拟设备",
+    );
+    expect(translateWebSource("en", "3 subagents running")).toBe("3 subagents running");
   });
 });

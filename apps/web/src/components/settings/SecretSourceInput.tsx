@@ -230,6 +230,7 @@ export function SecretSourceInput({
   children,
   ...rest
 }: SecretSourceInputProps) {
+  const { locale: i18nLocale } = useI18n();
   // A provider picked here applies once a reference for it is committed.
   const [pendingProvider, setPendingProvider] = useState<SecretProviderId | null>(null);
   const [rejectedReference, setRejectedReference] = useState<string | null>(null);
@@ -313,7 +314,8 @@ export function SecretSourceInput({
         </div>
         {rejectedReference !== null ? (
           <p className="text-2xs text-destructive">
-            {definition?.invalidReferenceMessage ?? "Enter a valid secret reference."}
+            {definition?.invalidReferenceMessage ??
+              translateWebSource(i18nLocale, "Enter a valid secret reference.")}
           </p>
         ) : null}
       </div>

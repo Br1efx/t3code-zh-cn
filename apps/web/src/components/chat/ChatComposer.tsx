@@ -3584,10 +3584,10 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                 {composerSuggestionsVisible && composerMenuItems.length === 0
                   ? isComposerMenuLoading
                     ? composerTriggerKind === "pull-request"
-                      ? "Finding pull request..."
+                      ? translateWebSource(releaseLocale, "Finding pull request...")
                       : composerTriggerKind === "skill" || composerTriggerKind === "slash-command"
-                        ? "Searching workspace skills..."
-                        : "Searching workspace files..."
+                        ? translateWebSource(releaseLocale, "Searching workspace skills...")
+                        : translateWebSource(releaseLocale, "Searching workspace files...")
                     : composerMenuEmptyState
                   : ""}
               </div>
@@ -3665,8 +3665,14 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                     placeholder={
                       isComposerApprovalState
                         ? activePendingApproval?.supportsFeedback
-                          ? "Send feedback to decline this request"
-                          : "Send a message to decline and redirect the agent"
+                          ? translateWebSource(
+                              releaseLocale,
+                              "Send feedback to decline this request",
+                            )
+                          : translateWebSource(
+                              releaseLocale,
+                              "Send a message to decline and redirect the agent",
+                            )
                         : activePendingProgress
                           ? isChoiceOnlyPendingQuestion
                             ? translateWebSource(releaseLocale, "Choose an option above")
@@ -3674,9 +3680,15 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
                               ? translateWebSource(releaseLocale, "Type your answer")
                               : t("composer.placeholder.customAnswer")
                           : projectSelectionRequired
-                            ? "Choose a project above to start a thread"
+                            ? translateWebSource(
+                                releaseLocale,
+                                "Choose a project above to start a thread",
+                              )
                             : showProviderUnavailable
-                              ? "Enable a provider in Settings to send a message"
+                              ? translateWebSource(
+                                  releaseLocale,
+                                  "Enable a provider in Settings to send a message",
+                                )
                               : (offeredPromptSuggestion ?? t("composer.placeholder.default"))
                     }
                     placeholderSuffix={
@@ -3726,7 +3738,7 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
             {speechInput.preview ? (
               // column-reverse pins the scroll to the bottom; the single inner div keeps the text in normal order.
               <div
-                aria-label="Live transcription"
+                aria-label={translateWebSource(releaseLocale, "Live transcription")}
                 className="mx-3 mb-3 flex max-h-32 flex-col-reverse overflow-y-auto rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm leading-relaxed break-words whitespace-pre-wrap sm:mx-4"
               >
                 <div>

@@ -473,7 +473,10 @@ export function AddEnvironmentDialog({
       {relayRouteOffer !== null ? (
         <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
           <p className="text-xs text-muted-foreground">
-            This machine is on your T3 Connect account. Use it as a fallback route.
+            {translateWebSource(
+              translationLocale,
+              "This machine is on your T3 Connect account. Use it as a fallback route.",
+            )}
           </p>
           <Button
             size="xs"
@@ -575,7 +578,8 @@ export function AddEnvironmentDialog({
                   </AutocompleteList>
                 ) : (
                   <AutocompleteEmpty className="break-all">
-                    No hosts match "{savedBackendSshHost.trim()}".
+                    {translateWebSource(translationLocale, 'No hosts match "')}
+                    {savedBackendSshHost.trim()}".
                   </AutocompleteEmpty>
                 )}
               </AutocompletePopup>

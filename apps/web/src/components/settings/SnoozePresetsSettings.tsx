@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useState } from "react";
@@ -232,6 +233,7 @@ function SnoozePresetList(props: {
   onAdd: () => void;
   onSettle: () => void;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const nowMinute = useNowMinute();
   const now = new Date(`${nowMinute}Z`);
   const formatTime = (date: Date) =>
@@ -309,7 +311,9 @@ function SnoozePresetList(props: {
         );
       })}
       <p className="text-xs text-muted-foreground">
-        {menuOrder.length === 0 ? "Menus offer only Custom…" : `Menu now: ${menuOrder.join(" · ")}`}
+        {menuOrder.length === 0
+          ? translateWebSource(i18nLocale, "Menus offer only Custom…")
+          : `Menu now: ${menuOrder.join(" · ")}`}
       </p>
       <div>
         <Button
@@ -323,7 +327,9 @@ function SnoozePresetList(props: {
         </Button>
         {props.presets.length >= MAX_SNOOZE_PRESETS ? (
           <span className="ps-2 text-xs text-muted-foreground">
-            Up to {MAX_SNOOZE_PRESETS} options
+            {localizeWebString(i18nLocale, "Up to ")}
+            {MAX_SNOOZE_PRESETS}
+            {localizeWebString(i18nLocale, " options")}
           </span>
         ) : null}
       </div>
@@ -381,7 +387,9 @@ function SnoozePresetFields(props: {
         />
       ) : (
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <span className="text-xs text-muted-foreground">at</span>
+          <span className="text-xs text-muted-foreground">
+            {translateWebSource(translationLocale, "at")}
+          </span>
           <Input
             nativeInput
             size="sm"
@@ -402,6 +410,7 @@ function SnoozePresetFields(props: {
 }
 
 function DurationFields(props: { minutes: number; onChange: (minutes: number) => void }) {
+  const { locale: i18nLocale } = useI18n();
   // The chosen unit stays put while stepping, so 59 → 60 minutes does not jump to hours.
   const [chosenUnit, setChosenUnit] = useState(() => splitMinutes(props.minutes).unit);
   const unit =
@@ -437,9 +446,9 @@ function DurationFields(props: { minutes: number; onChange: (minutes: number) =>
         }}
       >
         <NumberFieldGroup>
-          <NumberFieldDecrement aria-label="Decrease" />
+          <NumberFieldDecrement aria-label={translateWebSource(i18nLocale, "Decrease")} />
           <NumberFieldInput
-            aria-label="Amount"
+            aria-label={translateWebSource(i18nLocale, "Amount")}
             // Base UI commits on blur but not on Enter; refocus so keyboard users stay put.
             onKeyDown={(event) => {
               if (event.key !== "Enter") return;
@@ -448,7 +457,7 @@ function DurationFields(props: { minutes: number; onChange: (minutes: number) =>
               input.focus();
             }}
           />
-          <NumberFieldIncrement aria-label="Increase" />
+          <NumberFieldIncrement aria-label={translateWebSource(i18nLocale, "Increase")} />
         </NumberFieldGroup>
       </NumberField>
       <Select
@@ -461,7 +470,11 @@ function DurationFields(props: { minutes: number; onChange: (minutes: number) =>
           }
         }}
       >
-        <SelectTrigger size="sm" className="w-28" aria-label="Unit">
+        <SelectTrigger
+          size="sm"
+          className="w-28"
+          aria-label={translateWebSource(i18nLocale, "Unit")}
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectPopup>

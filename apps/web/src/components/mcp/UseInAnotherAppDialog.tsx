@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useAuth } from "@clerk/react";
@@ -77,8 +78,12 @@ export function UseInAnotherAppDialogHost() {
 }
 
 function UseInAnotherAppDialog({ requested }: { readonly requested: EnvironmentId | null }) {
+  const { locale: translationLocale } = useI18n();
   const { environment, label } = useAccessEnvironment(requested);
-  const title = `Use T3 Code in another app (MCP) · ${label ?? "T3 Code"}`;
+  const title =
+    translationLocale === "zh-CN"
+      ? `在其他应用中使用 T3 Code (MCP) · ${label ?? "T3 Code"}`
+      : `Use T3 Code in another app (MCP) · ${label ?? "T3 Code"}`;
   return (
     <Dialog open onOpenChange={(open) => (open ? undefined : close())}>
       <WizardPopup>
@@ -91,8 +96,11 @@ function UseInAnotherAppDialog({ requested }: { readonly requested: EnvironmentI
               <GateMessage
                 title={
                   environment === null
-                    ? "Connect to an environment first."
-                    : "T3 Connect is not available in this build."
+                    ? translateWebSource(translationLocale, "Connect to an environment first.")
+                    : translateWebSource(
+                        translationLocale,
+                        "T3 Connect is not available in this build.",
+                      )
                 }
               />
             </WizardPanel>
@@ -126,10 +134,19 @@ function Wizard({
   // The level is picked on the sign-in page, so the wizard neither asks for it nor needs a code.
   const hostedApproval =
     environment.serverConfig?.environment.capabilities.mcpHostedApproval === true;
-  const steps = hostedApproval ? HOSTED_APPROVAL_STEPS : STEPS;
+  const steps = (hostedApproval ? HOSTED_APPROVAL_STEPS : STEPS).map((stepLabel) =>
+    translateWebSource(translationLocale, stepLabel),
+  );
   const shownStep = hostedApproval && step === 2 ? 1 : step;
   const next = () => setStep(step === 0 ? (hostedApproval ? 2 : 1) : 2);
-  const appName = choice === null || choice === "other" ? "the app" : choice.name;
+  const appName =
+    choice === null || choice === "other"
+      ? translationLocale === "zh-CN"
+        ? "该应用"
+        : "the app"
+      : choice.name;
+  const accessPrompt =
+    translationLocale === "zh-CN" ? `允许 ${appName} 执行哪些操作？` : `What can ${appName} do?`;
   return (
     <>
       <WizardHeader title={title}>
@@ -149,9 +166,9 @@ function Wizard({
           <AppStep choice={choice} onChoose={setChoice} />
         ) : step === 1 ? (
           <section className="space-y-3">
-            <h3 className="text-sm font-medium">What can {appName} do?</h3>
+            <h3 className="text-sm font-medium">{accessPrompt}</h3>
             <RadioGroup
-              aria-label={`What can ${appName} do?`}
+              aria-label={accessPrompt}
               value={access}
               onValueChange={(value) => setPicked(value as AuthMcpClientAccess)}
             >
@@ -162,7 +179,12 @@ function Wizard({
                   selected={level === access}
                   disabledReason={levels.get(level)}
                   description={
-                    level === "full-access" ? "Runs commands and edits files without asking" : null
+                    level === "full-access"
+                      ? translateWebSource(
+                          translationLocale,
+                          "Runs commands and edits files without asking",
+                        )
+                      : null
                   }
                 />
               ))}
@@ -209,6 +231,7 @@ const DEFAULT_LEVELS: readonly AuthMcpClientAccess[] = [
 
 /** Why each level cannot be granted on this environment; absent when it can. */
 function useGrantableLevels(environment: EnvironmentPresentation) {
+  const { locale: translationLocale } = useI18n();
   const environmentId = environment.environmentId;
   const session = useEnvironmentSessionState(environmentId).data;
   const canMint = useEnvironmentScope(environmentId, AuthAccessWriteScope);
@@ -220,14 +243,20 @@ function useGrantableLevels(environment: EnvironmentPresentation) {
       const reason =
         remoteDenial ??
         (!canMint
-          ? `This device needs the Manage access permission on ${environment.label}.`
+          ? translationLocale === "zh-CN"
+            ? `当前设备需要 ${environment.label} 上的“管理访问权限”权限。`
+            : `This device needs the Manage access permission on ${environment.label}.`
           : session === null ||
               !mcpClientScopes(level).every((scope) => sessionGrantsScope(session, scope))
-            ? `This device cannot grant this on ${environment.label}.`
+            ? translationLocale === "zh-CN"
+              ? `当前设备无法在 ${environment.label} 上授予此权限。`
+              : `This device cannot grant this on ${environment.label}.`
             : level === "read-only"
               ? undefined
               : managedRuntimeModeDenial(policy, level));
-      return reason === undefined ? [] : [[level, reason] as const];
+      return reason === undefined
+        ? []
+        : [[level, translateWebSource(translationLocale, reason)] as const];
     }),
   );
 }
@@ -372,22 +401,37 @@ function GateScreen({
     </Button>
   );
   const checkAgain = retry(() => void check());
+  const cantCheckTitle =
+    translationLocale === "zh-CN"
+      ? `无法检查 ${name} 上的 T3 Connect 状态`
+      : `Can't check T3 Connect on ${name}`;
+  const offlineTitle =
+    translationLocale === "zh-CN"
+      ? `${name} 的 T3 Connect 当前离线`
+      : `${name}'s T3 Connect is offline`;
   switch (gate.kind) {
     case "checking":
       return (
         <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
           <Spinner size="sm" tone="muted" />
-          Checking T3 Connect…
+          {translateWebSource(translationLocale, "Checking T3 Connect…")}
         </p>
       );
     case "sign-in":
       return (
         <GateMessage
-          title="Sign in to T3 Connect"
-          lines={[
-            `Apps like Poke and Claude run in the cloud. They need a public address to reach ${name}.`,
-            `T3 Connect gives ${name} that address. Each app still needs your approval.`,
-          ]}
+          title={translateWebSource(translationLocale, "Sign in to T3 Connect")}
+          lines={
+            translationLocale === "zh-CN"
+              ? [
+                  `Poke、Claude 等应用运行在云端，需要公网地址才能连接到 ${name}。`,
+                  `T3 Connect 会为 ${name} 提供安全访问地址，且每个应用仍需经你批准才能接入。`,
+                ]
+              : [
+                  `Apps like Poke and Claude run in the cloud. They need a public address to reach ${name}.`,
+                  `T3 Connect gives ${name} that address. Each app still needs your approval.`,
+                ]
+          }
         >
           {/* Clerk's sign-in is its own modal, so this dialog closes first. */}
           <Button
@@ -402,30 +446,40 @@ function GateScreen({
       );
     case "disconnected":
       return gate.relay === null ? (
-        <GateMessage title={`Connect to ${name} first.`} />
-      ) : (
         <GateMessage
           title={
-            gate.relay === "offline"
-              ? `${name}'s T3 Connect is offline`
-              : `Can't check T3 Connect on ${name}`
+            translationLocale === "zh-CN" ? `请先连接到 ${name}。` : `Connect to ${name} first.`
           }
-        >
+        />
+      ) : (
+        <GateMessage title={gate.relay === "offline" ? offlineTitle : cantCheckTitle}>
           {retry(refreshList)}
         </GateMessage>
       );
     case "update":
-      return <GateMessage title={`Update T3 Code on ${name}`} />;
+      return (
+        <GateMessage
+          title={
+            translationLocale === "zh-CN"
+              ? `请更新 ${name} 上的 T3 Code`
+              : `Update T3 Code on ${name}`
+          }
+        />
+      );
     case "no-relay-read":
       return (
         <GateMessage
-          title={`Can't check T3 Connect on ${name}`}
-          lines={[`This device needs the View relay permission on ${name}.`]}
+          title={cantCheckTitle}
+          lines={[
+            translationLocale === "zh-CN"
+              ? `当前设备需要 ${name} 上的“查看中继状态”权限。`
+              : `This device needs the View relay permission on ${name}.`,
+          ]}
         />
       );
     case "error":
       return (
-        <GateMessage title={`Can't check T3 Connect on ${name}`} lines={[gate.message]}>
+        <GateMessage title={cantCheckTitle} lines={[gate.message]}>
           {checkAgain}
         </GateMessage>
       );
@@ -435,10 +489,17 @@ function GateScreen({
         const reachability = gate.reachability;
         return (
           <GateMessage
-            title={
-              reachability ? `${name}'s T3 Connect is offline` : `Can't check T3 Connect on ${name}`
+            title={reachability ? offlineTitle : cantCheckTitle}
+            lines={
+              reachability
+                ? [
+                    reachability.reason,
+                    translationLocale === "zh-CN"
+                      ? `解决方法：${reachability.fix}`
+                      : `Fix: ${reachability.fix}`,
+                  ]
+                : []
             }
-            lines={reachability ? [reachability.reason, `Fix: ${reachability.fix}`] : []}
           >
             {checkAgain}
           </GateMessage>
@@ -446,11 +507,22 @@ function GateScreen({
       }
       return (
         <GateMessage
-          title={`Turn on T3 Connect for ${name}`}
-          lines={[
-            `${name} gets a public https address, with no router setup.`,
-            "Only apps you approve can use it. You can turn it off in Settings.",
-          ]}
+          title={
+            translationLocale === "zh-CN"
+              ? `为 ${name} 开启 T3 Connect`
+              : `Turn on T3 Connect for ${name}`
+          }
+          lines={
+            translationLocale === "zh-CN"
+              ? [
+                  `无需配置路由器，即可为 ${name} 生成安全公网 HTTPS 地址。`,
+                  "只有经你批准的应用才能访问，你随时可以在设置中关闭。",
+                ]
+              : [
+                  `${name} gets a public https address, with no router setup.`,
+                  "Only apps you approve can use it. You can turn it off in Settings.",
+                ]
+          }
         >
           {turnOnHere.kind === "here" ? (
             <div className="space-y-2">
@@ -463,18 +535,27 @@ function GateScreen({
               {tunnelLimit !== null ? (
                 <>
                   <p className="text-sm text-destructive-foreground">
-                    Your T3 Connect account is out of tunnels.
+                    {translateWebSource(
+                      translationLocale,
+                      "Your T3 Connect account is out of tunnels.",
+                    )}
                   </p>
                   <ManageAccessButton environment={environment} label="Manage tunnels" />
                 </>
               ) : null}
             </div>
           ) : turnOnHere.kind === "policy" ? (
-            <p className="text-sm text-muted-foreground">{turnOnHere.reason}</p>
+            <p className="text-sm text-muted-foreground">
+              {translateWebSource(translationLocale, turnOnHere.reason)}
+            </p>
           ) : (
             <div className="space-y-2 text-sm">
               <CommandBlock command="t3 connect link" />
-              <p>Restart T3 Code on {name}.</p>
+              <p>
+                {translationLocale === "zh-CN"
+                  ? `请在 ${name} 上重启 T3 Code。`
+                  : `Restart T3 Code on ${name}.`}
+              </p>
               {checkAgain}
             </div>
           )}
@@ -495,13 +576,14 @@ function GateMessage({
   readonly lines?: readonly string[];
   readonly children?: ReactNode;
 }) {
+  const { locale: translationLocale } = useI18n();
   return (
     <section className="space-y-3">
-      <h3 className="text-base font-medium">{title}</h3>
+      <h3 className="text-base font-medium">{translateWebSource(translationLocale, title)}</h3>
       {lines.length > 0 ? (
         <div className="space-y-1 text-sm text-muted-foreground">
           {lines.map((line) => (
-            <p key={line}>{line}</p>
+            <p key={line}>{translateWebSource(translationLocale, line)}</p>
           ))}
         </div>
       ) : null}
@@ -517,9 +599,10 @@ function AppStep({
   readonly choice: Choice | null;
   readonly onChoose: (choice: Choice) => void;
 }) {
+  const { locale: translationLocale } = useI18n();
   return (
     <section className="space-y-3">
-      <h3 className="text-sm font-medium">Which app?</h3>
+      <h3 className="text-sm font-medium">{translateWebSource(translationLocale, "Which app?")}</h3>
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
         {MCP_APPS.filter((app) => !app.hidden).map((app) => (
           <button
@@ -546,7 +629,7 @@ function AppStep({
         onClick={() => onChoose("other")}
         className="w-full rounded-lg border border-border px-3 py-2.5 text-sm font-medium outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring aria-pressed:border-primary aria-pressed:bg-primary/8"
       >
-        Something else…
+        {translateWebSource(translationLocale, "Something else…")}
       </button>
     </section>
   );
@@ -570,8 +653,24 @@ function ConnectStep({
   const code =
     access === null ? (
       <p className="text-sm text-muted-foreground">
-        {translateWebSource(translationLocale, "When")} {app?.name ?? "the app"} opens the sign-in
-        page, choose what it may do and approve with your T3 Connect account.
+        {translationLocale === "zh-CN" ? (
+          <>
+            当 {app?.name ?? "该应用"}
+            {localizeWebString(
+              translationLocale,
+              " 打开登录页面时，选择允许它执行的操作并用你的 T3 Connect 账号批准。",
+            )}
+          </>
+        ) : (
+          <>
+            {translateWebSource(translationLocale, "When")}{" "}
+            {app?.name ?? translateWebSource(translationLocale, "the app")}
+            {localizeWebString(
+              translationLocale,
+              " opens the sign-in page, choose what it may do and approve with your T3 Connect account.",
+            )}
+          </>
+        )}
       </p>
     ) : (
       <ApprovalCode
@@ -591,20 +690,28 @@ function ConnectStep({
         ) : null}
         <ol className="list-decimal space-y-1 ps-5 text-sm">
           {(app?.steps ?? OTHER_MCP_APP_STEPS).map((step) => (
-            <li key={step}>{step}</li>
+            <li key={step}>{translateWebSource(translationLocale, step)}</li>
           ))}
         </ol>
         {app === null ? (
           <p className="text-xs text-muted-foreground">
-            Apps that require their own client ID cannot connect.
+            {translateWebSource(
+              translationLocale,
+              "Apps that require their own client ID cannot connect.",
+            )}
           </p>
         ) : app.docs ? (
-          <TextButton onClick={() => openLink(app.docs ?? "")}>{app.name} help</TextButton>
+          <TextButton onClick={() => openLink(app.docs ?? "")}>
+            {translationLocale === "zh-CN" ? `${app.name} 帮助文档` : `${app.name} help`}
+          </TextButton>
         ) : null}
         {code}
         {app === null ? null : (
           <TextButton onClick={() => setAnotherWay(false)}>
-            {app.handoff.kind === "commands" ? "Back to commands" : "Back to one click"}
+            {translateWebSource(
+              translationLocale,
+              app.handoff.kind === "commands" ? "Back to commands" : "Back to one click",
+            )}
           </TextButton>
         )}
         <LinkedLine environment={environment} access={access} />
@@ -616,7 +723,9 @@ function ConnectStep({
       <PrimaryAction app={app} mcpUrl={mcpUrl} />
       <CopyRow label="URL" value={mcpUrl} />
       {code}
-      <TextButton onClick={() => setAnotherWay(true)}>Set up another way</TextButton>
+      <TextButton onClick={() => setAnotherWay(true)}>
+        {translateWebSource(translationLocale, "Set up another way")}
+      </TextButton>
       <LinkedLine environment={environment} access={access} />
     </section>
   );
@@ -653,8 +762,13 @@ function openLink(url: string) {
 }
 
 function PrimaryAction({ app, mcpUrl }: { readonly app: McpApp; readonly mcpUrl: string }) {
-  const action = mcpHandoffAction(app, mcpUrl);
-  const note = app.note ? <p className="text-xs text-muted-foreground">{app.note}</p> : null;
+  const { locale: translationLocale } = useI18n();
+  const action = mcpHandoffAction(app, mcpUrl, translationLocale);
+  const note = app.note ? (
+    <p className="text-xs text-muted-foreground">
+      {translateWebSource(translationLocale, app.note)}
+    </p>
+  ) : null;
   if (action === null) {
     return (
       <div className="space-y-2">
@@ -663,7 +777,11 @@ function PrimaryAction({ app, mcpUrl }: { readonly app: McpApp; readonly mcpUrl:
               .commands(mcpUrl)
               .map((command) => <CommandBlock key={command} command={command} />)
           : null}
-        <p className="text-xs text-muted-foreground">Run these where {app.name} runs.</p>
+        <p className="text-xs text-muted-foreground">
+          {translationLocale === "zh-CN"
+            ? `请在运行 ${app.name} 的设备上执行以下命令。`
+            : `Run these where ${app.name} runs.`}
+        </p>
         {note}
       </div>
     );
@@ -699,7 +817,14 @@ function PrimaryAction({ app, mcpUrl }: { readonly app: McpApp; readonly mcpUrl:
           ? {}
           : {
               actionProps: {
-                children: appLink === null ? `Open ${app.name}` : `Get ${app.name}`,
+                children:
+                  translationLocale === "zh-CN"
+                    ? appLink === null
+                      ? `打开 ${app.name}`
+                      : `获取 ${app.name}`
+                    : appLink === null
+                      ? `Open ${app.name}`
+                      : `Get ${app.name}`,
                 onClick: () => openLink(link),
               },
             }),
@@ -747,15 +872,29 @@ function ApprovalCode({
         expiresAt: result.success.expiresAt.epochMilliseconds,
       });
     } else {
-      setError(`Could not get a code from ${name}. Try again.`);
+      setError(
+        translationLocale === "zh-CN"
+          ? `无法从 ${name} 获取授权码，请重试。`
+          : `Could not get a code from ${name}. Try again.`,
+      );
     }
   };
   const left = code === null ? 0 : Math.max(0, Math.floor((code.expiresAt - now) / 1000));
+  const accessLabel = translateWebSource(translationLocale, accessConfig[access].label);
   return (
     <div className="space-y-1.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-sm">
-          Code to approve <span className="font-medium">{accessConfig[access].label}</span>
+          {translationLocale === "zh-CN" ? (
+            <>
+              用于批准 <span className="font-medium">{accessLabel}</span> 的授权码
+            </>
+          ) : (
+            <>
+              {localizeWebString(translationLocale, "Code to approve ")}
+              <span className="font-medium">{accessLabel}</span>
+            </>
+          )}
         </span>
         {live ? null : (
           <Button size="sm" variant="outline" disabled={pending} onClick={() => void mint()}>
@@ -771,11 +910,15 @@ function ApprovalCode({
               value={code.credential}
             />
             <p className="text-xs text-muted-foreground">
-              Expires {Math.floor(left / 60)}:{String(left % 60).padStart(2, "0")} · one use
+              {translationLocale === "zh-CN"
+                ? `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")} 后过期 · 一次性有效`
+                : `Expires ${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")} · one use`}
             </p>
           </>
         ) : (
-          <p className="text-xs text-muted-foreground">The code expired.</p>
+          <p className="text-xs text-muted-foreground">
+            {translateWebSource(translationLocale, "The code expired.")}
+          </p>
         )
       ) : null}
       {error ? <p className="text-xs text-destructive-foreground">{error}</p> : null}
@@ -784,6 +927,7 @@ function ApprovalCode({
 }
 
 function CopyRow({ label, value }: { readonly label: string; readonly value: string }) {
+  const { locale: translationLocale } = useI18n();
   const { copyToClipboard, isCopied } = useCopyToClipboard({ timeout: 1500, target: label });
   return (
     <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2">
@@ -792,7 +936,7 @@ function CopyRow({ label, value }: { readonly label: string; readonly value: str
       <Button
         size="icon-xs"
         variant="ghost"
-        aria-label={`Copy ${label}`}
+        aria-label={translationLocale === "zh-CN" ? `复制 ${label}` : `Copy ${label}`}
         onClick={() => copyToClipboard(value, undefined)}
       >
         {isCopied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
@@ -812,6 +956,7 @@ function LinkedLine({
   /** Null when the level is picked later; each link then shows its own. */
   readonly access: AuthMcpClientAccess | null;
 }) {
+  const { locale: translationLocale } = useI18n();
   const offered = offersLinkedEnvironments(environment.serverConfig);
   const links = useEnvironmentQuery(
     offered
@@ -827,9 +972,19 @@ function LinkedLine({
     // A forwarded call keeps the lower of the app's level and the link's own.
     const level =
       access === null || levelRank(link.access) < levelRank(access) ? link.access : access;
-    return `${name} · ${link.status === "expired" ? "Expired" : accessConfig[level].label}`;
+    const statusLabel =
+      link.status === "expired"
+        ? translateWebSource(translationLocale, "Expired")
+        : translateWebSource(translationLocale, accessConfig[level].label);
+    return `${name} · ${statusLabel}`;
   });
-  return <p className="text-xs text-muted-foreground">Linked: {named.join(", ")}</p>;
+  return (
+    <p className="text-xs text-muted-foreground">
+      {translationLocale === "zh-CN"
+        ? `已互联设备：${named.join("、")}`
+        : `Linked: ${named.join(", ")}`}
+    </p>
+  );
 }
 
 /** Opens Sharing & access on this environment, where its clients and T3 Connect tunnels live. */

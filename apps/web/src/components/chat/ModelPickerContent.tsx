@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import { useLegendListRef } from "~/hooks/useLegendListRef";
 import {
   ANTIGRAVITY_DEFAULT_MODEL,
@@ -208,6 +210,7 @@ function ModelPickerProviderNotices({
   onRequestClose: (() => void) | undefined;
   onOpenProviderSetup: ((instanceId: ProviderInstanceId) => void) | undefined;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const navigate = useNavigate();
   return (
     <>
@@ -225,7 +228,9 @@ function ModelPickerProviderNotices({
                   onOpenProviderSetup?.(entry.instanceId);
                 }}
               >
-                {setupEntries.length > 1 ? `Set up ${entry.displayName}` : "Open provider setup"}
+                {setupEntries.length > 1
+                  ? `Set up ${entry.displayName}`
+                  : translateWebSource(i18nLocale, "Open provider setup")}
               </InlineButton>
             </div>
           ))}
@@ -245,7 +250,7 @@ function ModelPickerProviderNotices({
               void navigate({ to: "/settings/providers" });
             }}
           >
-            Provider settings
+            {translateWebSource(i18nLocale, "Provider settings")}
           </InlineButton>
         </p>
       ))}
@@ -350,6 +355,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
   /** Closes the list column, inside the popup's fixed height. */
   listFooter?: ReactNode;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const {
     searchInputRef,
     keybindings: providedKeybindings,
@@ -926,7 +932,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           >
             <ComboboxSearchInput
               ref={searchInputRef}
-              placeholder="Search models..."
+              placeholder={translateWebSource(i18nLocale, "Search models...")}
               value={searchQuery}
               onChange={(e) => {
                 if (!isSearching) setSearchHeight(pickerContentRef.current?.offsetHeight ?? 0);
@@ -1027,7 +1033,9 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
                       className="group w-full cursor-pointer"
                     >
                       <span className="text-sm leading-snug text-muted-foreground group-hover:text-foreground group-data-highlighted:text-foreground">
-                        {legacySection.isExpanded ? "Show less" : "Show more"}
+                        {legacySection.isExpanded
+                          ? translateWebSource(i18nLocale, "Show less")
+                          : translateWebSource(i18nLocale, "Show more")}
                       </span>
                     </ComboboxItem>
                   );

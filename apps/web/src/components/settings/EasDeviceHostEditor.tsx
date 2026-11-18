@@ -273,7 +273,7 @@ export function EasDeviceHostEditor(props: {
                   : account.status === "failed"
                     ? account.error
                     : account.status === "checking"
-                      ? "Checking the Expo account…"
+                      ? translateWebSource(translationLocale, "Checking the Expo account…")
                       : translateWebSource(
                           sourceLocale,
                           "Check the Expo account before choosing a project.",

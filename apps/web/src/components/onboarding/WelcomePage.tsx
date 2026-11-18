@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useAuth } from "@clerk/react";
@@ -358,7 +359,7 @@ function TelemetryNotice({ environmentId }: { readonly environmentId: Environmen
         target="_blank"
         rel="noreferrer noopener"
       >
-        privacy policy
+        {translateWebSource(translationLocale, "privacy policy")}
       </a>
       .
     </p>
@@ -808,7 +809,8 @@ function ProjectsSection({
       <WelcomeSection title={translateWebSource(translationLocale, "Projects")}>
         <p className="text-sm leading-10 text-muted-foreground">
           {translateWebSource(translationLocale, "Looking for projects in your")}{" "}
-          {IMPORT_SOURCES_LABEL} history…
+          {IMPORT_SOURCES_LABEL}
+          {localizeWebString(translationLocale, " history…")}
         </p>
       </WelcomeSection>
     );
@@ -879,7 +881,8 @@ function ProjectsSection({
                 : translateWebSource(translationLocale, "Import projects and their threads")}
             </span>
             <span className="block text-xs text-muted-foreground">
-              {translateWebSource(translationLocale, "From your")} {IMPORT_SOURCES_LABEL} history
+              {translateWebSource(translationLocale, "From your")} {IMPORT_SOURCES_LABEL}
+              {localizeWebString(translationLocale, " history")}
             </span>
           </span>
         </label>
@@ -905,7 +908,10 @@ function ProjectsSection({
         <fieldset className="-mx-1.5 mt-1 min-w-0" disabled={isImporting}>
           <div className="flex items-center justify-between gap-3 px-2 text-xs text-muted-foreground">
             <span role="status">
-              {selected.length} of {candidates.length} selected
+              {selected.length}
+              {localizeWebString(translationLocale, " of ")}
+              {candidates.length}
+              {localizeWebString(translationLocale, " selected")}
             </span>
             <div className="flex items-center gap-1">
               <Button
@@ -974,7 +980,9 @@ function PhoneSection({ environmentId }: { readonly environmentId: EnvironmentId
             {translateWebSource(translationLocale, "Use T3 Code on your phone")}
           </span>
           <CollapsibleTrigger render={<Button variant="ghost-muted" size="xs" />}>
-            {open ? "Hide" : translateWebSource(translationLocale, "Set up")}
+            {open
+              ? translateWebSource(translationLocale, "Hide")
+              : translateWebSource(translationLocale, "Set up")}
             <ChevronDownIcon className={cn("size-3.5", open && "rotate-180")} />
           </CollapsibleTrigger>
         </div>
@@ -1088,8 +1096,14 @@ function PhoneConnectLink({ environmentId }: { readonly environmentId: Environme
       <>
         <p className="text-sm text-foreground">
           {shared
-            ? "T3 Connect is on, but the app cannot reach this computer."
-            : "Signed in. Share this computer so the app can reach it."}
+            ? translateWebSource(
+                translationLocale,
+                "T3 Connect is on, but the app cannot reach this computer.",
+              )
+            : translateWebSource(
+                translationLocale,
+                "Signed in. Share this computer so the app can reach it.",
+              )}
         </p>
         {settingsLink(shared ? "Check T3 Connect" : "Set up T3 Connect")}
       </>
@@ -1406,7 +1420,8 @@ function AgentInstallTerminal({
           ) : setupState === "writeFailed" ? (
             <>
               {translateWebSource(translationLocale, "Run")}{" "}
-              <code className="rounded bg-muted px-1 font-mono">{command}</code> in this terminal.
+              <code className="rounded bg-muted px-1 font-mono">{command}</code>
+              {localizeWebString(translationLocale, " in this terminal.")}
             </>
           ) : setupState === "ready" ? (
             translateWebSource(translationLocale, "Review the command, then press Enter to run it.")
@@ -1776,7 +1791,10 @@ function ImportCandidateList({
                 {translateWebSource(translationLocale, "Other folders")}
               </span>
               <span className="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums">
-                {other.length} {other.length === 1 ? "folder" : "folders"}
+                {other.length}{" "}
+                {other.length === 1
+                  ? translateWebSource(translationLocale, "folder")
+                  : translateWebSource(translationLocale, "folders")}
               </span>
             </CollapsibleTrigger>
           </div>
@@ -1975,8 +1993,9 @@ function CliPathSetup() {
       <p className="min-w-0 flex-1 text-sm text-muted-foreground">
         {setup.added ? (
           <>
-            {translateWebSource(translationLocale, "Added to")} {setup.file}. Open a new terminal to
-            use <code className="font-mono">t3</code>.
+            {translateWebSource(translationLocale, "Added to")} {setup.file}
+            {localizeWebString(translationLocale, ". Open a new terminal to use ")}
+            <code className="font-mono">t3</code>.
           </>
         ) : (
           <>

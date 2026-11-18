@@ -201,7 +201,9 @@ export function ProjectDefaultsSettings({ category }: { category: ProjectSetting
           </div>
         ) : (
           <span className="text-sm text-muted-foreground">
-            {mixedModel ? "Mixed" : "No providers available"}
+            {mixedModel
+              ? translateWebSource(translationLocale, "Mixed")
+              : translateWebSource(translationLocale, "No providers available")}
           </span>
         )
       }
@@ -383,7 +385,10 @@ export function ProjectDefaultsSettings({ category }: { category: ProjectSetting
                   if (value) updateSettings({ defaultRuntimeMode: value });
                 }}
               >
-                <SelectTrigger size="sm" aria-label="Default permissions">
+                <SelectTrigger
+                  size="sm"
+                  aria-label={translateWebSource(translationLocale, "Default permissions")}
+                >
                   {!mixedPermissions && (
                     <PermissionIcon className="size-3.5 shrink-0 text-muted-foreground" />
                   )}
@@ -476,7 +481,10 @@ export function ProjectDefaultsSettings({ category }: { category: ProjectSetting
             }
             control={
               <Switch
-                aria-label="Remove agent credits when merging"
+                aria-label={translateWebSource(
+                  translationLocale,
+                  "Remove agent credits when merging",
+                )}
                 mixed={mixedAgentCredits}
                 checked={mixedAgentCredits ? false : settings.removeAgentCreditsOnMerge}
                 onCheckedChange={(enabled) =>
@@ -513,7 +521,13 @@ export function ProjectDefaultsSettings({ category }: { category: ProjectSetting
                     updateSettings({ pullRequestMergeMethod: value });
                 }}
               >
-                <SelectTrigger size="sm" aria-label="Default pull request merge method">
+                <SelectTrigger
+                  size="sm"
+                  aria-label={translateWebSource(
+                    translationLocale,
+                    "Default pull request merge method",
+                  )}
+                >
                   <SelectValue>
                     {(value: string | null) =>
                       value === "merge" || value === "squash" || value === "rebase"
@@ -540,6 +554,7 @@ export function ProjectDefaultsSettings({ category }: { category: ProjectSetting
 }
 
 export function WorktreeSubmodulesRow() {
+  const { locale: i18nLocale } = useI18n();
   const { scope, target, connectedEnvironments } = useSettingsScope();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
@@ -576,7 +591,10 @@ export function WorktreeSubmodulesRow() {
             if (isWorktreeSubmodules(value)) updateSettings({ worktreeSubmodules: value });
           }}
         >
-          <SelectTrigger size="sm" aria-label="Worktree submodules">
+          <SelectTrigger
+            size="sm"
+            aria-label={translateWebSource(i18nLocale, "Worktree submodules")}
+          >
             <SelectValue>
               {(value: string | null) =>
                 isWorktreeSubmodules(value)

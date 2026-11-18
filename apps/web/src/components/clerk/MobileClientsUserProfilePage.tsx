@@ -28,14 +28,17 @@ function MobileClientStatusBadge({
   readonly enabled: boolean;
   readonly label: string;
 }) {
+  const { locale: translationLocale } = useI18n();
   return (
     <Badge variant={enabled ? "success" : "outline"}>
-      {label}: {enabled ? "On" : "Off"}
+      {translateWebSource(translationLocale, label)}:{" "}
+      {translateWebSource(translationLocale, enabled ? "On" : "Off")}
     </Badge>
   );
 }
 
 function MobileClientRow({ device }: { readonly device: RelayClientDeviceRecord }) {
+  const { locale: translationLocale } = useI18n();
   return (
     <ClerkUserProfileRow icon={<SmartphoneIcon className="size-4" />}>
       <div className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
@@ -48,7 +51,7 @@ function MobileClientRow({ device }: { readonly device: RelayClientDeviceRecord 
           </p>
         </div>
         <p className="shrink-0 text-2xs leading-4 text-muted-foreground/75">
-          {mobileClientUpdatedAtLabel(device.updatedAt)}
+          {mobileClientUpdatedAtLabel(device.updatedAt, translationLocale)}
         </p>
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5">
@@ -59,15 +62,20 @@ function MobileClientRow({ device }: { readonly device: RelayClientDeviceRecord 
         <MobileClientStatusBadge enabled={device.liveActivities.enabled} label="Live Activities" />
       </div>
       <p className="mt-1.5 text-xs leading-4.5 text-muted-foreground/80">
-        {mobileClientNotificationDetail(device)}
+        {mobileClientNotificationDetail(device, translationLocale)}
       </p>
     </ClerkUserProfileRow>
   );
 }
 
 function MobileClientsSkeleton() {
+  const { locale: translationLocale } = useI18n();
   return (
-    <div aria-label="Loading mobile clients" className="divide-y border-t" role="status">
+    <div
+      aria-label={translateWebSource(translationLocale, "Loading mobile clients")}
+      className="divide-y border-t"
+      role="status"
+    >
       {MOBILE_CLIENT_SKELETON_ROWS.map((row) => (
         <div key={row} className="py-4">
           <div className="flex gap-3">
@@ -103,8 +111,7 @@ function EmptyMobileClients() {
 }
 
 export function MobileClientsUserProfilePage() {
-  const { locale: translationLocale } = useI18n();
-  const { t } = useI18n();
+  const { locale: translationLocale, t } = useI18n();
   const devicesState = useManagedRelayDevices();
   const devices = devicesState.data ?? [];
   const isInitialLoad =
@@ -113,7 +120,7 @@ export function MobileClientsUserProfilePage() {
 
   return (
     <ClerkUserProfilePage
-      title="Mobile clients"
+      title={translateWebSource(translationLocale, "Mobile clients")}
       description={t("mobileClients.description")}
       action={
         <ClerkUserProfileRefreshButton
@@ -130,7 +137,7 @@ export function MobileClientsUserProfilePage() {
           >
             <div>
               <p className="font-medium text-destructive-foreground">
-                Could not load mobile clients
+                {translateWebSource(translationLocale, "Could not load mobile clients")}
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">{devicesState.error}</p>
             </div>

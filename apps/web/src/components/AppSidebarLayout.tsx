@@ -1,3 +1,4 @@
+import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useAtomValue } from "@effect/atom-react";
 import * as Schema from "effect/Schema";
@@ -421,6 +422,7 @@ export function AppSidebarLayout({
   children: ReactNode;
   showSidebar?: boolean;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const sidebarArea = workspaceAreaProps("sidebar", 0, "Threads");
   const [sidebarRouteReveal] = useState<SidebarRouteReveal>(() => ({
     observedKey: null,
@@ -478,7 +480,7 @@ export function AppSidebarLayout({
               data-app-sidebar=""
               {...sidebarArea}
               role="navigation"
-              aria-label="Threads"
+              aria-label={translateWebSource(i18nLocale, "Threads")}
               resizable={{
                 maxWidth: sidebarMaximumWidth,
                 minWidth: sidebarMinimumWidth,

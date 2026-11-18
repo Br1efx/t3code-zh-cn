@@ -277,7 +277,9 @@ export function SavedBackendListRow({
             onClick={() => setRoutesOpen((open) => !open)}
             className="inline-flex shrink-0 items-center gap-0.5 rounded-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring"
           >
-            {routeCount === 1 ? "Routes" : `${routeCount} routes`}
+            {routeCount === 1
+              ? translateWebSource(translationLocale, "Routes")
+              : `${routeCount} routes`}
             <ChevronRightIcon
               aria-hidden
               className={cn(
@@ -469,6 +471,7 @@ function CloudLinkSwitch({
 
 /** Tunnel meter, plus the upgrade prompt after the relay refuses a tunnel at the cap. */
 function T3ConnectTunnelUsage({ tunnelLimit }: { readonly tunnelLimit: number | null }) {
+  const { locale: i18nLocale } = useI18n();
   const usage = useManagedTunnelUsage();
   const accountPage = useT3ConnectAccountPage();
   const openAccountPage = accountPage.open;
@@ -492,10 +495,12 @@ function T3ConnectTunnelUsage({ tunnelLimit }: { readonly tunnelLimit: number | 
         action={
           // At the cap the alert below carries the same actions.
           !openAccountPage || showLimitAlert ? null : usage.upgrade ? (
-            <InlineButton onClick={() => openAccountPage("t3-chat")}>Get more tunnels</InlineButton>
+            <InlineButton onClick={() => openAccountPage("t3-chat")}>
+              {translateWebSource(i18nLocale, "Get more tunnels")}
+            </InlineButton>
           ) : usage.used >= usage.limit ? (
             <InlineButton onClick={() => openAccountPage("t3-connect")}>
-              Manage tunnels
+              {translateWebSource(i18nLocale, "Manage tunnels")}
             </InlineButton>
           ) : null
         }

@@ -1,3 +1,6 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { useEffect, useImperativeHandle, useRef, useState, type RefObject } from "react";
 import { parseDelimitedPreview } from "@t3tools/shared/delimitedPreview";
 import { formatAttachmentSize } from "@t3tools/client-runtime/state/attachments";
@@ -43,6 +46,7 @@ export default function LargeTextViewer(props: {
   /** A preview's own wrap toggle; omitted follows the word wrap setting. */
   readonly wordWrap?: boolean;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const [meta, setMeta] = useState<Extract<TextPreviewResult, { type: "meta" }> | null>(null);
   const [pages, setPages] = useState(new Map<number, string[][]>());
   const [error, setError] = useState<string | null>(null);
@@ -225,16 +229,21 @@ export default function LargeTextViewer(props: {
           : countLabel(meta.count, "line")}
         {meta.complete && meta.sizeBytes !== undefined
           ? ` · ${meta.sizeBytes === 0 ? "0 bytes" : formatAttachmentSize(meta.sizeBytes)}`
-          : " · Indexing…"}
+          : localizeWebString(i18nLocale, " · Indexing…")}
       </div>
       {!meta.complete ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20">
-          <FileSurfaceNotice>Loading the rest of the file…</FileSurfaceNotice>
+          <FileSurfaceNotice>
+            {translateWebSource(i18nLocale, "Loading the rest of the file…")}
+          </FileSurfaceNotice>
         </div>
       ) : null}
       {meta.columns === 1024 ? (
         <FileSurfaceNotice>
-          Showing the first 1,024 columns. Source and Save retain every column.
+          {translateWebSource(
+            i18nLocale,
+            "Showing the first 1,024 columns. Source and Save retain every column.",
+          )}
         </FileSurfaceNotice>
       ) : null}
       {meta.count > 0 ? (
@@ -256,7 +265,7 @@ export default function LargeTextViewer(props: {
         />
       ) : (
         <div className="flex flex-1 items-center justify-center p-6 text-xs text-muted-foreground">
-          This file is empty.
+          {translateWebSource(i18nLocale, "This file is empty.")}
         </div>
       )}
     </div>

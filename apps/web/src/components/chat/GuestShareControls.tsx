@@ -136,8 +136,11 @@ function GuestShareDialog({
           ) : (
             <p className="text-muted-foreground text-sm">
               {activeShare !== null
-                ? "A new link ends the current one."
-                : "The link works once and expires in 24 hours."}
+                ? translateWebSource(translationLocale, "A new link ends the current one.")
+                : translateWebSource(
+                    translationLocale,
+                    "The link works once and expires in 24 hours.",
+                  )}
             </p>
           )}
           {state.status === "failed" ? (
@@ -208,11 +211,17 @@ export function GuestShareIndicator({ threadRef }: { readonly threadRef: ScopedT
 }
 
 function GuestShareStatus({ share }: { readonly share: ThreadGuestShare }) {
+  const { locale: i18nLocale } = useI18n();
   const nowMinute = useNowMinute();
   // The share stays on the thread after it expires, until the owner clears it.
-  if (share.expiresAt.slice(0, 16) <= nowMinute) return <span>Guest link expired</span>;
+  if (share.expiresAt.slice(0, 16) <= nowMinute)
+    return <span>{translateWebSource(i18nLocale, "Guest link expired")}</span>;
   return (
-    <span>{share.guestName !== null ? `${share.guestName} is a guest` : "Guest link active"}</span>
+    <span>
+      {share.guestName !== null
+        ? `${share.guestName} is a guest`
+        : translateWebSource(i18nLocale, "Guest link active")}
+    </span>
   );
 }
 

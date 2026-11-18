@@ -17,6 +17,11 @@ export interface DesktopApplicationMenuMessages {
   readonly open: (appName: string) => string;
   readonly quit: (appName: string) => string;
   readonly closeWindow: string;
+  readonly closeDeveloperTools: string;
+  readonly noSuggestions: string;
+  readonly copyLink: string;
+  readonly copyEmailAddress: string;
+  readonly copyImage: string;
   readonly undo: string;
   readonly redo: string;
   readonly cut: string;
@@ -83,6 +88,11 @@ const messages = {
     open: (appName) => `Open ${appName}`,
     quit: (appName) => `Quit ${appName}`,
     closeWindow: "Close Window",
+    closeDeveloperTools: "Close Developer Tools",
+    noSuggestions: "No suggestions",
+    copyLink: "Copy Link",
+    copyEmailAddress: "Copy Email Address",
+    copyImage: "Copy Image",
     undo: "Undo",
     redo: "Redo",
     cut: "Cut",
@@ -128,7 +138,7 @@ const messages = {
   "zh-CN": {
     file: "文件",
     edit: "编辑",
-    view: "视图",
+    view: "查看",
     window: "窗口",
     help: "帮助",
     settings: "设置...",
@@ -141,6 +151,11 @@ const messages = {
     open: (appName) => `打开 ${appName}`,
     quit: (appName) => `退出 ${appName}`,
     closeWindow: "关闭窗口",
+    closeDeveloperTools: "关闭开发者工具",
+    noSuggestions: "无拼写建议",
+    copyLink: "复制链接",
+    copyEmailAddress: "复制邮箱地址",
+    copyImage: "复制图片",
     undo: "撤销",
     redo: "重做",
     cut: "剪切",
@@ -153,13 +168,13 @@ const messages = {
     stopSpeaking: "停止朗读",
     delete: "删除",
     selectAll: "全选",
-    reload: "重新加载",
-    forceReload: "强制重新加载",
-    toggleDeveloperTools: "切换开发者工具",
-    toggleFullScreen: "切换全屏",
+    reload: "刷新页面",
+    forceReload: "强制刷新",
+    toggleDeveloperTools: "显示/隐藏开发者工具",
+    toggleFullScreen: "进入/退出全屏",
     minimize: "最小化",
     zoomWindow: "缩放",
-    bringAllToFront: "全部置于最前",
+    bringAllToFront: "前置全部窗口",
     actualSize: "实际大小",
     zoomIn: "放大",
     zoomOut: "缩小",
@@ -167,16 +182,17 @@ const messages = {
     upToDateTitle: "已是最新版本",
     upToDateMessage: (version) => `T3 Code ${version} 当前已是最新版本。`,
     updateAvailableTitle: "发现新版本",
-    updateAvailableMessage: (version) => `${describeUpdateZhCn(version)} 现已可用。`,
-    updateAvailableDetail: (currentVersion) => `当前运行版本为 T3 Code ${currentVersion}。`,
+    updateAvailableMessage: (version) =>
+      `发现新版本（${describeUpdateZhCn(version)}），现在可以下载更新。`,
+    updateAvailableDetail: (currentVersion) => `当前版本：T3 Code ${currentVersion}。`,
     download: "下载",
     later: "稍后",
     updateDownloadingTitle: "正在下载更新",
-    updateDownloadingMessage: (version) => `${describeUpdateZhCn(version)} 正在下载中。`,
-    updateReadyTitle: "更新已就绪",
-    updateReadyMessage: (version) => `${describeUpdateZhCn(version)} 已准备好安装。`,
-    updateReadyDetail: "T3 Code 将重启以完成安装，所有正在运行的任务都会中断。",
-    restart: "重启",
+    updateDownloadingMessage: (version) => `正在下载 ${describeUpdateZhCn(version)}，请稍候。`,
+    updateReadyTitle: "新版本已下载完成",
+    updateReadyMessage: (version) => `${describeUpdateZhCn(version)} 已下载完成，随时可以安装。`,
+    updateReadyDetail: "软件需要重启才能完成更新，正在进行的操作将会中断。",
+    restart: "立即重启",
     updateCheckFailedTitle: "检查更新失败",
     updateCheckFailedMessage: "无法检查更新。",
     unknownUpdateError: "发生未知错误，请稍后重试。",

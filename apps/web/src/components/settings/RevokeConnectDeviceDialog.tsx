@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import { useState } from "react";
 
 import {
@@ -61,6 +63,7 @@ function RevokeConnectDeviceDialogPopup({
   readonly onClose: () => void;
   readonly requireApproval: () => Promise<boolean>;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const [turnOnApproval, setTurnOnApproval] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -92,17 +95,20 @@ function RevokeConnectDeviceDialogPopup({
           />
           <span className="min-w-0">
             <span className="block text-sm font-medium text-foreground">
-              Require approval for new devices
+              {translateWebSource(i18nLocale, "Require approval for new devices")}
             </span>
             <span className="block text-xs text-muted-foreground">
-              The device has to be approved here before it can connect again.
+              {translateWebSource(
+                i18nLocale,
+                "The device has to be approved here before it can connect again.",
+              )}
             </span>
           </span>
         </label>
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogClose disabled={busy} render={<Button variant="outline" disabled={busy} />}>
-          Cancel
+          {translateWebSource(i18nLocale, "Cancel")}
         </AlertDialogClose>
         <Button variant="destructive" disabled={busy} onClick={() => void confirm()}>
           {busy && <Spinner size="sm" />}

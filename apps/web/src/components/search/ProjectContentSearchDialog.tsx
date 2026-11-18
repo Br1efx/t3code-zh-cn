@@ -179,7 +179,7 @@ function OpenContentSearchDialog(props: {
             label={t("contentSearch.matchCase")}
             onClick={() => setCaseSensitive((current) => !current)}
           >
-            Aa
+            {translateWebSource(uiLocale, "Aa")}
           </SearchOptionButton>
           <SearchOptionButton
             active={wholeWord}
@@ -187,7 +187,9 @@ function OpenContentSearchDialog(props: {
             label={t("contentSearch.wholeWord")}
             onClick={() => setWholeWord((current) => !current)}
           >
-            <span className="underline decoration-2 underline-offset-2">ab</span>
+            <span className="underline decoration-2 underline-offset-2">
+              {translateWebSource(uiLocale, "ab")}
+            </span>
           </SearchOptionButton>
           <SearchOptionButton
             active={useRegex}

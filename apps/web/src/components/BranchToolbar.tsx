@@ -244,7 +244,9 @@ const RunContextSelector = memo(function RunContextSelector({
           />
         )}
       </TooltipTrigger>
-      <TooltipPopup>{autoEnvironmentLabel ?? activeEnvironment?.label ?? "Run on"}</TooltipPopup>
+      <TooltipPopup>
+        {autoEnvironmentLabel ?? activeEnvironment?.label ?? tx("Run on")}
+      </TooltipPopup>
     </Tooltip>
   );
   const icon = showEnvironmentIndicator ? environmentIcon : workspaceIcon;

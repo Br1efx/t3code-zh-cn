@@ -98,6 +98,7 @@ it.effect.each([false, true])(
           Effect.provide(NodeCrypto.layer),
           Effect.provideService(DesktopTray.DesktopTray, {
             ensure: () => Effect.succeed(false),
+            refreshMenu: Effect.void,
             markQuitRequested: () => undefined,
             shouldHideOnClose: () => false,
           }),

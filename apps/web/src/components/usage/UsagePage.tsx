@@ -996,7 +996,9 @@ function UsageOverview({
               </colgroup>
               <thead>
                 <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                  <th className="py-2 pl-2 font-normal">{shownHourly ? "Hour" : "Day"}</th>
+                  <th className="py-2 pl-2 font-normal">
+                    {translateWebSource(translationLocale, shownHourly ? "Hour" : "Day")}
+                  </th>
                   {activeProviders.map((provider) => (
                     <th key={provider} className="py-2 pl-4 text-right font-normal">
                       {PROVIDER_PRESENTATION[provider].label}

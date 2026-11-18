@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import { documentChipKindForFileName } from "~/pierre-icons";
 import { isSvgAttachment } from "@t3tools/shared/image";
 import { useRenderedAppearance } from "../../hooks/useTheme";
@@ -144,6 +146,7 @@ function UserMessagePreviewAnnotationDetails(props: {
   record: Extract<KnownComposerContextRecord, { kind: "preview-annotation" }>;
   image: ChatImageAttachment | null;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const ctx = use(TimelineRowCtx);
   const visibleElements = props.record.elements ?? [];
   return (
@@ -167,12 +170,14 @@ function UserMessagePreviewAnnotationDetails(props: {
         </button>
       ) : (
         <div className="border-b border-border/70 bg-muted/40 px-3 py-2 text-secondary-label text-xs">
-          Screenshot unavailable
+          {translateWebSource(i18nLocale, "Screenshot unavailable")}
         </div>
       )}
       <div className="min-w-0 px-3 py-2.5">
         <div className="text-message-foreground text-xs font-medium">
-          {props.record.pageTitle?.trim() || props.record.pageUrl || "Preview annotation"}
+          {props.record.pageTitle?.trim() ||
+            props.record.pageUrl ||
+            translateWebSource(i18nLocale, "Preview annotation")}
         </div>
         {props.record.comment ? (
           <div className="mt-1 whitespace-pre-wrap wrap-break-word text-sm">
@@ -278,11 +283,12 @@ interface UserMessageContextRenderContext {
 }
 
 function UnavailableUserMessageContextChip(props: UserMessageContextRenderContext) {
+  const { locale: i18nLocale } = useI18n();
   return (
     <UnresolvedChip
       label={props.reference.label}
       copyMarkdown={props.copyMarkdown}
-      tooltip="This context is no longer available."
+      tooltip={translateWebSource(i18nLocale, "This context is no longer available.")}
     />
   );
 }

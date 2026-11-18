@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import {
@@ -224,21 +225,30 @@ function ModelCard(props: ModelCardProps) {
               <ModelBadge
                 icon={<StarIcon className="mr-1 size-3" />}
                 label="Recommended"
-                tooltip="A good default pick for the languages it covers."
+                tooltip={translateWebSource(
+                  translationLocale,
+                  "A good default pick for the languages it covers.",
+                )}
               />
             ) : null}
             {model.supportsStreaming ? (
               <ModelBadge
                 icon={<AudioLinesIcon className="mr-1 size-3" />}
                 label="Live preview"
-                tooltip="Shows words in your draft as you speak, before the recording finishes."
+                tooltip={translateWebSource(
+                  translationLocale,
+                  "Shows words in your draft as you speak, before the recording finishes.",
+                )}
               />
             ) : null}
             {model.supportsTranslation ? (
               <ModelBadge
                 icon={<LanguagesIcon className="mr-1 size-3" />}
                 label="Translate"
-                tooltip="Can write English text from speech in another language. Turn on Translate to English to use it."
+                tooltip={translateWebSource(
+                  translationLocale,
+                  "Can write English text from speech in another language. Turn on Translate to English to use it.",
+                )}
               />
             ) : null}
           </div>
@@ -249,7 +259,8 @@ function ModelCard(props: ModelCardProps) {
           ) : null}
           {model.linkedFrom ? (
             <p className="mt-0.5 break-all text-2xs text-muted-foreground">
-              Using your file at {model.linkedFrom}
+              {localizeWebString(translationLocale, "Using your file at ")}
+              {model.linkedFrom}
             </p>
           ) : null}
           <ModelBenchmarks
@@ -282,7 +293,7 @@ function ModelCard(props: ModelCardProps) {
               </div>
               <p className="mt-1 text-2xs text-muted-foreground">
                 {model.state === "verifying"
-                  ? "Verifying download…"
+                  ? translateWebSource(translationLocale, "Verifying download…")
                   : `${Math.round(progress)}% downloaded`}
               </p>
             </div>
@@ -561,7 +572,9 @@ function CleanupModelRow() {
       description="Model for transcript cleanup, such as a cheaper or faster one. When disabled, use the text generation model configured for this environment."
       control={
         connectedEnvironments.length === 0 ? (
-          <span className="text-sm text-muted-foreground">Connect an environment first.</span>
+          <span className="text-sm text-muted-foreground">
+            {translateWebSource(translationLocale, "Connect an environment first.")}
+          </span>
         ) : (
           <div className="flex min-w-0 flex-wrap items-center gap-2 @min-[32rem]/settings-row:justify-end">
             {dedicated && (!hasProvider || !instanceEntry) ? (
@@ -611,7 +624,7 @@ function CleanupModelRow() {
                     : null,
                 })
               }
-              aria-label="Use a separate cleanup model"
+              aria-label={translateWebSource(translationLocale, "Use a separate cleanup model")}
             />
           </div>
         )
@@ -755,7 +768,7 @@ function AdvancedSpeechSettings({
         }
         control={
           <Switch
-            aria-label="Streaming transcription"
+            aria-label={translateWebSource(translationLocale, "Streaming transcription")}
             disabled={!supported.supportsStreaming}
             checked={settings.speechStreaming}
             onCheckedChange={(checked) => void updateClientSettings({ speechStreaming: checked })}
@@ -779,7 +792,11 @@ function AdvancedSpeechSettings({
                 );
             }}
           >
-            <SelectTrigger size="sm" aria-label="Transcription hardware" className="max-w-72">
+            <SelectTrigger
+              size="sm"
+              aria-label={translateWebSource(translationLocale, "Transcription hardware")}
+              className="max-w-72"
+            >
               <SelectValue>
                 {supported.acceleration === "auto"
                   ? "Auto"
@@ -821,7 +838,11 @@ function AdvancedSpeechSettings({
                 );
             }}
           >
-            <SelectTrigger size="sm" aria-label="Unload model" className="max-w-72">
+            <SelectTrigger
+              size="sm"
+              aria-label={translateWebSource(translationLocale, "Unload model")}
+              className="max-w-72"
+            >
               <SelectValue>{UNLOAD_LABELS[supported.modelUnloadTimeout]}</SelectValue>
             </SelectTrigger>
             <SelectPopup align="end" alignItemWithTrigger={false}>
@@ -1104,6 +1125,7 @@ function TranscriptionTest(props: {
   readonly projectId: ProjectId | null;
   readonly projectName: string | null;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const [transcript, setTranscript] = useState<string | null>(null);
   const draft = transcript ?? "";
   const [showTranscript, setShowTranscript] = useState(false);
@@ -1158,7 +1180,7 @@ function TranscriptionTest(props: {
               <span className="text-xs text-muted-foreground">
                 {speech.status?.supported === false
                   ? speech.status.reason
-                  : "Waiting for the environment to connect"}
+                  : translateWebSource(i18nLocale, "Waiting for the environment to connect")}
               </span>
             )}
           </div>
@@ -1169,13 +1191,16 @@ function TranscriptionTest(props: {
             <div className="min-w-0 flex-1 py-1.5">
               {speech.preview || transcript !== null ? null : (
                 <p className="text-xs text-muted-foreground">
-                  Say a sentence. Cleanup is skipped, so you see exactly what the model heard.
+                  {translateWebSource(
+                    i18nLocale,
+                    "Say a sentence. Cleanup is skipped, so you see exactly what the model heard.",
+                  )}
                 </p>
               )}
               {speech.preview || transcript !== null ? (
                 <p
                   role="status"
-                  aria-label="Test transcript"
+                  aria-label={translateWebSource(i18nLocale, "Test transcript")}
                   className="select-text whitespace-pre-wrap break-words text-sm leading-relaxed"
                 >
                   {speech.preview ? (
@@ -1369,7 +1394,10 @@ export function VoiceSettingsPanel() {
                   void updateClientSettings({ voiceShortcutMode: value as VoiceShortcutMode });
               }}
             >
-              <SelectTrigger size="sm" aria-label="Dictation shortcut mode">
+              <SelectTrigger
+                size="sm"
+                aria-label={translateWebSource(translationLocale, "Dictation shortcut mode")}
+              >
                 <SelectValue>{SHORTCUT_MODES[settings.voiceShortcutMode].label}</SelectValue>
               </SelectTrigger>
               <SelectPopup align="end" alignItemWithTrigger={false}>
@@ -1424,7 +1452,7 @@ export function VoiceSettingsPanel() {
               >
                 <SelectTrigger
                   size="sm"
-                  aria-label="Transcribe with"
+                  aria-label={translateWebSource(translationLocale, "Transcribe with")}
                   className="min-w-0 @min-[32rem]/settings-row:w-auto @min-[32rem]/settings-row:max-w-72"
                 >
                   <SelectValue>
@@ -1564,7 +1592,7 @@ export function VoiceSettingsPanel() {
             description="Speak any language and get English text."
             control={
               <Switch
-                aria-label="Translate to English"
+                aria-label={translateWebSource(translationLocale, "Translate to English")}
                 checked={settings.speechTranslateToEnglish}
                 onCheckedChange={(checked) =>
                   void updateClientSettings({ speechTranslateToEnglish: checked })
@@ -1583,7 +1611,7 @@ export function VoiceSettingsPanel() {
           }
           control={
             <Switch
-              aria-label="Silence filtering"
+              aria-label={translateWebSource(translationLocale, "Silence filtering")}
               disabled={destination.cloudProvider === "openai"}
               checked={settings.speechSilenceFiltering}
               onCheckedChange={(checked) =>
@@ -1598,7 +1626,7 @@ export function VoiceSettingsPanel() {
           description="Drop “um” and “uh” from transcripts."
           control={
             <Switch
-              aria-label="Remove filler words"
+              aria-label={translateWebSource(translationLocale, "Remove filler words")}
               checked={settings.speechRemoveFillerWords}
               onCheckedChange={(checked) =>
                 void updateClientSettings({ speechRemoveFillerWords: checked })
@@ -1644,7 +1672,7 @@ export function VoiceSettingsPanel() {
           description="Off by default. Sends the transcript and nearby draft text, never audio, to the cleanup model."
           control={
             <Switch
-              aria-label="Clean up transcripts"
+              aria-label={translateWebSource(translationLocale, "Clean up transcripts")}
               checked={cleanupEnabled}
               onCheckedChange={chooseTranscriptCleanup}
             />
@@ -1675,7 +1703,10 @@ export function VoiceSettingsPanel() {
                     });
                 }}
               >
-                <SelectTrigger size="sm" aria-label="Cleanup instructions">
+                <SelectTrigger
+                  size="sm"
+                  aria-label={translateWebSource(translationLocale, "Cleanup instructions")}
+                >
                   <SelectValue>
                     {settings.speechPostProcessingPrompt.mode === "custom" ? "Custom" : "Built-in"}
                   </SelectValue>

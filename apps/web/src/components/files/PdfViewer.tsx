@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import {
   useEffect,
   useEffectEvent,
@@ -136,6 +138,7 @@ export default function PdfViewer(props: {
   initialView?: PdfViewState;
   onViewChange?: (view: PdfViewState) => void;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const [savedPosition] = useState(() =>
     props.positionKey === undefined ? undefined : positions.get(props.positionKey),
   );
@@ -375,7 +378,9 @@ export default function PdfViewer(props: {
           <MinusIcon className="size-3.5" />
         </FileSurfaceAction>
         <span className="min-w-14 text-center tabular-nums">
-          {zoom === null ? "Fit width" : `${Math.round(scale * 100)}%`}
+          {zoom === null
+            ? translateWebSource(i18nLocale, "Fit width")
+            : `${Math.round(scale * 100)}%`}
         </span>
         <FileSurfaceAction
           label="Zoom in"
@@ -412,7 +417,7 @@ export default function PdfViewer(props: {
           <>
             <span role="status">
               {finding
-                ? "Searching…"
+                ? translateWebSource(i18nLocale, "Searching…")
                 : (findError ?? `${matches.length ? match + 1 : 0}/${matches.length}`)}
             </span>
             <FileSurfaceAction

@@ -3,6 +3,8 @@ import { MessageSquareIcon, ServerIcon, SmartphoneIcon } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { translateWebSource } from "~/i18n/messages";
+import { useI18n } from "~/i18n/WebI18nContext";
 import { MobileClientsUserProfilePage } from "./MobileClientsUserProfilePage";
 import { T3ChatUserProfilePage } from "./T3ChatUserProfilePage";
 import { T3ConnectUserProfilePage } from "./T3ConnectUserProfilePage";
@@ -37,6 +39,7 @@ export function useT3ConnectAccountPage(): {
   readonly open: ((page?: T3ConnectAccountPageUrl) => void) | null;
   readonly portals: ReactNode;
 } {
+  const { locale: translationLocale } = useI18n();
   const clerk = useClerk();
   const { isSignedIn } = useAuth();
   const [targets, setTargets] = useState<PortalTargets>({});
@@ -47,7 +50,7 @@ export function useT3ConnectAccountPage(): {
     clerk.openUserProfile({
       __experimental_startPath: `/${page}`,
       customPages: T3_CONNECT_ACCOUNT_PAGES.map((page) => ({
-        label: page.label,
+        label: translateWebSource(translationLocale, page.label),
         url: page.url,
         mount: (element: HTMLDivElement) => setTarget(`content:${page.url}`, element),
         unmount: () => setTarget(`content:${page.url}`, undefined),

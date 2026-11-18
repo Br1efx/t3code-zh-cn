@@ -63,6 +63,11 @@ import * as Scope from "effect/Scope";
 import * as SynchronizedRef from "effect/SynchronizedRef";
 
 import * as DesktopEnvironment from "../app/DesktopEnvironment.ts";
+import {
+  isZhCn,
+  makeDesktopLocaleResolver,
+  type ResolvedAppLocale,
+} from "../i18n/DesktopLocale.ts";
 import * as DesktopRendererHistory from "../telemetry/DesktopRendererHistory.ts";
 import {
   MENU_ACTION_CHANNEL,
@@ -165,9 +170,10 @@ const DEFAULT_ANNOTATION_THEME: DesktopPreviewAnnotationTheme = {
   fontMono: "ui-monospace, monospace",
 };
 
-const buildPreviewPictureInPictureDataUrl = (): string => {
+const buildPreviewPictureInPictureDataUrl = (locale: ResolvedAppLocale = "en"): string => {
+  const zh = isZhCn(locale);
   const html = `<!doctype html>
-<html>
+<html lang="${zh ? "zh-CN" : "en"}">
   <head>
     <meta charset="utf-8">
     <meta
@@ -182,7 +188,7 @@ const buildPreviewPictureInPictureDataUrl = (): string => {
     </style>
   </head>
   <body>
-    <img id="preview-frame" alt="Live browser preview">
+    <img id="preview-frame" alt="${zh ? "实时浏览器预览" : "Live browser preview"}">
     <script>
       const frame = document.getElementById("preview-frame");
       window.previewPictureInPicture.onFrame((next) => {
@@ -570,6 +576,7 @@ const makeNativeOperations = Effect.fn("PreviewManager.makeOperations")(function
   const browserHost = yield* DesktopBrowserHost.DesktopBrowserHost;
   const browserSession = yield* BrowserSession.BrowserSession;
   const passkeys = yield* PreviewPasskeys.PreviewPasskeys;
+  const resolveLocale = yield* makeDesktopLocaleResolver;
   const context = yield* Effect.context<never>();
   const runFork = Effect.runForkWith(context);
   const runPromise = Effect.runPromiseWith(context);
@@ -2474,6 +2481,7 @@ const makeNativeOperations = Effect.fn("PreviewManager.makeOperations")(function
           if (replaced) yield* replaced.cancel;
           // A newer pick may cancel during teardown; do not leak listeners or start an abandoned overlay.
           if (settled) return;
+          const locale = yield* resolveLocale;
           yield* attempt({ operation: "pickElement.register", tabId, webContentsId: wc.id }, () => {
             wc.ipc.on(ELEMENT_PICKED_CHANNEL, onMessage);
             if (voice) wc.ipc.on(ANNOTATION_VOICE_EVENT_CHANNEL, onVoiceEvent);
@@ -2485,6 +2493,7 @@ const makeNativeOperations = Effect.fn("PreviewManager.makeOperations")(function
               annotationTheme,
               annotationSendEnabled.get(tabId) === true,
               voice,
+              locale,
             );
           });
         });
@@ -3145,6 +3154,8 @@ const makeNativeOperations = Effect.fn("PreviewManager.makeOperations")(function
           },
           () => wc.getTitle().trim(),
         );
+        const locale = yield* resolveLocale;
+        const zh = isZhCn(locale);
         const pictureInPictureWindow = yield* attempt(
           {
             operation: "pictureInPicture.create",
@@ -3157,7 +3168,13 @@ const makeNativeOperations = Effect.fn("PreviewManager.makeOperations")(function
               height: PICTURE_IN_PICTURE_INITIAL_HEIGHT,
               minWidth: PICTURE_IN_PICTURE_MIN_WIDTH,
               minHeight: PICTURE_IN_PICTURE_MIN_HEIGHT,
-              title: title.length > 0 ? `Preview · ${title}` : "Browser preview",
+              title: zh
+                ? title.length > 0
+                  ? `预览 · ${title}`
+                  : "浏览器预览"
+                : title.length > 0
+                  ? `Preview · ${title}`
+                  : "Browser preview",
               show: false,
               alwaysOnTop: true,
               autoHideMenuBar: true,
@@ -3253,7 +3270,7 @@ const makeNativeOperations = Effect.fn("PreviewManager.makeOperations")(function
             copy.set(tabId, session);
           }),
         );
-        return { kind: "created" as const, session };
+        return { kind: "created" as const, session, locale };
       }),
     );
     const pictureInPictureSession = claim.session;
@@ -3289,7 +3306,8 @@ const makeNativeOperations = Effect.fn("PreviewManager.makeOperations")(function
           tabId,
           webContentsId: pictureInPictureSession.webContentsId,
         },
-        () => pictureInPictureSession.window.loadURL(buildPreviewPictureInPictureDataUrl()),
+        () =>
+          pictureInPictureSession.window.loadURL(buildPreviewPictureInPictureDataUrl(claim.locale)),
       );
       const currentWebContents = yield* requireWebContents(tabId);
       if (

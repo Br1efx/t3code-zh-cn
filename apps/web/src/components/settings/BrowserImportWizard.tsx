@@ -308,8 +308,14 @@ function FullDiskAccessStep({
         {!permission.isReady(["fullDiskAccess"]) ? (
           <p className="mt-3 text-xs text-muted-foreground">
             {stillRequired
-              ? "Access is still required. Quit and reopen T3 Code if you just allowed it, then retry the import."
-              : "If access doesn't update after you allow it, quit and reopen T3 Code, then retry the import."}
+              ? translateWebSource(
+                  translationLocale,
+                  "Access is still required. Quit and reopen T3 Code if you just allowed it, then retry the import.",
+                )
+              : translateWebSource(
+                  translationLocale,
+                  "If access doesn't update after you allow it, quit and reopen T3 Code, then retry the import.",
+                )}
           </p>
         ) : null}
       </DialogPanel>
@@ -512,7 +518,9 @@ function CheckingStep({
         <div className="flex items-center gap-3 py-2">
           <Spinner size="md" tone="muted" />
           <span className="text-sm text-muted-foreground">
-            {check === "fullDiskAccess" ? "Checking access…" : "Checking…"}
+            {check === "fullDiskAccess"
+              ? translateWebSource(translationLocale, "Checking access…")
+              : translateWebSource(translationLocale, "Checking…")}
           </span>
         </div>
       </DialogPanel>

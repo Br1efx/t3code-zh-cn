@@ -138,6 +138,7 @@ function DiffFileCollapseToggle({
   load?: () => void;
   onToggle: (fileKey: string) => void;
 }) {
+  const { locale: translationLocale } = useI18n();
   return (
     <Tooltip>
       <TooltipTrigger
@@ -146,7 +147,13 @@ function DiffFileCollapseToggle({
             size="icon-micro"
             variant="ghost"
             className="-ms-0.5"
-            aria-label={collapsed ? `Expand ${filePath}` : `Collapse ${filePath}`}
+            aria-label={
+              translationLocale === "zh-CN"
+                ? `${collapsed ? "展开" : "折叠"} ${filePath}`
+                : collapsed
+                  ? `Expand ${filePath}`
+                  : `Collapse ${filePath}`
+            }
             aria-expanded={!collapsed}
             ref={(node) => {
               if (!node || !load) return;
@@ -172,7 +179,9 @@ function DiffFileCollapseToggle({
           <ChevronDownIcon className="size-4 text-muted-foreground/80" />
         )}
       </TooltipTrigger>
-      <TooltipPopup side="top">{collapsed ? "Expand diff" : "Collapse diff"}</TooltipPopup>
+      <TooltipPopup side="top">
+        {translateWebSource(translationLocale, collapsed ? "Expand diff" : "Collapse diff")}
+      </TooltipPopup>
     </Tooltip>
   );
 }
@@ -428,30 +437,40 @@ export default function DiffPanel({
           : "branch-range"),
   );
   const comparisonHeadRef = selectedGitSource?.headRef ?? gitStatusQuery.data?.refName ?? "HEAD";
-  const comparisonBaseRef = selectedGitSource?.baseRef ?? selectedBaseRef ?? "Automatic";
+  const comparisonBaseRef =
+    selectedGitSource?.baseRef ??
+    selectedBaseRef ??
+    translateWebSource(translationLocale, "Automatic");
   const selectedCommitSubject =
     selectedCommitSha !== null && selectedGitSource?.headRef === selectedCommitSha
       ? selectedGitSource.commitSubject
       : undefined;
   const selectedGitScopeLabel =
     selectedCommitSha !== null
-      ? (selectedCommitSubject ?? `Commit ${selectedCommitSha.slice(0, 7)}`)
+      ? (selectedCommitSubject ??
+        (translationLocale === "zh-CN"
+          ? `提交 ${selectedCommitSha.slice(0, 7)}`
+          : `Commit ${selectedCommitSha.slice(0, 7)}`))
       : selectedGitScope === "unstaged"
-        ? "Uncommitted"
-        : "Changes";
+        ? translateWebSource(translationLocale, "Uncommitted")
+        : translateWebSource(translationLocale, "Changes");
   const selectedScopeLabel = toolCallSelection
-    ? "Tool call"
+    ? translateWebSource(translationLocale, "Tool call")
     : selectedRunId === null
       ? selectedCommitSha !== null
-        ? (selectedCommitSubject ?? "Commit")
+        ? (selectedCommitSubject ?? translateWebSource(translationLocale, "Commit"))
         : selectedGitScopeLabel
       : selectedTurn?.runId === latestTurn?.runId
-        ? "Latest turn"
-        : `Turn ${selectedCheckpointTurnCount ?? "?"}`;
+        ? translateWebSource(translationLocale, "Latest turn")
+        : translationLocale === "zh-CN"
+          ? `第 ${selectedCheckpointTurnCount ?? "?"} 轮`
+          : `Turn ${selectedCheckpointTurnCount ?? "?"}`;
   const reviewSectionTitle = toolCallSelection
-    ? "Tool call"
+    ? translateWebSource(translationLocale, "Tool call")
     : selectedTurn
-      ? `Turn ${selectedCheckpointTurnCount ?? "?"}`
+      ? translationLocale === "zh-CN"
+        ? `第 ${selectedCheckpointTurnCount ?? "?"} 轮`
+        : `Turn ${selectedCheckpointTurnCount ?? "?"}`
       : selectedGitScopeLabel;
   const headerCommitSha = selectedRunId === null ? selectedCommitSha : null;
   const selectedCommitUrl =
@@ -876,17 +895,19 @@ export default function DiffPanel({
           <DropdownMenuContent align="start">
             <DropdownMenuRadioGroup value={selectedScopeValue} onValueChange={selectScopeValue}>
               <DropdownMenuRadioItem value="branch" closeOnClick>
-                <span>Changes</span>
+                <span>{translateWebSource(translationLocale, "Changes")}</span>
               </DropdownMenuRadioItem>
               <DropdownMenuRadioItem value="unstaged" closeOnClick>
-                <span>Uncommitted</span>
+                <span>{translateWebSource(translationLocale, "Uncommitted")}</span>
               </DropdownMenuRadioItem>
               <DropdownMenuRadioItem value="latest" closeOnClick>
-                <span>Latest turn</span>
+                <span>{translateWebSource(translationLocale, "Latest turn")}</span>
               </DropdownMenuRadioItem>
             </DropdownMenuRadioGroup>
             <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Turn</DropdownMenuSubTrigger>
+              <DropdownMenuSubTrigger>
+                {translateWebSource(translationLocale, "Turn")}
+              </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
                 <DropdownMenuRadioGroup value={selectedTurnValue} onValueChange={selectScopeValue}>
                   {orderedTurnDiffSummaries.map((summary) => {
@@ -898,7 +919,11 @@ export default function DiffPanel({
                         closeOnClick
                       >
                         <span className="flex items-center gap-2">
-                          <span>Turn {turnCount}</span>
+                          <span>
+                            {translationLocale === "zh-CN"
+                              ? `第 ${turnCount} 轮`
+                              : `Turn ${turnCount}`}
+                          </span>
                           <span className="ml-auto text-xs tabular-nums text-muted-foreground">
                             {formatShortTimestamp(summary.completedAt, settings.timestampFormat)}
                           </span>
@@ -917,7 +942,9 @@ export default function DiffPanel({
                 branchCommitsQuery.refresh();
               }}
             >
-              <DropdownMenuSubTrigger>Commits</DropdownMenuSubTrigger>
+              <DropdownMenuSubTrigger>
+                {translateWebSource(translationLocale, "Commits")}
+              </DropdownMenuSubTrigger>
               <DropdownMenuSubContent className="max-h-80 max-w-96">
                 <DropdownMenuRadioGroup
                   value={selectedCommitValue}
@@ -965,7 +992,11 @@ export default function DiffPanel({
                                 href={commitUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                aria-label={`Open commit ${commit.sha.slice(0, 7)}`}
+                                aria-label={
+                                  translationLocale === "zh-CN"
+                                    ? `打开提交 ${commit.sha.slice(0, 7)}`
+                                    : `Open commit ${commit.sha.slice(0, 7)}`
+                                }
                               />
                             }
                             onClick={(event) => openCommitUrl(event, commitUrl)}
@@ -988,16 +1019,26 @@ export default function DiffPanel({
                 ) : !canReadFiles ? (
                   <DropdownMenuItem disabled>
                     {fileAccess.isPending
-                      ? "Checking file access..."
-                      : (fileAccess.error ?? "This connection cannot read local diffs.")}
+                      ? translateWebSource(translationLocale, "Checking file access...")
+                      : (fileAccess.error ??
+                        translateWebSource(
+                          translationLocale,
+                          "This connection cannot read local diffs.",
+                        ))}
                   </DropdownMenuItem>
                 ) : branchCommits === null ? (
-                  <DropdownMenuItem disabled>Loading commits...</DropdownMenuItem>
+                  <DropdownMenuItem disabled>
+                    {translateWebSource(translationLocale, "Loading commits...")}
+                  </DropdownMenuItem>
                 ) : branchCommits.commits.length === 0 ? (
-                  <DropdownMenuItem disabled>No commits on this branch.</DropdownMenuItem>
+                  <DropdownMenuItem disabled>
+                    {translateWebSource(translationLocale, "No commits on this branch.")}
+                  </DropdownMenuItem>
                 ) : branchCommits.truncated ? (
                   <DropdownMenuItem disabled>
-                    {`Showing latest ${branchCommits.commits.length} commits`}
+                    {translationLocale === "zh-CN"
+                      ? `仅显示最近 ${branchCommits.commits.length} 条提交`
+                      : `Showing latest ${branchCommits.commits.length} commits`}
                   </DropdownMenuItem>
                 ) : null}
               </DropdownMenuSubContent>
@@ -1007,7 +1048,11 @@ export default function DiffPanel({
         {canSelectBranchBase && (
           <div
             className="flex min-w-0 max-w-full items-center gap-2 overflow-hidden text-xs text-muted-foreground"
-            aria-label={`Comparing ${comparisonHeadRef} against ${comparisonBaseRef}`}
+            aria-label={
+              translationLocale === "zh-CN"
+                ? `正在对比 ${comparisonHeadRef} 与 ${comparisonBaseRef}`
+                : `Comparing ${comparisonHeadRef} against ${comparisonBaseRef}`
+            }
           >
             <Tooltip>
               <TooltipTrigger
@@ -1028,7 +1073,7 @@ export default function DiffPanel({
               <TooltipTrigger
                 render={<span aria-hidden className="hidden @max-[20rem]/diff-refs:inline" />}
               >
-                vs
+                {translateWebSource(translationLocale, "vs")}
               </TooltipTrigger>
               <TooltipPopup side="top">
                 {`${comparisonHeadRef} → ${comparisonBaseRef}`}
@@ -1049,7 +1094,11 @@ export default function DiffPanel({
               <ComboboxTrigger
                 render={<Button variant="ghost-muted" size="xs" />}
                 className="min-w-9 max-w-48 shrink-0"
-                aria-label={`Change comparison target. Currently ${comparisonBaseRef}`}
+                aria-label={
+                  translationLocale === "zh-CN"
+                    ? `更改对比目标，当前为 ${comparisonBaseRef}`
+                    : `Change comparison target. Currently ${comparisonBaseRef}`
+                }
               >
                 <span className="min-w-0 truncate">{comparisonBaseRef}</span>
                 <ChevronDownIcon className="size-3.5 shrink-0 opacity-70" />
@@ -1072,7 +1121,9 @@ export default function DiffPanel({
                     </span>
                   </div>
                 </div>
-                <ComboboxEmpty>No matching refs.</ComboboxEmpty>
+                <ComboboxEmpty>
+                  {translateWebSource(translationLocale, "No matching refs.")}
+                </ComboboxEmpty>
                 <ComboboxList className="max-h-64 min-w-0 overflow-x-hidden">
                   <ComboboxItem
                     className="w-full min-w-0 grid-cols-[1rem_minmax(0,1fr)]"
@@ -1101,7 +1152,11 @@ export default function DiffPanel({
                               onPointerDown={(event) => event.stopPropagation()}
                             >
                               <Switch
-                                aria-label={`Use remote version of ${choice.label}`}
+                                aria-label={
+                                  translationLocale === "zh-CN"
+                                    ? `使用 ${choice.label} 的远端版本`
+                                    : `Use remote version of ${choice.label}`
+                                }
                                 checked={useRemote}
                                 className="[--thumb-size:--spacing(3)]"
                                 onCheckedChange={(checked) => {
@@ -1119,13 +1174,18 @@ export default function DiffPanel({
                                   <span className="flex justify-end text-muted-foreground">
                                     <CheckIcon
                                       role="img"
-                                      aria-label="Remote only"
+                                      aria-label={translateWebSource(
+                                        translationLocale,
+                                        "Remote only",
+                                      )}
                                       className="size-3"
                                     />
                                   </span>
                                 }
                               />
-                              <TooltipPopup side="top">Remote only</TooltipPopup>
+                              <TooltipPopup side="top">
+                                {translateWebSource(translationLocale, "Remote only")}
+                              </TooltipPopup>
                             </Tooltip>
                           ) : null}
                         </div>
@@ -1160,7 +1220,10 @@ export default function DiffPanel({
                   type="button"
                   size="icon-sm"
                   variant="ghost"
-                  aria-label={isRefreshingDiff ? "Refreshing diff" : "Refresh diff"}
+                  aria-label={translateWebSource(
+                    translationLocale,
+                    isRefreshingDiff ? "Refreshing diff" : "Refresh diff",
+                  )}
                   onClick={refreshDiffFromUserAction}
                 />
               }
@@ -1168,7 +1231,10 @@ export default function DiffPanel({
               <RefreshIcon size="sm" refreshing={isRefreshingDiff} />
             </TooltipTrigger>
             <TooltipPopup side="top">
-              {isRefreshingDiff ? "Refreshing diff…" : "Refresh diff"}
+              {translateWebSource(
+                translationLocale,
+                isRefreshingDiff ? "Refreshing diff…" : "Refresh diff",
+              )}
             </TooltipPopup>
           </Tooltip>
         )}
@@ -1180,7 +1246,10 @@ export default function DiffPanel({
                   type="button"
                   size="icon-sm"
                   variant="ghost"
-                  aria-label={allDiffFilesCollapsed ? "Expand all files" : "Collapse all files"}
+                  aria-label={translateWebSource(
+                    translationLocale,
+                    allDiffFilesCollapsed ? "Expand all files" : "Collapse all files",
+                  )}
                   onClick={toggleDiffFileCollapse}
                 />
               }
@@ -1192,7 +1261,10 @@ export default function DiffPanel({
               )}
             </TooltipTrigger>
             <TooltipPopup side="top">
-              {allDiffFilesCollapsed ? "Expand all files" : "Collapse all files"}
+              {translateWebSource(
+                translationLocale,
+                allDiffFilesCollapsed ? "Expand all files" : "Collapse all files",
+              )}
             </TooltipPopup>
           </Tooltip>
         )}
@@ -1225,7 +1297,10 @@ export default function DiffPanel({
           <TooltipTrigger
             render={
               <Toggle
-                aria-label={wordWrap ? "Disable diff line wrapping" : "Enable diff line wrapping"}
+                aria-label={translateWebSource(
+                  translationLocale,
+                  wordWrap ? "Disable diff line wrapping" : "Enable diff line wrapping",
+                )}
                 variant="ghost"
                 size="sm"
                 pressed={wordWrap}
@@ -1238,16 +1313,20 @@ export default function DiffPanel({
             <TextWrapIcon className="size-3.5" />
           </TooltipTrigger>
           <TooltipPopup side="top">
-            {wordWrap ? "Disable line wrapping" : "Enable line wrapping"}
+            {translateWebSource(
+              translationLocale,
+              wordWrap ? "Disable line wrapping" : "Enable line wrapping",
+            )}
           </TooltipPopup>
         </Tooltip>
         <Tooltip>
           <TooltipTrigger
             render={
               <Toggle
-                aria-label={
-                  diffIgnoreWhitespace ? "Show whitespace changes" : "Hide whitespace changes"
-                }
+                aria-label={translateWebSource(
+                  translationLocale,
+                  diffIgnoreWhitespace ? "Show whitespace changes" : "Hide whitespace changes",
+                )}
                 variant="ghost"
                 size="sm"
                 pressed={diffIgnoreWhitespace}
@@ -1260,7 +1339,10 @@ export default function DiffPanel({
             <PilcrowIcon className="size-3.5" />
           </TooltipTrigger>
           <TooltipPopup side="top">
-            {diffIgnoreWhitespace ? "Show whitespace changes" : "Hide whitespace changes"}
+            {translateWebSource(
+              translationLocale,
+              diffIgnoreWhitespace ? "Show whitespace changes" : "Hide whitespace changes",
+            )}
           </TooltipPopup>
         </Tooltip>
         {testFileCount > 0 && (
@@ -1268,7 +1350,7 @@ export default function DiffPanel({
             <TooltipTrigger
               render={
                 <Toggle
-                  aria-label="Hide test files"
+                  aria-label={translateWebSource(translationLocale, "Hide test files")}
                   variant="ghost"
                   size="sm"
                   pressed={hideTestFiles}
@@ -1280,8 +1362,10 @@ export default function DiffPanel({
             </TooltipTrigger>
             <TooltipPopup side="top">
               {hideTestFiles
-                ? `Show ${testFileCount} hidden test ${testFileCount === 1 ? "file" : "files"}`
-                : "Hide test files"}
+                ? translationLocale === "zh-CN"
+                  ? `显示已隐藏的 ${testFileCount} 个测试文件`
+                  : `Show ${testFileCount} hidden test ${testFileCount === 1 ? "file" : "files"}`
+                : translateWebSource(translationLocale, "Hide test files")}
             </TooltipPopup>
           </Tooltip>
         )}
@@ -1290,7 +1374,10 @@ export default function DiffPanel({
             <TooltipTrigger
               render={
                 <Toggle
-                  aria-label={fileTreeOpen ? "Hide file tree" : "Show file tree"}
+                  aria-label={translateWebSource(
+                    translationLocale,
+                    fileTreeOpen ? "Hide file tree" : "Show file tree",
+                  )}
                   variant="ghost"
                   size="sm"
                   pressed={fileTreeOpen}
@@ -1301,7 +1388,10 @@ export default function DiffPanel({
               <FolderTreeIcon className="size-3.5" />
             </TooltipTrigger>
             <TooltipPopup side="top">
-              {fileTreeOpen ? "Hide file tree" : "Show file tree"}
+              {translateWebSource(
+                translationLocale,
+                fileTreeOpen ? "Hide file tree" : "Show file tree",
+              )}
             </TooltipPopup>
           </Tooltip>
         )}
@@ -1313,22 +1403,28 @@ export default function DiffPanel({
     <DiffPanelShell mode={mode} header={headerRow}>
       {!activeThread ? (
         <div className="flex flex-1 items-center justify-center px-5 text-center text-xs text-muted-foreground/70">
-          Select a thread to inspect turn diffs.
+          {translateWebSource(translationLocale, "Select a thread to inspect turn diffs.")}
         </div>
       ) : !isGitRepo && !toolCallSelection ? (
         <div className="flex flex-1 items-center justify-center px-5 text-center text-xs text-muted-foreground/70">
-          Turn diffs are unavailable because this project is not a git repository.
+          {translateWebSource(
+            translationLocale,
+            "Turn diffs are unavailable because this project is not a git repository.",
+          )}
         </div>
       ) : selectedRunId !== null && orderedTurnDiffSummaries.length === 0 ? (
         <div className="flex flex-1 items-center justify-center px-5 text-center text-xs text-muted-foreground/70">
-          No completed turns yet.
+          {translateWebSource(translationLocale, "No completed turns yet.")}
         </div>
       ) : isGitSelection && !canReadFiles ? (
         fileAccess.isPending ? (
-          <DiffPanelLoadingState label="Checking file access..." />
+          <DiffPanelLoadingState
+            label={translateWebSource(translationLocale, "Checking file access...")}
+          />
         ) : (
           <div className="flex flex-1 items-center justify-center px-5 text-center text-xs text-muted-foreground/70">
-            {fileAccess.error ?? "This connection cannot read local diffs."}
+            {fileAccess.error ??
+              translateWebSource(translationLocale, "This connection cannot read local diffs.")}
           </div>
         )
       ) : (
@@ -1336,23 +1432,30 @@ export default function DiffPanel({
           <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
             {preview?.incomplete && (
               <p className="shrink-0 border-b border-border/70 bg-muted/40 px-3 py-1.5 text-2xs text-muted-foreground">
-                {selectedPatchError
-                  ? "Showing tracked changes. Untracked changes could not be loaded. Refresh to retry."
-                  : "Showing tracked changes. Checking untracked files..."}
+                {translateWebSource(
+                  translationLocale,
+                  selectedPatchError
+                    ? "Showing tracked changes. Untracked changes could not be loaded. Refresh to retry."
+                    : "Showing tracked changes. Checking untracked files...",
+                )}
               </p>
             )}
             {isSelectedPatchTruncated && !lazySource && (
               <p className="shrink-0 border-b border-border/70 bg-muted/40 px-3 py-1.5 text-2xs text-muted-foreground">
-                This preview exceeds the size limit. Changes shown are incomplete.
+                {translateWebSource(
+                  translationLocale,
+                  "This preview exceeds the size limit. Changes shown are incomplete.",
+                )}
                 {isGitSelection && selectedGitSource?.files && !preview?.incomplete
-                  ? " Totals include all changes."
+                  ? translateWebSource(translationLocale, " Totals include all changes.")
                   : ""}
               </p>
             )}
             {omittedToolCallFiles > 0 && (
               <p className="shrink-0 border-b border-border/70 bg-muted/40 px-3 py-1.5 text-2xs text-muted-foreground">
-                This tool call changed {recordedToolCallFileCount} files. The recorded patch omits{" "}
-                {omittedToolCallFiles} of them.
+                {translationLocale === "zh-CN"
+                  ? `此次工具调用修改了 ${recordedToolCallFileCount} 个文件，已记录的补丁省略了其中 ${omittedToolCallFiles} 个。`
+                  : `This tool call changed ${recordedToolCallFileCount} files. The recorded patch omits ${omittedToolCallFiles} of them.`}
               </p>
             )}
             {selectedPatchError && !renderablePatch && (
@@ -1363,7 +1466,10 @@ export default function DiffPanel({
             {!renderablePatch && toolCallPreview && toolCallPreview.content.length > 0 ? (
               <div className="min-h-0 flex-1 space-y-3 overflow-auto p-3 text-xs">
                 <p className="text-muted-foreground">
-                  The provider recorded file content without a diff.
+                  {translateWebSource(
+                    translationLocale,
+                    "The provider recorded file content without a diff.",
+                  )}
                 </p>
                 {toolCallPreview.content.map(({ label, text }) => (
                   <div key={label} className="space-y-1">
@@ -1374,7 +1480,7 @@ export default function DiffPanel({
                         wordWrap && "whitespace-pre-wrap wrap-break-word",
                       )}
                     >
-                      {text === "" ? "Empty content." : text}
+                      {text === "" ? translateWebSource(translationLocale, "Empty content.") : text}
                     </pre>
                   </div>
                 ))}
@@ -1382,7 +1488,8 @@ export default function DiffPanel({
             ) : !renderablePatch && !lazySource ? (
               isLoadingSelectedPatch ? (
                 <DiffPanelLoadingState
-                  label={
+                  label={translateWebSource(
+                    translationLocale,
                     toolCallSelection
                       ? "Loading tool call diff..."
                       : selectedTurn
@@ -1391,15 +1498,18 @@ export default function DiffPanel({
                           ? "Loading uncommitted changes..."
                           : selectedGitScope === "commit"
                             ? "Loading commit..."
-                            : "Loading changes..."
-                  }
+                            : "Loading changes...",
+                  )}
                 />
               ) : (
                 <div className="flex h-full items-center justify-center px-3 py-2 text-xs text-muted-foreground/70">
                   <p>
-                    {hasNoNetChanges
-                      ? "No net changes in this selection."
-                      : "No patch available for this selection."}
+                    {translateWebSource(
+                      translationLocale,
+                      hasNoNetChanges
+                        ? "No net changes in this selection."
+                        : "No patch available for this selection.",
+                    )}
                   </p>
                 </div>
               )

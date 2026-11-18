@@ -263,7 +263,7 @@ function SetupDetails({ snapshot }: { snapshot: WorktreeSetupSnapshot }) {
       ) : null}
       {snapshot.baseRef ? (
         <>
-          <dt className="text-foreground/80">Base</dt>
+          <dt className="text-foreground/80">{translateWebSource(translationLocale, "Base")}</dt>
           <dd className="min-w-0 font-mono">
             <MiddleTruncate value={snapshot.baseRef} className="flex" />
           </dd>
@@ -336,7 +336,10 @@ export function WorktreeSetupCard({
       (setupStage.status === "running" && setupStage.tail.length > 0));
 
   return (
-    <section aria-label="Worktree setup" data-worktree-setup-phase={snapshot.phase}>
+    <section
+      aria-label={translateWebSource(translationLocale, "Worktree setup")}
+      data-worktree-setup-phase={snapshot.phase}
+    >
       {showHeader ? <SetupHeaderRow snapshot={snapshot} /> : null}
       {collapsed ? (
         <CollapsedSummaryRow snapshot={snapshot} />

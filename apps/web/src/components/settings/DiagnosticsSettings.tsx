@@ -407,7 +407,8 @@ function ProcessDiagnosticsTable({
             {visibleProcesses.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-4 text-xs text-muted-foreground sm:px-5">
-                  {emptyLabel ?? "No live descendant processes found."}
+                  {emptyLabel ??
+                    translateWebSource(translationLocale, "No live descendant processes found.")}
                 </td>
               </tr>
             ) : null}
@@ -566,9 +567,10 @@ function ResourceHistoryWindowSelector({
   selectedWindowMs: number;
   onSelect: (windowMs: number) => void;
 }) {
+  const { locale: i18nLocale } = useI18n();
   return (
     <ToggleGroup
-      aria-label="Process history period"
+      aria-label={translateWebSource(i18nLocale, "Process history period")}
       variant="segmented"
       value={[String(selectedWindowMs)]}
       onValueChange={(next) => {
@@ -636,7 +638,9 @@ function ProcessResourceHistoryTable({
               <th className="px-3 py-2 text-right font-semibold">
                 {translateWebSource(translationLocale, "Peak")}
               </th>
-              <th className="px-3 py-2 text-right font-semibold">Max Mem</th>
+              <th className="px-3 py-2 text-right font-semibold">
+                {translateWebSource(translationLocale, "Max Mem")}
+              </th>
               <th className="px-3 py-2 font-semibold">
                 {translateWebSource(translationLocale, "Command")}
               </th>
@@ -974,9 +978,9 @@ function DiagnosticsSettingsBody() {
       <SettingsPageContainer>
         <p className="text-sm text-muted-foreground">
           {environmentId === null
-            ? "Connect an environment to see diagnostics."
+            ? translateWebSource(locale, "Connect an environment to see diagnostics.")
             : diagnosticsAccess.isPending
-              ? "Checking diagnostics access…"
+              ? translateWebSource(locale, "Checking diagnostics access…")
               : diagnosticsAccess.error}
         </p>
       </SettingsPageContainer>

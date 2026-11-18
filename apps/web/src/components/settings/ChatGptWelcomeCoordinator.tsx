@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useAtomValue } from "@effect/atom-react";
@@ -73,7 +74,9 @@ export function ChatGptWelcomeCoordinator() {
             credit settings in ChatGPT.
           </DialogDescription>
           <p className="text-xs text-muted-foreground">
-            {next?.providerName} on {next?.environmentLabel}
+            {next?.providerName}
+            {localizeWebString(translationLocale, " on ")}
+            {next?.environmentLabel}
           </p>
         </DialogHeader>
         <DialogFooter>

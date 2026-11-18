@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import { pipe } from "effect/Function";
 import { ThreadDetailsControl } from "./ThreadDetailsControl";
 import type {
@@ -92,6 +94,7 @@ function ThreadDetailsPrRows({
   currentLink: ThreadPullRequestLink | null;
   onOpenLink: (event: ReactMouseEvent<HTMLElement>, url: string) => void;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const [expanded, setExpanded] = useState(false);
   const watch = useAtomCommand(threadEnvironment.watchPullRequest, { reportFailure: true });
   const stopWatching = (link: ThreadPullRequestLink | null) =>
@@ -149,7 +152,7 @@ function ThreadDetailsPrRows({
         ) : (
           <ChevronDownIcon aria-hidden className="size-4 shrink-0" />
         )}
-        {expanded ? "Show less" : `Show ${rest.length} more`}
+        {expanded ? translateWebSource(i18nLocale, "Show less") : `Show ${rest.length} more`}
       </ThreadDetailsControl>
     </>
   );

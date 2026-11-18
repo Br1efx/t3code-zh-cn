@@ -241,8 +241,10 @@ function ConfiguredConnectOnboardingDialog() {
           title={t("connectOnboarding.title")}
           description={
             <>
-              Mesh your devices together. Publish this environment and connect the rest, all in one
-              place.
+              {translateWebSource(
+                uiLocale,
+                "Mesh your devices together. Publish this environment and connect the rest, all in one place.",
+              )}
             </>
           }
         >
@@ -368,7 +370,7 @@ function PublishStep({
   readonly onExposeEnvironmentChange: (enabled: boolean) => void;
   readonly onPublishAgentActivityChange: (enabled: boolean) => void;
 }) {
-  const { t } = useI18n();
+  const { locale: i18nLocale, t } = useI18n();
   return (
     <div className="space-y-3">
       <div className="rounded-lg border">
@@ -388,7 +390,7 @@ function PublishStep({
         />
         {requireDeviceApproval !== null ? (
           <OnboardingToggleRow
-            title="Require approval for new devices"
+            title={translateWebSource(i18nLocale, "Require approval for new devices")}
             description="Devices that sign in to your T3 Connect account wait until someone already connected here approves them."
             checked={requireDeviceApproval}
             disabled={disabled || requireDeviceApprovalLocked}

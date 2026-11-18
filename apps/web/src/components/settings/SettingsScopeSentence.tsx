@@ -70,6 +70,7 @@ interface SettingsScopeMenuProps {
 }
 
 export function SettingsScopeSentence() {
+  const { locale: translationLocale } = useI18n();
   const scope = useOptionalSettingsScope();
   const pathname = useLocation({ select: (location) => location.pathname });
   const { environments } = useEnvironments();
@@ -84,12 +85,20 @@ export function SettingsScopeSentence() {
   return (
     <p className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 px-3 text-sm text-muted-foreground sm:px-4">
       <span className="flex min-w-0 items-center gap-1.5">
-        <span className="shrink-0">Applying settings for</span>
+        <span className="shrink-0">
+          {translationLocale === "zh-CN"
+            ? "当前设置生效范围："
+            : translateWebSource(translationLocale, "Applying settings for")}
+        </span>
         <ProjectScopeMenu {...props} />
       </span>
       <span className="flex min-w-0 items-center gap-1.5">
         <span className="shrink-0">
-          {scope.search.machine || scope.scope.kind === "checkout" ? "on" : "across"}
+          {translationLocale === "zh-CN"
+            ? "·"
+            : scope.search.machine || scope.scope.kind === "checkout"
+              ? translateWebSource(translationLocale, "on")
+              : translateWebSource(translationLocale, "across")}
         </span>
         <EnvironmentScopeMenu {...props} />
       </span>
@@ -147,15 +156,18 @@ function ScopeMenu({
 }) {
   const { locale: sourceLocale } = useI18n();
   const [query, setQuery] = useState("");
+  const translatedAriaLabel = translateWebSource(sourceLocale, ariaLabel);
+  const translatedLabel = translateWebSource(sourceLocale, label);
+  const translatedSearchLabel = translateWebSource(sourceLocale, searchLabel);
   const Trigger = options.length > 6 ? ComboboxTrigger : MenuTrigger;
   const trigger = (
     <Trigger
-      aria-label={`${ariaLabel}: ${label}`}
+      aria-label={`${translatedAriaLabel}: ${translatedLabel}`}
       render={<Button variant="outline" size="sm" />}
       className="min-w-0 max-w-72"
     >
       {icon}
-      <span className="min-w-0 truncate">{label}</span>
+      <span className="min-w-0 truncate">{translatedLabel}</span>
       <ChevronDownIcon
         aria-hidden
         strokeWidth={1.75}
@@ -188,8 +200,8 @@ function ScopeMenu({
         {trigger}
         <ComboboxPopup align="start" className="w-80">
           <ComboboxSearchInput
-            aria-label={searchLabel}
-            placeholder={searchLabel}
+            aria-label={translatedSearchLabel}
+            placeholder={translatedSearchLabel}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
@@ -317,13 +329,16 @@ function EnvironmentScopeMenu({
 }
 
 function CheckoutScopeMenu({ value, groups, onChange }: SettingsScopeMenuProps) {
+  const { locale: translationLocale } = useI18n();
   const group = groups.find((candidate) => candidate.projectKey === value.project);
   const checkouts = group ? settingsScopeCheckoutChoices(group, value) : [];
   if (checkouts.length === 0) return null;
   const selected = checkouts.find((member) => member.physicalProjectKey === value.checkout);
   return (
     <span className="flex min-w-0 items-center gap-1.5">
-      <span className="shrink-0">in</span>
+      <span className="shrink-0">
+        {translationLocale === "zh-CN" ? "·" : translateWebSource(translationLocale, "in")}
+      </span>
       <ScopeMenu
         ariaLabel="Checkout scope"
         icon={<FolderIcon aria-hidden className="size-3.5 shrink-0" />}
@@ -344,7 +359,10 @@ function CheckoutScopeMenu({ value, groups, onChange }: SettingsScopeMenuProps) 
           )
         }
         searchLabel="Search checkouts"
-        allOption={{ value: ALL_CHECKOUTS_VALUE, label: "All checkouts" }}
+        allOption={{
+          value: ALL_CHECKOUTS_VALUE,
+          label: translateWebSource(translationLocale, "All checkouts"),
+        }}
         options={checkouts.map((member) => ({
           value: member.physicalProjectKey,
           label: fileBasename(member.workspaceRoot),
@@ -391,7 +409,11 @@ function ProjectScopeMenu({ value, groups, environments, onChange }: SettingsSco
         return {
           value: group.projectKey,
           label: group.displayName,
-          secondary: group.archived ? ["Archived", location].filter(Boolean).join(" · ") : location,
+          secondary: group.archived
+            ? [translateWebSource(translationLocale, "Archived"), location]
+                .filter(Boolean)
+                .join(" · ")
+            : location,
           icon: <ProjectFavicon project={group} className="size-3.5 shrink-0" />,
         };
       })}

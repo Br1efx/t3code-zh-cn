@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { useEnvironmentScope } from "../../state/session";
 import { useEnvironmentsWithScope, readEnvironmentScope } from "../../state/session";
 import {
@@ -268,6 +269,7 @@ function UnknownWhenVariableWarning({
 }
 
 function KeybindingConflictWarning({ labels }: { labels: ReadonlyArray<string> }) {
+  const { locale: i18nLocale } = useI18n();
   if (labels.length === 0) return null;
   const description =
     labels.length === 1
@@ -276,7 +278,11 @@ function KeybindingConflictWarning({ labels }: { labels: ReadonlyArray<string> }
 
   return (
     <WarningTooltipIcon label={description}>
-      {description} The most recent matching binding wins when both conditions can apply.
+      {description}
+      {localizeWebString(
+        i18nLocale,
+        " The most recent matching binding wins when both conditions can apply.",
+      )}
     </WarningTooltipIcon>
   );
 }
@@ -1560,8 +1566,11 @@ export function KeybindingsSettingsPanel() {
       {!canWriteSettings ? (
         <p className="text-xs text-muted-foreground">
           {connectedEnvironments.length === 0
-            ? "Connect an environment to change keybindings."
-            : "This connection can view keybindings but cannot change them."}
+            ? translateWebSource(translationLocale, "Connect an environment to change keybindings.")
+            : translateWebSource(
+                translationLocale,
+                "This connection can view keybindings but cannot change them.",
+              )}
         </p>
       ) : null}
       <div inert={!canWriteSettings} className="flex flex-col gap-8">

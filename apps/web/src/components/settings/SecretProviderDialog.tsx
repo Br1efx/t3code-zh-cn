@@ -138,8 +138,10 @@ export function SecretProviderDialog({
                 </p>
               ) : null}
               <p className="text-xs text-muted-foreground">
-                The account shorthand, sign-in address without https://, or ID that op account list
-                shows.
+                {translateWebSource(
+                  translationLocale,
+                  "The account shorthand, sign-in address without https://, or ID that op account list shows.",
+                )}
               </p>
             </div>
           </form>

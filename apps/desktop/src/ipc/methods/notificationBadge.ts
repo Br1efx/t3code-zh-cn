@@ -4,6 +4,11 @@ import * as Schema from "effect/Schema";
 import * as HostProcess from "@t3tools/shared/HostProcess";
 
 import * as ElectronApp from "../../electron/ElectronApp.ts";
+import {
+  isZhCn,
+  resolveCurrentDesktopLocale,
+  type ResolvedAppLocale,
+} from "../../i18n/DesktopLocale.ts";
 import * as DesktopIpc from "../DesktopIpc.ts";
 import { SET_NOTIFICATION_BADGE_CHANNEL } from "../channels.ts";
 
@@ -20,17 +25,21 @@ const NotificationBadge = Schema.Struct({
 function applyNotificationBadge(
   platform: NodeJS.Platform,
   { count, image }: typeof NotificationBadge.Type,
+  locale: ResolvedAppLocale = "en",
 ): void {
   try {
     if (Electron.BrowserWindow.getFocusedWindow()) count = 0;
     if (platform === "win32") {
       const overlay = count > 0 && image ? Electron.nativeImage.createFromDataURL(image) : null;
+      const description =
+        count > 0
+          ? isZhCn(locale)
+            ? `有 ${count} 个对话收到新通知`
+            : `${count} threads with new notifications`
+          : "";
       for (const window of Electron.BrowserWindow.getAllWindows()) {
         if (!window.isDestroyed()) {
-          window.setOverlayIcon(
-            overlay?.isEmpty() ? null : overlay,
-            count > 0 ? `${count} threads with new notifications` : "",
-          );
+          window.setOverlayIcon(overlay?.isEmpty() ? null : overlay, description);
         }
       }
     } else if (platform === "darwin" || platform === "linux") {
@@ -57,11 +66,13 @@ export const installNotificationBadge = Effect.fn("desktop.ipc.installNotificati
         channel: SET_NOTIFICATION_BADGE_CHANNEL,
         payload: NotificationBadge,
         result: Schema.Void,
-        handler: (badge) =>
-          Effect.sync(() => {
+        handler: Effect.fn("desktop.ipc.notificationBadge.set")(function* (badge) {
+          const locale = yield* resolveCurrentDesktopLocale;
+          yield* Effect.sync(() => {
             if (badge.count > 0 && Electron.BrowserWindow.getFocusedWindow()) clear();
-            else applyNotificationBadge(platform, badge);
-          }),
+            else applyNotificationBadge(platform, badge, locale);
+          });
+        }),
       }),
     );
     yield* app.on("browser-window-focus", clear);

@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import { LoaderCircleIcon, PauseIcon, PlayIcon, TriangleAlertIcon } from "lucide-react";
 import { createContext, useContext, useRef, useState } from "react";
 
@@ -73,6 +75,7 @@ function audioTime(seconds: number) {
 }
 
 function AudioChip(props: AudioPreviewProps) {
+  const { locale: i18nLocale } = useI18n();
   const audio = useRef<HTMLAudioElement | null>(null);
   const onUnmount = useContext(AudioPreviewUnmountContext);
   const [loadedSource, setLoadedSource] = useState<string | null>(null);
@@ -115,7 +118,11 @@ function AudioChip(props: AudioPreviewProps) {
       {...(props.failed ? { state: "invalid" as const } : {})}
       {...(props.variant === "bubble" ? { shape: "bubble" as const } : {})}
       className="relative isolate overflow-hidden"
-      title={props.failed ? "Audio unavailable. Open the file or retry playback." : props.name}
+      title={
+        props.failed
+          ? translateWebSource(i18nLocale, "Audio unavailable. Open the file or retry playback.")
+          : props.name
+      }
     >
       <span
         aria-hidden
@@ -159,7 +166,7 @@ function AudioChip(props: AudioPreviewProps) {
       </ContextChipLabel>
       <span dir="ltr" className="shrink-0 self-baseline text-3xs text-current">
         {props.failed
-          ? "Unavailable"
+          ? translateWebSource(i18nLocale, "Unavailable")
           : loading
             ? "..."
             : duration > 0

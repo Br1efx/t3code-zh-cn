@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import { memo, useRef, useState, type ReactNode, type KeyboardEvent } from "react";
 import { flushSync } from "react-dom";
 import {
@@ -87,6 +89,7 @@ export const ExpandedImageDialog = memo(function ExpandedImageDialog({
   preview,
   onClose,
 }: ExpandedImageDialogProps) {
+  const { locale: i18nLocale } = useI18n();
   const [imageOffset, setImageOffset] = useState(0);
   const [failedImageSrc, setFailedImageSrc] = useState<string | null>(null);
   const [accessibilityDetailsSrc, setAccessibilityDetailsSrc] = useState<string | null>(null);
@@ -231,8 +234,11 @@ export const ExpandedImageDialog = memo(function ExpandedImageDialog({
               <ExpandedMediaFailure>
                 <p>
                   {openOriginalLink
-                    ? "This image could not be loaded."
-                    : "Image unavailable. The file may have been moved or deleted."}
+                    ? translateWebSource(i18nLocale, "This image could not be loaded.")
+                    : translateWebSource(
+                        i18nLocale,
+                        "Image unavailable. The file may have been moved or deleted.",
+                      )}
                 </p>
                 {openOriginalLink}
               </ExpandedMediaFailure>

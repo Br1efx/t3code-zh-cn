@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import type { EnvironmentId, SourceControlSignInPrompt } from "@t3tools/contracts";
@@ -251,7 +252,8 @@ export function SourceControlAppSignInSettings({
             </Button>
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span aria-hidden className="size-1.5 rounded-full bg-warning" />
-              Waiting for approval · code expires at {expiryTime(waiting.expiresAt)}
+              {localizeWebString(translationLocale, "Waiting for approval · code expires at ")}
+              {expiryTime(waiting.expiresAt)}
             </p>
           </div>
         </div>
@@ -260,10 +262,17 @@ export function SourceControlAppSignInSettings({
       {signedIn ? (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
           <span className="min-w-0 flex-1">
-            Reaches repositories in accounts and organizations that installed the app.
+            {translateWebSource(
+              translationLocale,
+              "Reaches repositories in accounts and organizations that installed the app.",
+            )}
           </span>
-          <ExternalLink href={appSignIn.installUrl}>Install on an organization</ExternalLink>
-          <ExternalLink href={appSignIn.revokeUrl}>Manage on GitHub</ExternalLink>
+          <ExternalLink href={appSignIn.installUrl}>
+            {translateWebSource(translationLocale, "Install on an organization")}
+          </ExternalLink>
+          <ExternalLink href={appSignIn.revokeUrl}>
+            {translateWebSource(translationLocale, "Manage on GitHub")}
+          </ExternalLink>
         </div>
       ) : null}
 

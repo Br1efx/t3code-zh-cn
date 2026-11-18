@@ -329,7 +329,7 @@ describe("getProviderUpdateRunToastView", () => {
     );
     expect(result).toEqual({
       type: "error",
-      title: "服务提供方更新失败",
+      title: "AI 服务更新失败",
       description: "Laptop · Codex: offline",
     });
   });

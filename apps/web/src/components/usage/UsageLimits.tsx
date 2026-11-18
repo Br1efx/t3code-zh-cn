@@ -348,6 +348,7 @@ export function ResetCredits({
   readonly credits: ServerProviderResetCredits;
   readonly now: number;
 }) {
+  const { locale: translationLocale } = useI18n();
   const { canManageProviders, choice, confirming, setConfirming, confirm, busy, status, redeem } =
     useResetCredit(environmentId);
   if (credits.availableCount === 0 && status === null) return null;
@@ -355,7 +356,9 @@ export function ResetCredits({
     <div className="flex flex-col gap-1 text-xs text-muted-foreground">
       {resetCreditChoices(credits, input, now).map((choice) => (
         <div key={choice.key} className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="tabular-nums">{choice.summary}</span>
+          <span className="tabular-nums">
+            {translateWebSource(translationLocale, choice.summary)}
+          </span>
           {choice.availableCount > 0 ? (
             <Button
               size="xs"

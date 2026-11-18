@@ -1,3 +1,6 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import {
   AuthOrchestrationOperateScope,
   type EnvironmentId,
@@ -83,6 +86,7 @@ export const ChatHeader = memo(function ChatHeader({
   onOpenProjectSettings,
   onFindInThread,
 }: ChatHeaderProps) {
+  const { locale: i18nLocale } = useI18n();
   const activeProjectName = activeProject?.isScratch ? "No project" : activeProject?.title;
   const activeProjectCwd = activeProject?.workspaceRoot ?? null;
   const interfaceFont = useClientSettings((settings) => settings.fontFamilySans);
@@ -328,7 +332,7 @@ export const ChatHeader = memo(function ChatHeader({
             <input
               autoFocus
               dir="auto"
-              aria-label="Thread title"
+              aria-label={translateWebSource(i18nLocale, "Thread title")}
               className="min-w-0 flex-1 rounded-sm bg-transparent text-sm font-medium text-foreground outline-none ring-1 ring-inset ring-ring/50 focus:ring-ring"
               defaultValue={renamingTitle}
               onBlur={(event) => {
@@ -389,7 +393,8 @@ export const ChatHeader = memo(function ChatHeader({
           {renamingTitle === null && activeThreadLinkOrigin ? (
             <Tooltip>
               <TooltipTrigger render={<Badge variant="info" size="sm" />}>
-                From {activeThreadLinkOrigin}
+                {localizeWebString(i18nLocale, "From ")}
+                {activeThreadLinkOrigin}
               </TooltipTrigger>
               <TooltipPopup side="top">
                 Started by an agent on {activeThreadLinkOrigin} through a linked environment.

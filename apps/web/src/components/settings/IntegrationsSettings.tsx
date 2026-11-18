@@ -597,6 +597,7 @@ function BrowserAppearanceSetting({ disabled }: { readonly disabled: boolean }) 
 }
 
 function BrowserRecordingInputSettings({ disabled }: { readonly disabled: boolean }) {
+  const { locale: i18nLocale } = useI18n();
   const showKeys = useClientSettings((settings) => settings.browserRecordingShowKeyPresses);
   const showMouse = useClientSettings((settings) => settings.browserRecordingShowMousePresses);
   const updateSettings = useUpdateScopedSettings();
@@ -610,7 +611,7 @@ function BrowserRecordingInputSettings({ disabled }: { readonly disabled: boolea
           <Switch
             disabled={disabled}
             checked={showKeys}
-            aria-label="Show key presses in recordings"
+            aria-label={translateWebSource(i18nLocale, "Show key presses in recordings")}
             onCheckedChange={(checked) =>
               updateSettings({ browserRecordingShowKeyPresses: Boolean(checked) })
             }
@@ -625,7 +626,7 @@ function BrowserRecordingInputSettings({ disabled }: { readonly disabled: boolea
           <Switch
             disabled={disabled}
             checked={showMouse}
-            aria-label="Show mouse presses in recordings"
+            aria-label={translateWebSource(i18nLocale, "Show mouse presses in recordings")}
             onCheckedChange={(checked) =>
               updateSettings({ browserRecordingShowMousePresses: Boolean(checked) })
             }
@@ -840,6 +841,7 @@ function BrowserSearchEngineSetting() {
 }
 
 export function PullRequestLinksOpenInAppSetting() {
+  const { locale: i18nLocale } = useI18n();
   const openInApp = useClientSettings((settings) => settings.pullRequestLinksOpenInApp);
   const updateSettings = useUpdatePrimarySettings();
 
@@ -861,7 +863,7 @@ export function PullRequestLinksOpenInAppSetting() {
           onCheckedChange={(checked) =>
             updateSettings({ pullRequestLinksOpenInApp: Boolean(checked) })
           }
-          aria-label="Open pull requests in T3 Code"
+          aria-label={translateWebSource(i18nLocale, "Open pull requests in T3 Code")}
         />
       }
     />
@@ -904,6 +906,7 @@ function DeviceIntegrationControls({
   enabled: boolean;
   agentAccessEnabled: boolean;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const canConfigure = useEnvironmentScope(environmentId, AuthSettingsWriteScope);
   const { state, loaded } = useDeviceState(environmentId);
   const { scope, environments, connectedEnvironments } = useSettingsScope();
@@ -1016,7 +1019,10 @@ function DeviceIntegrationControls({
         settingKeys={["enableDeviceSupport"]}
         description={
           <>
-            Open simulators and emulators in the Device panel. Hub:{" "}
+            {translateWebSource(
+              i18nLocale,
+              "Open simulators and emulators in the Device panel. Hub:",
+            )}{" "}
             <DeviceToolVersions
               action={versionActions("hub")}
               kind="hub"
@@ -1038,7 +1044,7 @@ function DeviceIntegrationControls({
                 busy ||
                 pending !== null
               }
-              aria-label="Device hub"
+              aria-label={translateWebSource(i18nLocale, "Device hub")}
               onCheckedChange={(checked) =>
                 void update("hub", {
                   enabled: Boolean(checked),
@@ -1055,7 +1061,10 @@ function DeviceIntegrationControls({
         settingKeys={["enableAgentDeviceAccess"]}
         description={
           <>
-            New agent sessions can open and drive these devices. agent-device:{" "}
+            {translateWebSource(
+              i18nLocale,
+              "New agent sessions can open and drive these devices. agent-device:",
+            )}{" "}
             <DeviceToolVersions
               action={versionActions("agent")}
               kind="agent"
@@ -1075,7 +1084,7 @@ function DeviceIntegrationControls({
                 (!projectScope && (!loaded || !anyHubEnabled || busy)) ||
                 pending !== null
               }
-              aria-label="Agent device access"
+              aria-label={translateWebSource(i18nLocale, "Agent device access")}
               onCheckedChange={(checked) =>
                 projectScope
                   ? updateSettings({ enableAgentDeviceAccess: Boolean(checked) })

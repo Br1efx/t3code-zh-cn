@@ -456,7 +456,11 @@ function WorkEntryLogRow(props: WorkEntryRowProps) {
         <span
           className={iconWrapperClass}
           role={showFailedIndicator ? "img" : undefined}
-          aria-label={showFailedIndicator ? "Tool call failed" : undefined}
+          aria-label={
+            showFailedIndicator
+              ? translateWebSource(translationLocale, "Tool call failed")
+              : undefined
+          }
         >
           <ToolActivityIconView
             icon={entryToolIcon}
@@ -527,19 +531,19 @@ function WorkEntryLogRow(props: WorkEntryRowProps) {
               }}
               onKeyDown={stopRowToggle}
             >
-              Open chat
+              {translateWebSource(translationLocale, "Open chat")}
             </button>
           ) : null}
           {notifiedSubagentThreadId ? (
             <InlineButton
-              aria-label="Open subagent thread"
+              aria-label={translateWebSource(translationLocale, "Open subagent thread")}
               onClick={(event) => {
                 event.stopPropagation();
                 ctx.onOpenThread(notifiedSubagentThreadId);
               }}
               onKeyDown={stopRowToggle}
             >
-              Open subagent
+              {translateWebSource(translationLocale, "Open subagent")}
             </InlineButton>
           ) : null}
           {showFailedIndicator &&

@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useState } from "react";
@@ -130,7 +131,7 @@ function DeviceHostEditorForm({
           />
         </label>
         <label className="block space-y-1.5 text-sm">
-          <span>SSH target</span>
+          <span>{translateWebSource(translationLocale, "SSH target")}</span>
           <Input
             required
             value={draft.target}
@@ -146,10 +147,12 @@ function DeviceHostEditorForm({
           open={host.port !== undefined || host.identityFile !== undefined || undefined}
           className="text-sm"
         >
-          <summary className="cursor-pointer text-muted-foreground">SSH options</summary>
+          <summary className="cursor-pointer text-muted-foreground">
+            {translateWebSource(translationLocale, "SSH options")}
+          </summary>
           <div className="mt-3 grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
             <label className="block space-y-1.5">
-              <span>Identity file</span>
+              <span>{translateWebSource(translationLocale, "Identity file")}</span>
               <Input
                 value={draft.identityFile ?? ""}
                 disabled={busy}
@@ -183,7 +186,10 @@ function DeviceHostEditorForm({
             </label>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
-            Optional. Resolved separately on each environment.
+            {translateWebSource(
+              translationLocale,
+              "Optional. Resolved separately on each environment.",
+            )}
           </p>
         </details>
         <Collapsible
@@ -247,7 +253,8 @@ function DeviceHostEditorForm({
                           </>
                         ) : result.status === "local" ? (
                           <>
-                            <MonitorIcon className="size-3" /> Already available locally
+                            <MonitorIcon className="size-3" />
+                            {localizeWebString(translationLocale, " Already available locally")}
                           </>
                         ) : result.status === "failed" ? (
                           <>
@@ -269,7 +276,9 @@ function DeviceHostEditorForm({
                     ) : null}
                     {result.status === "failed" ? (
                       <details className="mt-1.5 text-muted-foreground">
-                        <summary className="cursor-pointer">Show error</summary>
+                        <summary className="cursor-pointer">
+                          {translateWebSource(translationLocale, "Show error")}
+                        </summary>
                         <p className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-words">
                           {result.error}
                         </p>

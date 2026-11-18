@@ -95,7 +95,7 @@ function RetryCountdownTicker({ retryAt }: { readonly retryAt: number }) {
           : "正在重试"
         : seconds > 0
           ? `retrying in ${seconds}s`
-          : "retrying"}
+          : translateWebSource(locale, "retrying")}
     </>
   );
 }

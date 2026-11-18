@@ -362,10 +362,20 @@ function AboutVersionSection() {
               }`
             ) : unswitchedMachines > 0 ? (
               <>
-                {unswitchedMachines === 1
-                  ? "1 machine still runs"
-                  : `${unswitchedMachines} machines still run`}{" "}
-                {channelSwitchLabel(selectedUpdateChannel === "nightly" ? "latest" : "nightly")}.{" "}
+                {translationLocale === "zh-CN"
+                  ? `还有 ${unswitchedMachines} 台设备仍在使用${translateWebSource(
+                      translationLocale,
+                      channelSwitchLabel(
+                        selectedUpdateChannel === "nightly" ? "latest" : "nightly",
+                      ),
+                    )}。`
+                  : `${
+                      unswitchedMachines === 1
+                        ? "1 machine still runs"
+                        : `${unswitchedMachines} machines still run`
+                    } ${channelSwitchLabel(
+                      selectedUpdateChannel === "nightly" ? "latest" : "nightly",
+                    )}.`}{" "}
                 {/* The dialog moves what it can and says why it skips the rest. */}
                 <Button
                   size="xs"
@@ -373,7 +383,7 @@ function AboutVersionSection() {
                   disabled={updateRun !== null}
                   onClick={() => setSwitchChannel(selectedUpdateChannel)}
                 >
-                  {translateWebSource(translationLocale, "Review")}
+                  {translationLocale === "zh-CN" ? "查看并切换" : "Review"}
                 </Button>
               </>
             ) : (
@@ -1226,7 +1236,7 @@ export function ChatSettingsPanel() {
               onCheckedChange={(checked) =>
                 updateSettings({ composerRichTextEnabled: Boolean(checked) })
               }
-              aria-label="Rich text composer"
+              aria-label={translateWebSource(translationLocale, "Rich text composer")}
             />
           }
         />
@@ -1254,7 +1264,7 @@ export function ChatSettingsPanel() {
               <SelectTrigger
                 size="sm"
                 className="w-auto min-w-0 max-w-full"
-                aria-label="Send shortcut"
+                aria-label={translateWebSource(translationLocale, "Send shortcut")}
               >
                 <SelectValue>
                   {
@@ -1338,7 +1348,11 @@ export function ChatSettingsPanel() {
                 }
               }}
             >
-              <SelectTrigger size="sm" className="w-auto min-w-0" aria-label="Follow-up behavior">
+              <SelectTrigger
+                size="sm"
+                className="w-auto min-w-0"
+                aria-label={translateWebSource(translationLocale, "Follow-up behavior")}
+              >
                 <SelectValue>
                   {settings.followUpBehavior === "queue" ? "Queue" : "Steer"}
                 </SelectValue>
@@ -1374,6 +1388,7 @@ const TOOL_CALL_VISIBILITY_LABELS: Record<ToolCallVisibility, string> = {
 const isToolCallVisibility = Schema.is(ToolCallVisibility);
 
 function ToolCallVisibilityRow() {
+  const { locale: i18nLocale } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   return (
@@ -1397,7 +1412,11 @@ function ToolCallVisibilityRow() {
             if (isToolCallVisibility(value)) updateSettings({ toolCallVisibility: value });
           }}
         >
-          <SelectTrigger size="sm" className="w-full sm:w-40" aria-label="Tool calls in chat">
+          <SelectTrigger
+            size="sm"
+            className="w-full sm:w-40"
+            aria-label={translateWebSource(i18nLocale, "Tool calls in chat")}
+          >
             <SelectValue>{TOOL_CALL_VISIBILITY_LABELS[settings.toolCallVisibility]}</SelectValue>
           </SelectTrigger>
           <SelectPopup align="end" alignItemWithTrigger={false}>
@@ -1422,6 +1441,7 @@ const SCREEN_READER_ANNOUNCEMENTS_LABELS: Record<ScreenReaderAnnouncements, stri
 const isScreenReaderAnnouncements = Schema.is(ScreenReaderAnnouncements);
 
 function ScreenReaderAnnouncementsRow() {
+  const { locale: i18nLocale } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   return (
@@ -1453,7 +1473,7 @@ function ScreenReaderAnnouncementsRow() {
           <SelectTrigger
             size="sm"
             className="w-full sm:w-48"
-            aria-label="Screen reader announcements"
+            aria-label={translateWebSource(i18nLocale, "Screen reader announcements")}
           >
             <SelectValue>
               {SCREEN_READER_ANNOUNCEMENTS_LABELS[settings.screenReaderAnnouncements]}
@@ -1473,6 +1493,7 @@ function ScreenReaderAnnouncementsRow() {
 }
 
 function ScreenReaderWindowTitleRow() {
+  const { locale: i18nLocale } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   return (
@@ -1495,7 +1516,7 @@ function ScreenReaderWindowTitleRow() {
         <Switch
           checked={settings.screenReaderWindowTitle}
           onCheckedChange={(checked) => updateSettings({ screenReaderWindowTitle: checked })}
-          aria-label="Screen reader window title"
+          aria-label={translateWebSource(i18nLocale, "Screen reader window title")}
         />
       }
     />
@@ -1503,6 +1524,7 @@ function ScreenReaderWindowTitleRow() {
 }
 
 function DiffColorsSettingsRow() {
+  const { locale: i18nLocale } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   return (
@@ -1528,7 +1550,11 @@ function DiffColorsSettingsRow() {
                 updateSettings({ diffColorScheme: value });
             }}
           >
-            <SelectTrigger size="sm" className="w-full min-w-0" aria-label="Diff colors">
+            <SelectTrigger
+              size="sm"
+              className="w-full min-w-0"
+              aria-label={translateWebSource(i18nLocale, "Diff colors")}
+            >
               <span
                 aria-hidden="true"
                 className={
@@ -1541,7 +1567,9 @@ function DiffColorsSettingsRow() {
                 <span className="size-2 rounded-full bg-diff-addition" />
               </span>
               <SelectValue>
-                {settings.diffColorScheme === "blue-orange" ? "Blue & orange" : "Red & green"}
+                {settings.diffColorScheme === "blue-orange"
+                  ? translateWebSource(i18nLocale, "Blue & orange")
+                  : translateWebSource(i18nLocale, "Red & green")}
               </SelectValue>
             </SelectTrigger>
             <SelectPopup align="end" alignItemWithTrigger={false}>
@@ -1631,7 +1659,7 @@ export function DiffsSettingsPanel() {
               onCheckedChange={(checked) =>
                 updateSettings({ diffIgnoreWhitespace: Boolean(checked) })
               }
-              aria-label="Hide whitespace changes by default"
+              aria-label={translateWebSource(locale, "Hide whitespace changes by default")}
             />
           }
         />
@@ -1662,7 +1690,7 @@ export function DiffsSettingsPanel() {
               <SelectTrigger
                 size="sm"
                 className="w-full sm:w-40"
-                aria-label="Default diff file state"
+                aria-label={translateWebSource(locale, "Default diff file state")}
               >
                 <SelectValue>{settings.diffFilesCollapsed ? "Collapsed" : "Expanded"}</SelectValue>
               </SelectTrigger>
@@ -1705,7 +1733,10 @@ export function DiffsSettingsPanel() {
               onCheckedChange={(checked) =>
                 updateSettings({ proactivePanelsEnabled: Boolean(checked) })
               }
-              aria-label="Open pull requests and changes panels proactively"
+              aria-label={translateWebSource(
+                locale,
+                "Open pull requests and changes panels proactively",
+              )}
             />
           }
         />
@@ -1721,6 +1752,7 @@ export function CompactIdleThreadsRow() {
 }
 
 function ScopedCompactIdleThreadsRow() {
+  const { locale: i18nLocale } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   const { targets } = useSettingsScope();
@@ -1751,7 +1783,11 @@ function ScopedCompactIdleThreadsRow() {
             if (mode) updateSettings({ idleCompaction: mode.value });
           }}
         >
-          <SelectTrigger size="sm" className="w-full sm:w-56" aria-label="Compact idle threads">
+          <SelectTrigger
+            size="sm"
+            className="w-full sm:w-56"
+            aria-label={translateWebSource(i18nLocale, "Compact idle threads")}
+          >
             <SelectValue>
               {(value: string | null) =>
                 value === null
@@ -1871,9 +1907,11 @@ export function ThreadsSettingsPanel() {
               value={mixedAddProjectBaseDirectory ? "" : settings.addProjectBaseDirectory}
               onCommit={(next) => updateSettings({ addProjectBaseDirectory: next })}
               normalizeDraft={resolvePastedPath}
-              placeholder={mixedAddProjectBaseDirectory ? "Mixed" : "~/"}
+              placeholder={
+                mixedAddProjectBaseDirectory ? translateWebSource(translationLocale, "Mixed") : "~/"
+              }
               spellCheck={false}
-              aria-label="Add project base directory"
+              aria-label={translateWebSource(translationLocale, "Add project base directory")}
             />
           }
         />
@@ -1897,7 +1935,7 @@ export function ThreadsSettingsPanel() {
               settingKeys={["ghqCloneLayout"]}
               checked={settings.ghqCloneLayout}
               onCheckedChange={(checked) => updateSettings({ ghqCloneLayout: Boolean(checked) })}
-              aria-label="Clone into host folders"
+              aria-label={translateWebSource(translationLocale, "Clone into host folders")}
             />
           }
         />
@@ -1927,7 +1965,7 @@ export function ThreadsSettingsPanel() {
               onCheckedChange={(checked) =>
                 updateSettings({ autoResumeLimitedThreads: Boolean(checked) })
               }
-              aria-label="Resume after usage limits"
+              aria-label={translateWebSource(translationLocale, "Resume after usage limits")}
             />
           }
         />
@@ -1943,7 +1981,7 @@ export function ThreadsSettingsPanel() {
               onCheckedChange={(checked) =>
                 updateSettings({ snoozeLimitedThreads: Boolean(checked) })
               }
-              aria-label="Snooze until limits reset"
+              aria-label={translateWebSource(translationLocale, "Snooze until limits reset")}
             />
           }
         />
@@ -2051,7 +2089,7 @@ export function ThreadsSettingsPanel() {
                   onCheckedChange={(checked) =>
                     updateSettings({ sidebarAutoSettleKeepPullRequests: checked })
                   }
-                  aria-label="Keep threads with a PR"
+                  aria-label={translateWebSource(translationLocale, "Keep threads with a PR")}
                 />
               }
             />
@@ -2084,7 +2122,10 @@ export function ThreadsSettingsPanel() {
           control={
             !hasServerTargets ? (
               <span className="text-sm text-muted-foreground">
-                Connect an environment to choose its text generation model.
+                {translateWebSource(
+                  translationLocale,
+                  "Connect an environment to choose its text generation model.",
+                )}
               </span>
             ) : !hasTextGenerationProvider ? (
               <span className="text-sm text-muted-foreground">
@@ -2206,7 +2247,11 @@ export function ThreadsSettingsPanel() {
                   }
                 }}
               >
-                <SelectTrigger size="sm" className="w-full sm:w-56" aria-label="Response streaming">
+                <SelectTrigger
+                  size="sm"
+                  className="w-full sm:w-56"
+                  aria-label={translateWebSource(translationLocale, "Response streaming")}
+                >
                   <SelectValue>
                     {(value: ResponseStreamingMode | null) =>
                       value === null ? "Mixed" : RESPONSE_STREAMING_MODE_LABELS[value]
@@ -2267,7 +2312,7 @@ export function MaintenanceSettingsPanel() {
               onCheckedChange={(checked) =>
                 updateSettings({ enableProviderUpdateChecks: Boolean(checked) })
               }
-              aria-label="Check provider versions"
+              aria-label={translateWebSource(translationLocale, "Check provider versions")}
             />
           }
         />
@@ -2307,7 +2352,7 @@ export function MaintenanceSettingsPanel() {
               onCheckedChange={(checked) =>
                 updateSettings({ continueThreadsAfterServerUpdate: Boolean(checked) })
               }
-              aria-label="Continue threads after restarts"
+              aria-label={translateWebSource(translationLocale, "Continue threads after restarts")}
             />
           }
         />
@@ -2343,7 +2388,7 @@ export function MaintenanceSettingsPanel() {
               onCheckedChange={(checked) =>
                 updateSettings({ keepAwakeWhileAgentsWork: Boolean(checked) })
               }
-              aria-label="Keep awake while agents work"
+              aria-label={translateWebSource(translationLocale, "Keep awake while agents work")}
             />
           }
         />

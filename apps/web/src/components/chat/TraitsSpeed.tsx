@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import type { ProviderDriverKind, ProviderOptionDescriptor } from "@t3tools/contracts";
 import { getProviderOptionCurrentValue } from "@t3tools/shared/model";
 import { ZapIcon } from "lucide-react";
@@ -47,6 +49,7 @@ export function TraitsSpeedIcon({
   speedIcon: "fast" | "ultrafast";
   size?: ComposerControlSize;
 }) {
+  const { locale: i18nLocale } = useI18n();
   return (
     <>
       <ComposerControlIcon
@@ -62,7 +65,9 @@ export function TraitsSpeedIcon({
         )}
       />
       <span className="sr-only">
-        {speedIcon === "ultrafast" ? "Ultrafast mode on" : "Fast mode on"}
+        {speedIcon === "ultrafast"
+          ? translateWebSource(i18nLocale, "Ultrafast mode on")
+          : translateWebSource(i18nLocale, "Fast mode on")}
       </span>
     </>
   );

@@ -172,7 +172,7 @@ export function CodexSetupSection(props: CodexSetupSectionProps) {
                   props.onModeChange("managed");
                 }}
               >
-                Continue with ChatGPT
+                {translateWebSource(translationLocale, "Continue with ChatGPT")}
               </ChatGptConnectionButton>
             </ManagedControl>
           )
@@ -701,7 +701,12 @@ function ManagedCodexSetup({
   const callbackCompletion =
     !handoff && auth?.phase === "waiting" && url ? (
       <div className="flex w-full flex-col gap-3 text-xs leading-relaxed text-muted-foreground">
-        <p>If sign-in doesn't return to T3 Code, paste the URL from the final localhost page.</p>
+        <p>
+          {translateWebSource(
+            translationLocale,
+            "If sign-in doesn't return to T3 Code, paste the URL from the final localhost page.",
+          )}
+        </p>
         <form
           className="flex flex-col gap-2 sm:flex-row sm:items-center"
           onSubmit={(event) => {
@@ -755,7 +760,9 @@ function ManagedCodexSetup({
         ) : null}
         {handoffUrl ? (
           <details>
-            <summary className="cursor-pointer">Other ways to connect</summary>
+            <summary className="cursor-pointer">
+              {translateWebSource(translationLocale, "Other ways to connect")}
+            </summary>
             <Button className="mt-2" size="sm" variant="outline" render={<a href={handoffUrl} />}>
               Use T3 desktop for automatic return
             </Button>
@@ -881,10 +888,10 @@ function ManagedCodexSetup({
                 }}
               >
                 {installActive || pending
-                  ? "Setting up..."
+                  ? translateWebSource(translationLocale, "Setting up...")
                   : hasSavedAccount
-                    ? "Reconnect account"
-                    : "Continue with ChatGPT"}
+                    ? translateWebSource(translationLocale, "Reconnect account")
+                    : translateWebSource(translationLocale, "Continue with ChatGPT")}
               </ChatGptConnectionButton>
             )
           }
@@ -941,7 +948,10 @@ function ManagedCodexSetup({
   }
 
   return (
-    <section aria-label="Codex setup" className="divide-y divide-border/50">
+    <section
+      aria-label={translateWebSource(translationLocale, "Codex setup")}
+      className="divide-y divide-border/50"
+    >
       {accountPicker}
       <SettingsRow
         title="ChatGPT account"
@@ -1031,10 +1041,10 @@ function ManagedCodexSetup({
                   }}
                 >
                   {pending
-                    ? "Setting up..."
+                    ? translateWebSource(translationLocale, "Setting up...")
                     : hasSavedAccount
-                      ? "Reconnect account"
-                      : "Continue with ChatGPT"}
+                      ? translateWebSource(translationLocale, "Reconnect account")
+                      : translateWebSource(translationLocale, "Continue with ChatGPT")}
                 </ChatGptConnectionButton>
                 {hasSavedAccount ? (
                   <Button
@@ -1167,12 +1177,13 @@ function CodexSignInDescription({
   readonly controls?: string;
   readonly onToggle?: () => void;
 }) {
+  const { locale: i18nLocale } = useI18n();
   if (!onToggle) return <div className="leading-relaxed">{label}</div>;
   return (
     <button
       type="button"
       className="inline-flex items-center gap-1.5 rounded-sm text-left leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-      aria-label="Having trouble signing in?"
+      aria-label={translateWebSource(i18nLocale, "Having trouble signing in?")}
       aria-expanded={expanded}
       aria-controls={controls}
       onClick={onToggle}

@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import {
   formatProviderSubagentStatus,
   type ProviderSubagentStatus,
@@ -20,6 +22,7 @@ export function ProviderSubagentBar(props: {
   readonly onOpenParent: (() => void) | null;
   readonly actions?: ReactNode;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const { status } = props;
   const live = status !== null && isOrchestrationV2WorkActive(status.status);
   const modelDescription =
@@ -64,7 +67,7 @@ export function ProviderSubagentBar(props: {
         {`${modelDescription} subagent: ${announcement}`}
       </span>
       <span className="shrink-0 text-muted-foreground @max-[640px]/composer-surface:sr-only">
-        Runs on its own
+        {translateWebSource(i18nLocale, "Runs on its own")}
       </span>
       {props.actions}
       {props.onOpenParent ? (

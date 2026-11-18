@@ -41,6 +41,7 @@ const countLabel = (count: number, one: string, many: string) =>
   `${count.toLocaleString()} ${count === 1 ? one : many}`;
 
 function ArchiveFile(props: { readonly path: string; readonly bytes: Uint8Array<ArrayBuffer> }) {
+  const { locale: i18nLocale } = useI18n();
   const [url, setUrl] = useState<string | null>(null);
   const kind = filePreviewKind({ name: props.path });
   const text = (() => {
@@ -73,7 +74,9 @@ function ArchiveFile(props: { readonly path: string; readonly bytes: Uint8Array<
   return (
     <>
       {text.truncated ? (
-        <FileSurfaceNotice>Preview limited to the first 1 MB.</FileSurfaceNotice>
+        <FileSurfaceNotice>
+          {translateWebSource(i18nLocale, "Preview limited to the first 1 MB.")}
+        </FileSurfaceNotice>
       ) : null}
       <Suspense fallback={<FileSurfaceLoading />}>
         <SourcePreview name={props.path} text={text.text} />
@@ -231,7 +234,12 @@ export default function BinaryViewer(props: {
                   if (!busy && value !== null) selectPage(0, value);
                 }}
               >
-                <SelectTrigger aria-label="Table" aria-disabled={busy} aria-busy={busy} size="xs">
+                <SelectTrigger
+                  aria-label={translateWebSource(translationLocale, "Table")}
+                  aria-disabled={busy}
+                  aria-busy={busy}
+                  size="xs"
+                >
                   <SelectValue>
                     {table.name} ({countLabel(table.count, "row", "rows")})
                   </SelectValue>
@@ -254,7 +262,7 @@ export default function BinaryViewer(props: {
             </FileSurfaceAction>
             <span className="shrink-0 tabular-nums" aria-live="polite">
               {table.count === 0
-                ? "0 rows"
+                ? translateWebSource(translationLocale, "0 rows")
                 : `${page * SQLITE_PAGE_SIZE + 1}–${Math.min(table.count, (page + 1) * SQLITE_PAGE_SIZE)} of ${table.count.toLocaleString()}`}
             </span>
             <FileSurfaceAction
@@ -270,11 +278,16 @@ export default function BinaryViewer(props: {
             role="status"
           >
             {countLabel(table.count, "row", "rows")} ·{" "}
-            {rows ? countLabel(rows.columns.length, "column", "columns") : "… columns"}
+            {rows
+              ? countLabel(rows.columns.length, "column", "columns")
+              : translateWebSource(translationLocale, "… columns")}
             {sizeBytes !== null ? ` · ${formatAttachmentSize(sizeBytes)}` : ""}
           </div>
           <FileSurfaceNotice>
-            Read-only. Up to 50 columns and 1,024 characters per cell. Blob contents are omitted.
+            {translateWebSource(
+              translationLocale,
+              "Read-only. Up to 50 columns and 1,024 characters per cell. Blob contents are omitted.",
+            )}
           </FileSurfaceNotice>
         </>
       ) : null}
@@ -292,7 +305,7 @@ export default function BinaryViewer(props: {
       ) : archive ? (
         <div className="scrollbar-gutter-both min-h-0 flex-1 overflow-auto">
           <table
-            aria-label="Archive entries"
+            aria-label={translateWebSource(translationLocale, "Archive entries")}
             className="w-full border-separate border-spacing-0 text-xs"
           >
             <thead className="sticky top-0 bg-background text-muted-foreground">
@@ -301,10 +314,10 @@ export default function BinaryViewer(props: {
                   {translateWebSource(translationLocale, "Name")}
                 </th>
                 <th scope="col" className="px-3 py-2 text-right font-normal">
-                  Size
+                  {translateWebSource(translationLocale, "Size")}
                 </th>
                 <th scope="col" className="px-3 py-2 text-right font-normal">
-                  Modified
+                  {translateWebSource(translationLocale, "Modified")}
                 </th>
               </tr>
             </thead>
@@ -391,11 +404,15 @@ export default function BinaryViewer(props: {
             </tbody>
           </table>
           {rows.rows.length === 0 ? (
-            <p className="p-6 text-xs text-muted-foreground">This table is empty.</p>
+            <p className="p-6 text-xs text-muted-foreground">
+              {translateWebSource(translationLocale, "This table is empty.")}
+            </p>
           ) : null}
         </div>
       ) : (
-        <p className="p-6 text-xs text-muted-foreground">This database has no readable tables.</p>
+        <p className="p-6 text-xs text-muted-foreground">
+          {translateWebSource(translationLocale, "This database has no readable tables.")}
+        </p>
       )}
     </div>
   );

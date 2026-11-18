@@ -1,4 +1,6 @@
 /* oxlint-disable react/no-array-index-key -- Notebook cells and outputs retain their saved source order. */
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import { formatAttachmentSize } from "@t3tools/client-runtime/state/attachments";
 import { useEffect, useRef, useState } from "react";
 import type { Root, RootContent } from "mdast";
@@ -45,6 +47,7 @@ export default function NotebookPreview(props: {
   readonly notebook: Extract<OfficeWorkerResult, { type: "notebook" }>;
   readonly sizeBytes?: number | undefined;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const [visible, setVisible] = useState(20);
   const scroll = useRef<HTMLDivElement>(null);
   const [outputView, setOutputView] = useState(() => ({
@@ -99,12 +102,17 @@ export default function NotebookPreview(props: {
         role="status"
       >
         {props.notebook.cells.length.toLocaleString()}{" "}
-        {props.notebook.cells.length === 1 ? "cell" : "cells"} · {props.notebook.language}
+        {props.notebook.cells.length === 1
+          ? translateWebSource(i18nLocale, "cell")
+          : translateWebSource(i18nLocale, "cells")}{" "}
+        · {props.notebook.language}
         {props.sizeBytes !== undefined
           ? ` · ${props.sizeBytes === 0 ? "0 bytes" : formatAttachmentSize(props.sizeBytes)}`
           : ""}
       </div>
-      <FileSurfaceNotice>Saved outputs only. Code is never executed.</FileSurfaceNotice>
+      <FileSurfaceNotice>
+        {translateWebSource(i18nLocale, "Saved outputs only. Code is never executed.")}
+      </FileSurfaceNotice>
       <div ref={scroll} className="scrollbar-gutter-both min-h-0 flex-1 overflow-auto">
         <div className="mx-auto max-w-4xl space-y-5 px-5 py-6">
           {props.notebook.cells.slice(0, visible).map((cell, index) => (
@@ -169,7 +177,9 @@ export default function NotebookPreview(props: {
             </section>
           ))}
           {props.notebook.cells.length === 0 ? (
-            <p className="text-sm text-muted-foreground">This notebook is empty.</p>
+            <p className="text-sm text-muted-foreground">
+              {translateWebSource(i18nLocale, "This notebook is empty.")}
+            </p>
           ) : null}
           {visible < props.notebook.cells.length ? (
             <Button variant="outline" size="sm" onClick={() => setVisible((count) => count + 20)}>

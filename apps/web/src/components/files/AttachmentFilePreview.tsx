@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { filePreviewDelimiter } from "@t3tools/shared/delimitedPreview";
@@ -381,10 +382,13 @@ export function AttachmentFilePreview(props: {
     />
   ) : (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1 px-6 text-center">
-      <p className="text-sm font-medium">No preview for this file</p>
+      <p className="text-sm font-medium">
+        {translateWebSource(translationLocale, "No preview for this file")}
+      </p>
       <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
-        Save it to open in an app that supports {props.name.split(".").at(-1) || "this format"}{" "}
-        files.
+        {localizeWebString(translationLocale, "Save it to open in an app that supports ")}
+        {props.name.split(".").at(-1) || translateWebSource(translationLocale, "this format")}{" "}
+        {translateWebSource(translationLocale, "files.")}
       </p>
     </div>
   );
@@ -394,7 +398,7 @@ export function AttachmentFilePreview(props: {
       <div className={cn(FILE_SURFACE_SUBHEADER_CLASS)} data-surface-subheader>
         <div className="flex min-w-0 flex-1 items-center text-xs">
           <span className="shrink-0 px-0.5 text-muted-foreground">
-            {props.origin ?? "Attachment"}
+            {props.origin ?? translateWebSource(translationLocale, "Attachment")}
           </span>
           <ChevronRightIcon className="mx-1 size-3.5 shrink-0 text-muted-foreground/60" />
           <span aria-current="page" className="min-w-0 truncate px-0.5 font-medium text-foreground">
@@ -486,9 +490,9 @@ export function AttachmentFilePreview(props: {
       </div>
       {content?.truncated ? (
         <FileSurfaceNotice>
-          Preview limited to the first 1 MB
-          {props.sizeBytes > 0 ? ` of a ${props.sizeBytes.toLocaleString()} byte file` : ""}. Save
-          the file to read it in full.
+          {translateWebSource(translationLocale, "Preview limited to the first 1 MB")}
+          {props.sizeBytes > 0 ? ` of a ${props.sizeBytes.toLocaleString()} byte file` : ""}
+          {translateWebSource(translationLocale, ". Save the file to read it in full.")}
         </FileSurfaceNotice>
       ) : null}
       {body}

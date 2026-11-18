@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import type { EnvironmentId, PullRequestRef, PullRequestReviewGuide } from "@t3tools/contracts";
@@ -118,7 +119,11 @@ export function GuideTour({
           {banner}
           {diff.error !== null ? (
             <p className="text-xs text-muted-foreground">
-              The diff could not be loaded, so excerpts are missing: {diff.error}
+              {localizeWebString(
+                uiLocale,
+                "The diff could not be loaded, so excerpts are missing: ",
+              )}
+              {diff.error}
             </p>
           ) : null}
           {stop === null ? (

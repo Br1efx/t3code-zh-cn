@@ -1,3 +1,6 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { T3CHAT_PLAN_TUNNEL_LIMITS } from "@t3tools/contracts/relay";
 import { TriangleAlertIcon } from "lucide-react";
 import type { ReactNode } from "react";
@@ -36,19 +39,23 @@ export function TunnelUsageMeter({
   readonly action?: ReactNode;
   readonly className?: string;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const full = used >= limit;
   const fill = full ? "bg-warning" : "bg-foreground/72";
   return (
     <div className={cn("flex max-w-sm flex-col gap-1.5", className)}>
       <div className="flex items-baseline justify-between gap-3 text-xs">
         <span className={cn("tabular-nums", full ? "text-warning-foreground" : "text-foreground")}>
-          {used} of {limit} tunnels in use
+          {used}
+          {localizeWebString(i18nLocale, " of ")}
+          {limit}
+          {localizeWebString(i18nLocale, " tunnels in use")}
         </span>
         {action}
       </div>
       <div
         role="meter"
-        aria-label="T3 Connect tunnels in use"
+        aria-label={translateWebSource(i18nLocale, "T3 Connect tunnels in use")}
         aria-valuemin={0}
         aria-valuemax={limit}
         aria-valuenow={used}

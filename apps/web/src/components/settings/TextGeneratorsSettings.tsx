@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import {
@@ -129,7 +130,7 @@ export function TextGeneratorsSettings({
               description={
                 // Indented past the icon so it lines up with the name.
                 <span className="block truncate ps-7.5">
-                  {config.enabled ? "" : "Off · "}
+                  {config.enabled ? "" : localizeWebString(translationLocale, "Off · ")}
                   {config.baseUrl.replace(/^https?:\/\//, "")}
                 </span>
               }
@@ -334,7 +335,11 @@ function TextGeneratorWizard({
     >
       <WizardPopup>
         <WizardHeader
-          title={existing ? `Edit ${textGeneratorDisplayName(existing)}` : "Add a text generator"}
+          title={
+            existing
+              ? `Edit ${textGeneratorDisplayName(existing)}`
+              : translateWebSource(translationLocale, "Add a text generator")
+          }
           description="Writes thread titles, commit messages, and other short text without starting a coding agent. Your API key is stored on this environment."
         >
           <WizardSteps
@@ -356,10 +361,12 @@ function TextGeneratorWizard({
               <fieldset disabled={checking} className="contents">
                 {existing === null ? (
                   <div className="grid gap-1.5">
-                    <span className="text-sm font-medium">Service</span>
+                    <span className="text-sm font-medium">
+                      {translateWebSource(translationLocale, "Service")}
+                    </span>
                     <div
                       role="radiogroup"
-                      aria-label="Service"
+                      aria-label={translateWebSource(translationLocale, "Service")}
                       className="grid grid-cols-2 gap-2 sm:grid-cols-4"
                     >
                       {TEXT_GENERATOR_PRESETS.map((candidate) => {
@@ -390,7 +397,9 @@ function TextGeneratorWizard({
                                 badgeContent="none"
                               />
                             )}
-                            {candidate.id === "custom" ? "Custom" : candidate.label}
+                            {candidate.id === "custom"
+                              ? translateWebSource(translationLocale, "Custom")
+                              : candidate.label}
                           </button>
                         );
                       })}
@@ -419,7 +428,7 @@ function TextGeneratorWizard({
                   </Label>
                   <SecretSourceInput
                     id="text-generator-key"
-                    aria-label="API key"
+                    aria-label={translateWebSource(translationLocale, "API key")}
                     value={keyDraft}
                     configured={storedKey !== ""}
                     sources={secretSources}
@@ -457,8 +466,16 @@ function TextGeneratorWizard({
           ) : (
             <div className="grid gap-4">
               <p className="text-sm text-muted-foreground">
-                {name} is connected and lists {modelCount} {modelCount === 1 ? "model" : "models"}.
-                Switch any of these to it, or keep what they use now.
+                {name}
+                {localizeWebString(translationLocale, " is connected and lists ")}
+                {modelCount}{" "}
+                {modelCount === 1
+                  ? translateWebSource(translationLocale, "model")
+                  : translateWebSource(translationLocale, "models")}
+                {translateWebSource(
+                  translationLocale,
+                  ". Switch any of these to it, or keep what they use now.",
+                )}
               </p>
               {/* One grid for all rows, so pickers and Test buttons line up in columns. */}
               <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2 gap-y-4">
@@ -560,10 +577,13 @@ function TextGenerationTaskPicker({
           </span>
         ) : shown ? (
           <span role="status" className="text-xs text-muted-foreground">
-            {selection.model} answered. It works.
+            {selection.model}
+            {localizeWebString(translationLocale, " answered. It works.")}
           </span>
         ) : own === null ? (
-          <span className="text-xs text-muted-foreground">Follows the text generation model</span>
+          <span className="text-xs text-muted-foreground">
+            {translateWebSource(translationLocale, "Follows the text generation model")}
+          </span>
         ) : null}
       </div>
       <div className="justify-self-end">

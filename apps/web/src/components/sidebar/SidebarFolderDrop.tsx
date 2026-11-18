@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import {
   DESKTOP_APP_ACTIVATION_PROTOCOL_VERSION,
   DesktopAppActivationPlatform,
@@ -27,6 +29,7 @@ function isFileDrag(event: DragEvent) {
  * Browsers expose no absolute paths, so only the desktop app can add them.
  */
 export function SidebarFolderDrop(props: { children: ReactNode }) {
+  const { locale: i18nLocale } = useI18n();
   const [isActive, setIsActive] = useState(false);
   const openLocalWorkspace = useOpenLocalWorkspace();
   const bridge = window.desktopBridge;
@@ -125,8 +128,8 @@ export function SidebarFolderDrop(props: { children: ReactNode }) {
         >
           <FolderPlusIcon className="size-5 text-sidebar-muted-foreground" />
           {bridge === undefined
-            ? "Dropping folders needs the desktop app"
-            : "Drop folders to add projects"}
+            ? translateWebSource(i18nLocale, "Dropping folders needs the desktop app")
+            : translateWebSource(i18nLocale, "Drop folders to add projects")}
         </div>
       ) : null}
     </div>

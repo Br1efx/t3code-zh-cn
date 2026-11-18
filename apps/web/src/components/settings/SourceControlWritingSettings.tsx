@@ -1,3 +1,4 @@
+import { translateWebSource } from "~/i18n/messages";
 import { useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import {
@@ -66,7 +67,7 @@ const MODE_OPTION_MESSAGE_KEYS = {
 >;
 
 export function SourceControlWritingSettingsSection() {
-  const { t } = useI18n();
+  const { locale: i18nLocale, t } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   const mixedReviewGuidesEnabled = useScopedSettingsMixed(["reviewGuidesEnabled"]);
@@ -236,7 +237,7 @@ export function SourceControlWritingSettingsSection() {
             <SelectTrigger
               size="sm"
               className="w-full sm:w-56"
-              aria-label="Commit and pull request writing"
+              aria-label={translateWebSource(i18nLocale, "Commit and pull request writing")}
             >
               <SelectValue>
                 {(value: SourceControlWritingStyleMode | null) =>
@@ -329,7 +330,7 @@ export function SourceControlWritingSettingsSection() {
             mixed={mixedReviewGuidesEnabled}
             checked={mixedReviewGuidesEnabled ? false : settings.reviewGuidesEnabled}
             onCheckedChange={(checked) => updateSettings({ reviewGuidesEnabled: Boolean(checked) })}
-            aria-label="Review guides"
+            aria-label={translateWebSource(i18nLocale, "Review guides")}
           />
         }
       />
@@ -344,7 +345,10 @@ export function SourceControlWritingSettingsSection() {
             control={
               !hasServerTargets ? (
                 <span className="text-sm text-muted-foreground">
-                  Connect an environment to choose its review guide model.
+                  {translateWebSource(
+                    i18nLocale,
+                    "Connect an environment to choose its review guide model.",
+                  )}
                 </span>
               ) : (
                 <div className="flex flex-wrap items-center justify-end gap-2">
@@ -432,7 +436,7 @@ export function SourceControlWritingSettingsSection() {
                         ),
                       });
                     }}
-                    aria-label="Use a separate review guide model"
+                    aria-label={translateWebSource(i18nLocale, "Use a separate review guide model")}
                   />
                 </div>
               )
@@ -519,7 +523,7 @@ export function SourceControlWritingSettingsSection() {
                   },
                 })
               }
-              aria-label="Follow pull request templates"
+              aria-label={translateWebSource(i18nLocale, "Follow pull request templates")}
             />
           }
         />
@@ -532,7 +536,10 @@ export function SourceControlWritingSettingsSection() {
           control={
             !hasServerTargets ? (
               <span className="text-sm text-muted-foreground">
-                Connect an environment to choose its source control writer model.
+                {translateWebSource(
+                  i18nLocale,
+                  "Connect an environment to choose its source control writer model.",
+                )}
               </span>
             ) : (
               <div className="flex flex-wrap items-center justify-end gap-2">
@@ -634,7 +641,10 @@ export function SourceControlWritingSettingsSection() {
                         : null,
                     });
                   }}
-                  aria-label="Use a separate source control writer model"
+                  aria-label={translateWebSource(
+                    i18nLocale,
+                    "Use a separate source control writer model",
+                  )}
                 />
               </div>
             )

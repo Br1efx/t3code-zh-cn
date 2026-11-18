@@ -8,6 +8,7 @@ import {
 } from "../../app/CodexAuthCallback.ts";
 import * as ElectronShell from "../../electron/ElectronShell.ts";
 import * as ElectronWindow from "../../electron/ElectronWindow.ts";
+import * as DesktopLocale from "../../i18n/DesktopLocale.ts";
 import * as DesktopIpc from "../DesktopIpc.ts";
 import * as IpcChannels from "../channels.ts";
 
@@ -20,6 +21,8 @@ export const receiveProviderAuthCallback = DesktopIpc.makeIpcMethod({
   handler: Effect.fn("desktop.ipc.providerAuth.receive")(function* (authorizationUrl) {
     const shell = yield* ElectronShell.ElectronShell;
     const windows = yield* ElectronWindow.ElectronWindow;
+    const locale = yield* DesktopLocale.resolveCurrentDesktopLocale;
+    const isZh = DesktopLocale.isZhCn(locale);
     const context = yield* Effect.context<ElectronShell.ElectronShell>();
     const runPromise = Effect.runPromiseWith(context);
     const callbackUrl = yield* Effect.tryPromise({
@@ -29,11 +32,16 @@ export const receiveProviderAuthCallback = DesktopIpc.makeIpcMethod({
           (url) => runPromise(shell.openExternal(url)),
           undefined,
           signal,
+          locale,
         ),
-      catch: () =>
+      catch: (cause) =>
         new CodexAuthCallbackError({
           detail:
-            "Could not receive ChatGPT sign-in on this computer. Try again or paste the redirect URL.",
+            cause instanceof Error && cause.message.length > 0
+              ? cause.message
+              : isZh
+                ? "无法在当前电脑接收 ChatGPT 登录结果。请重试，或手动粘贴浏览器跳转后的网址。"
+                : "Could not receive ChatGPT sign-in on this computer. Try again or paste the redirect URL.",
         }),
     });
     const window = yield* windows.currentMainOrFirst;
@@ -46,9 +54,15 @@ export const cancelProviderAuthCallback = DesktopIpc.makeIpcMethod({
   channel: IpcChannels.CANCEL_PROVIDER_AUTH_CALLBACK_CHANNEL,
   payload: Request,
   result: Schema.Void,
-  handler: (authorizationUrl) =>
-    Effect.try({
+  handler: Effect.fn("desktop.ipc.providerAuth.cancel")(function* (authorizationUrl) {
+    const locale = yield* DesktopLocale.resolveCurrentDesktopLocale;
+    const isZh = DesktopLocale.isZhCn(locale);
+    yield* Effect.try({
       try: () => cancelCodexAuthCallback(authorizationUrl),
-      catch: () => new CodexAuthCallbackError({ detail: "Invalid ChatGPT sign-in request." }),
-    }),
+      catch: () =>
+        new CodexAuthCallbackError({
+          detail: isZh ? "ChatGPT 登录请求无效，请重试。" : "Invalid ChatGPT sign-in request.",
+        }),
+    });
+  }),
 });

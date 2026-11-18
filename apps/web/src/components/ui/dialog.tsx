@@ -21,6 +21,7 @@ import {
   DIALOG_POPUP_CLASS,
 } from "~/components/ui/dialog-styles";
 import { ScrollArea } from "~/components/ui/scroll-area";
+import { localizeWebChildren } from "~/i18n/localizeWebChildren";
 import { useI18n } from "~/i18n/WebI18nContext";
 
 const ControlledOpenContext = createContext<boolean | undefined>(undefined);
@@ -221,23 +222,29 @@ function DialogFooter({
   );
 }
 
-function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
+function DialogTitle({ className, children, ...props }: DialogPrimitive.Title.Props) {
+  const { locale } = useI18n();
   return (
     <DialogPrimitive.Title
       className={cn("wrap-anywhere font-semibold text-xl leading-snug", className)}
       data-slot="dialog-title"
       {...props}
-    />
+    >
+      {localizeWebChildren(locale, children)}
+    </DialogPrimitive.Title>
   );
 }
 
-function DialogDescription({ className, ...props }: DialogPrimitive.Description.Props) {
+function DialogDescription({ className, children, ...props }: DialogPrimitive.Description.Props) {
+  const { locale } = useI18n();
   return (
     <DialogPrimitive.Description
       className={cn("text-muted-foreground text-sm", className)}
       data-slot="dialog-description"
       {...props}
-    />
+    >
+      {localizeWebChildren(locale, children)}
+    </DialogPrimitive.Description>
   );
 }
 

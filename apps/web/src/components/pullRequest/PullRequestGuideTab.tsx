@@ -114,14 +114,17 @@ export function PullRequestGuideTab({
       <div className="scrollbar-gutter-both flex h-full flex-col items-center justify-center-safe gap-2 overflow-y-auto px-4 py-10 text-center">
         <p className="text-sm font-medium text-foreground">
           {running
-            ? "Writing a review guide"
+            ? translateWebSource(uiLocale, "Writing a review guide")
             : failure === null
-              ? "No review guide yet"
-              : "Could not write a review guide"}
+              ? translateWebSource(uiLocale, "No review guide yet")
+              : translateWebSource(uiLocale, "Could not write a review guide")}
         </p>
         <p className="max-w-md text-xs text-muted-foreground">
           {running
-            ? "An agent is reading the change. A large one takes a few minutes. You can leave; you will be told when it is ready."
+            ? translateWebSource(
+                uiLocale,
+                "An agent is reading the change. A large one takes a few minutes. You can leave; you will be told when it is ready.",
+              )
             : failure === null
               ? (query.error ??
                 "A guide is a tour of the change: stops through the code in reading order, with the calls only a maintainer can make.")

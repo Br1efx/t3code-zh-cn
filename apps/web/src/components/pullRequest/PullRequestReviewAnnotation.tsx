@@ -94,7 +94,7 @@ export function PendingReviewCommentCard({
   comment: PendingReviewComment;
   onRemove: () => void;
 }) {
-  const { t } = useI18n();
+  const { locale: i18nLocale, t } = useI18n();
   return (
     <div
       className={cn(CARD_CLASS, "border-dashed")}
@@ -103,7 +103,7 @@ export function PendingReviewCommentCard({
     >
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <MessageSquareIcon className="size-3.5" />
-        <span>Pending. Sent when you submit the review</span>
+        <span>{translateWebSource(i18nLocale, "Pending. Sent when you submit the review")}</span>
         <Button
           size="icon-xs"
           variant="ghost"

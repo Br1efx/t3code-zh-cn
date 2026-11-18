@@ -64,7 +64,9 @@ export function BackgroundWorkDetails(props: {
                   <div className="flex items-baseline justify-between gap-3">
                     <h3 className="font-medium">{title}</h3>
                     <span className="shrink-0 text-xs text-muted-foreground">
-                      {task.awaited ? "Waiting" : "Running"}
+                      {task.awaited
+                        ? translateWebSource(translationLocale, "Waiting")
+                        : translateWebSource(translationLocale, "Running")}
                     </span>
                   </div>
                   {command ? (

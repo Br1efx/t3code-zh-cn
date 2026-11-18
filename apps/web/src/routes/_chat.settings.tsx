@@ -63,6 +63,7 @@ function SettingsScopeBoundary({ pathname, children }: { pathname: string; child
     autoSettlementAvailability &&
     !autoSettlementAvailability.isTargetAvailable
   ) {
+    const targetTitle = translateWebSource(uiLocale, searchTarget.title);
     return (
       <SettingsScopeNotice
         target="environment"
@@ -70,8 +71,12 @@ function SettingsScopeBoundary({ pathname, children }: { pathname: string; child
         eligibleEnvironmentIds={autoSettlementAvailability.eligibleEnvironmentIds}
       >
         {autoSettlementAvailability.eligibleEnvironmentIds.length > 0
-          ? `${searchTarget.title} requires a supporting environment. Choose one to continue.`
-          : `${searchTarget.title} requires a supporting environment. Connect or update an environment to continue.`}
+          ? uiLocale === "zh-CN"
+            ? `「${targetTitle}」需要兼容的运行设备支持，请在下方选择一台设备继续。`
+            : `${searchTarget.title} requires a supporting environment. Choose one to continue.`
+          : uiLocale === "zh-CN"
+            ? `「${targetTitle}」需要兼容的运行设备支持，请连接或更新运行设备后继续。`
+            : `${searchTarget.title} requires a supporting environment. Connect or update an environment to continue.`}
       </SettingsScopeNotice>
     );
   }
@@ -86,9 +91,12 @@ function SettingsScopeBoundary({ pathname, children }: { pathname: string; child
       searchTarget.scope === "checkout"
         ? searchTarget.scope
         : "all";
+    const targetTitle = translateWebSource(uiLocale, searchTarget.title);
     return (
       <SettingsScopeNotice target={target} targetId={hash}>
-        {`${searchTarget.title} is not available for the selected target. Choose its owning scope to continue.`}
+        {uiLocale === "zh-CN"
+          ? `当前所选范围不支持设置「${targetTitle}」，请切换到下方的所属范围继续。`
+          : `${searchTarget.title} is not available for the selected target. Choose its owning scope to continue.`}
       </SettingsScopeNotice>
     );
   }
@@ -98,15 +106,23 @@ function SettingsScopeBoundary({ pathname, children }: { pathname: string; child
   if (scope.kind === "unavailable")
     return (
       <SettingsPageContainer>
-        <p className="text-sm text-muted-foreground">{scope.message}</p>
+        <p className="text-sm text-muted-foreground">
+          {translateWebSource(uiLocale, scope.message)}
+        </p>
       </SettingsPageContainer>
     );
   if (scope.kind === "environment" && connectedEnvironments.length === 0) {
     return (
       <SettingsPageContainer>
         <p className="text-sm text-muted-foreground">
-          {translateWebSource(uiLocale, "Reconnect")} {scope.label}{" "}
-          {translateWebSource(uiLocale, "to change its settings.")}
+          {uiLocale === "zh-CN" ? (
+            `请重新连接 ${scope.label} 后再修改其设置。`
+          ) : (
+            <>
+              {translateWebSource(uiLocale, "Reconnect")} {scope.label}{" "}
+              {translateWebSource(uiLocale, "to change its settings.")}
+            </>
+          )}
         </p>
       </SettingsPageContainer>
     );
@@ -116,7 +132,11 @@ function SettingsScopeBoundary({ pathname, children }: { pathname: string; child
 
 function SettingsContentLayout() {
   const { locale: translationLocale } = useI18n();
-  const contentArea = workspaceAreaProps("settings", 1, "Settings content");
+  const contentArea = workspaceAreaProps(
+    "settings",
+    1,
+    translateWebSource(translationLocale, "Settings content"),
+  );
   const location = useLocation();
   const { search, environment } = useSettingsScope();
   const contentScopeKey =

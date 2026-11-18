@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { translateWebSource } from "~/i18n/messages";
 import {
   DndContext,
   type DragEndEvent,
@@ -27,6 +29,7 @@ export function MicrophoneOrderList(props: {
   readonly order: ReadonlyArray<MicrophoneEntry>;
   readonly devices: ReadonlyArray<BrowserMicrophone>;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const { order, devices } = props;
   const keys = order.map(microphoneEntryKey);
   const inUse = microphoneEntryKey(preferredMicrophone(order, devices));
@@ -51,7 +54,7 @@ export function MicrophoneOrderList(props: {
     >
       <SortableContext items={keys} strategy={verticalListSortingStrategy}>
         <ol
-          aria-label="Microphones, preferred first"
+          aria-label={translateWebSource(i18nLocale, "Microphones, preferred first")}
           className="divide-y divide-border/60 rounded-lg border border-border/60"
         >
           {order.map((entry, index) => {
@@ -98,6 +101,7 @@ function MicrophoneRow(props: {
   readonly onMove: (steps: number) => void;
   readonly onForget: (() => void) | undefined;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const { name } = props;
   const { listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } =
     useSortable({ id: props.id });
@@ -118,10 +122,12 @@ function MicrophoneRow(props: {
       <span className="col-start-2 flex @min-[32rem]/settings-row:col-start-auto">
         {props.inUse ? (
           <span className="rounded-sm bg-success/12 px-1 text-2xs text-success-foreground">
-            In use
+            {translateWebSource(i18nLocale, "In use")}
           </span>
         ) : props.notConnected ? (
-          <span className="text-2xs text-muted-foreground">Not connected</span>
+          <span className="text-2xs text-muted-foreground">
+            {translateWebSource(i18nLocale, "Not connected")}
+          </span>
         ) : null}
       </span>
       <span
