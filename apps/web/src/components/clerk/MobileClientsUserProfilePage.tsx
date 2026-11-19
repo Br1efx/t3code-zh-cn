@@ -1,9 +1,7 @@
-import { translateWebSource } from "~/i18n/messages";
 import type { RelayClientDeviceRecord } from "@t3tools/contracts/relay";
+import { T, useGT, useMessages } from "gt-react";
 import { SmartphoneIcon } from "lucide-react";
-import { useI18n } from "~/i18n/WebI18nContext";
 
-import { localizeRelayErrorMessage } from "../../cloud/relayFailureReason";
 import { useManagedRelayDevices } from "../../cloud/managedRelayState";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -29,18 +27,19 @@ function MobileClientStatusBadge({
   readonly enabled: boolean;
   readonly label: string;
 }) {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
   return (
     <Badge variant={enabled ? "success" : "outline"}>
-      {translateWebSource(translationLocale, label)}
-      {translationLocale === "zh-CN" ? "：" : ": "}
-      {translateWebSource(translationLocale, enabled ? "On" : "Off")}
+      {enabled
+        ? gt("{label}: On", { label, $context: "a setting is on" })
+        : gt("{label}: Off", { label, $context: "a setting is off" })}
     </Badge>
   );
 }
 
 function MobileClientRow({ device }: { readonly device: RelayClientDeviceRecord }) {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
+  const m = useMessages();
   return (
     <ClerkUserProfileRow icon={<SmartphoneIcon className="size-4" />}>
       <div className="flex flex-col gap-0.5 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
@@ -53,31 +52,30 @@ function MobileClientRow({ device }: { readonly device: RelayClientDeviceRecord 
           </p>
         </div>
         <p className="shrink-0 text-2xs leading-4 text-muted-foreground/75">
-          {mobileClientUpdatedAtLabel(device.updatedAt, translationLocale)}
+          {mobileClientUpdatedAtLabel(device.updatedAt, m)}
         </p>
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5">
         <MobileClientStatusBadge
           enabled={device.notifications.enabled}
-          label="Push notifications"
+          label={gt("Push notifications")}
         />
-        <MobileClientStatusBadge enabled={device.liveActivities.enabled} label="Live Activities" />
+        <MobileClientStatusBadge
+          enabled={device.liveActivities.enabled}
+          label={gt("Live Activities")}
+        />
       </div>
       <p className="mt-1.5 text-xs leading-4.5 text-muted-foreground/80">
-        {mobileClientNotificationDetail(device, translationLocale)}
+        {mobileClientNotificationDetail(device, m)}
       </p>
     </ClerkUserProfileRow>
   );
 }
 
 function MobileClientsSkeleton() {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
   return (
-    <div
-      aria-label={translateWebSource(translationLocale, "Loading mobile clients")}
-      className="divide-y border-t"
-      role="status"
-    >
+    <div aria-label={gt("Loading mobile clients")} className="divide-y border-t" role="status">
       {MOBILE_CLIENT_SKELETON_ROWS.map((row) => (
         <div key={row} className="py-4">
           <div className="flex gap-3">
@@ -98,23 +96,29 @@ function MobileClientsSkeleton() {
 }
 
 function EmptyMobileClients() {
-  const { t } = useI18n();
   return (
     <Empty size="compact">
       <EmptyMedia variant="icon">
         <SmartphoneIcon />
       </EmptyMedia>
       <EmptyHeader>
-        <EmptyTitle>No mobile clients</EmptyTitle>
-        <EmptyDescription>{t("mobileClients.emptyDescription")}</EmptyDescription>
+        <EmptyTitle>
+          <T>No mobile clients</T>
+        </EmptyTitle>
+        <EmptyDescription>
+          <T>
+            Install T3 Code on your phone and sign in to T3 Connect to get push notifications and
+            Live Activities.
+          </T>
+        </EmptyDescription>
       </EmptyHeader>
     </Empty>
   );
 }
 
 export function MobileClientsUserProfilePage() {
-  const { locale: translationLocale, t } = useI18n();
   const devicesState = useManagedRelayDevices();
+  const gt = useGT();
   const devices = devicesState.data ?? [];
   const isInitialLoad =
     !devicesState.accountId || (devicesState.data === null && !devicesState.error);
@@ -122,8 +126,8 @@ export function MobileClientsUserProfilePage() {
 
   return (
     <ClerkUserProfilePage
-      title={translateWebSource(translationLocale, "Mobile clients")}
-      description={t("mobileClients.description")}
+      title={gt("Mobile clients")}
+      description={gt("Mobile devices that get notifications from your environments.")}
       action={
         <ClerkUserProfileRefreshButton
           isPending={devicesState.isPending}
@@ -139,14 +143,12 @@ export function MobileClientsUserProfilePage() {
           >
             <div>
               <p className="font-medium text-destructive-foreground">
-                {translateWebSource(translationLocale, "Could not load mobile clients")}
+                <T>Could not load mobile clients</T>
               </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {localizeRelayErrorMessage(translationLocale, devicesState.error)}
-              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{devicesState.error}</p>
             </div>
             <Button size="xs" variant="outline" onClick={devicesState.refresh}>
-              {translateWebSource(translationLocale, "Try again")}
+              <T>Try again</T>
             </Button>
           </div>
         ) : null}

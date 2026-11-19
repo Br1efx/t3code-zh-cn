@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { localizeMobileString } from "../../i18n/mobileStrings";
 import { Platform, View } from "react-native";
 import { useResolveClassNames } from "uniwind";
 
@@ -23,10 +22,8 @@ export function ListChoiceRow(props: {
   return (
     <RowPressable
       accessibilityRole="radio"
-      accessibilityLabel={localizeMobileString(props.label)}
-      accessibilityHint={
-        props.description === undefined ? undefined : localizeMobileString(props.description)
-      }
+      accessibilityLabel={props.label}
+      accessibilityHint={props.description}
       accessibilityState={{ checked: props.selected, disabled: Boolean(props.disabled) }}
       disabled={props.disabled}
       onPress={props.onPress}

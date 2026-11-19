@@ -1,5 +1,6 @@
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { useRender } from "@base-ui/react/use-render";
+import { useGT } from "gt-react";
 import { XIcon } from "lucide-react";
 import {
   type ComponentProps,
@@ -21,8 +22,6 @@ import {
   DIALOG_POPUP_CLASS,
 } from "~/components/ui/dialog-styles";
 import { ScrollArea } from "~/components/ui/scroll-area";
-import { localizeWebChildren } from "~/i18n/localizeWebChildren";
-import { useI18n } from "~/i18n/WebI18nContext";
 
 const ControlledOpenContext = createContext<boolean | undefined>(undefined);
 
@@ -122,7 +121,7 @@ function DialogPopup({
   variant?: "default" | "media";
   mediaControlsPlacement?: "inside" | "outside";
 }) {
-  const { t } = useI18n();
+  const gt = useGT();
   const { popupRef, initialFocus } = useDialogActionInitialFocus();
   const popup = useRender({
     ref: popupRef,
@@ -143,7 +142,7 @@ function DialogPopup({
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close
-            aria-label={t("common.close")}
+            aria-label={gt("Close", { $context: "button, closes the dialog" })}
             className="absolute end-2 top-2"
             render={<Button size="icon" variant="ghost" />}
           >
@@ -222,29 +221,23 @@ function DialogFooter({
   );
 }
 
-function DialogTitle({ className, children, ...props }: DialogPrimitive.Title.Props) {
-  const { locale } = useI18n();
+function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       className={cn("wrap-anywhere font-semibold text-xl leading-snug", className)}
       data-slot="dialog-title"
       {...props}
-    >
-      {localizeWebChildren(locale, children)}
-    </DialogPrimitive.Title>
+    />
   );
 }
 
-function DialogDescription({ className, children, ...props }: DialogPrimitive.Description.Props) {
-  const { locale } = useI18n();
+function DialogDescription({ className, ...props }: DialogPrimitive.Description.Props) {
   return (
     <DialogPrimitive.Description
       className={cn("text-muted-foreground text-sm", className)}
       data-slot="dialog-description"
       {...props}
-    >
-      {localizeWebChildren(locale, children)}
-    </DialogPrimitive.Description>
+    />
   );
 }
 

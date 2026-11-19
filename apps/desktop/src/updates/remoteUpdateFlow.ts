@@ -1,7 +1,5 @@
 import type { DesktopUpdateRemoteOutcome, DesktopUpdateState } from "@t3tools/contracts";
 
-import { isZhCn, type ResolvedAppLocale } from "../i18n/DesktopLocale.ts";
-
 export type RemoteDesktopUpdateStep =
   | { readonly action: "check" }
   | { readonly action: "download" }
@@ -35,17 +33,12 @@ export function nextRemoteDesktopUpdateStep(
   state: DesktopUpdateState,
   attempts: RemoteDesktopUpdateAttempts,
   disabledReason: string | null,
-  locale: ResolvedAppLocale = "en",
 ): RemoteDesktopUpdateStep {
   if (!state.enabled || state.status === "disabled") {
     return {
       action: "done",
       outcome: "failed",
-      reason:
-        disabledReason ??
-        (isZhCn(locale)
-          ? "该电脑已关闭自动更新。"
-          : "Automatic updates are disabled on this machine."),
+      reason: disabledReason ?? "Automatic updates are disabled on this machine.",
     };
   }
   // Reinstalling a failed version disrupts threads without updating; retries require the local user.
@@ -56,9 +49,7 @@ export function nextRemoteDesktopUpdateStep(
     return {
       action: "done",
       outcome: "failed",
-      reason: isZhCn(locale)
-        ? `版本 ${state.notAppliedVersion} 未能成功安装，请直接在该电脑上打开桌面端重试。`
-        : `Update ${state.notAppliedVersion} did not apply on this machine. Retry it from the desktop app there.`,
+      reason: `Update ${state.notAppliedVersion} did not apply on this machine. Retry it from the desktop app there.`,
     };
   }
   // Match install admission, including retained downloads after unrelated background or earlier install errors.
@@ -73,11 +64,7 @@ export function nextRemoteDesktopUpdateStep(
       return {
         action: "done",
         outcome: "failed",
-        reason:
-          state.message ??
-          (isZhCn(locale)
-            ? "电脑端下载更新失败。"
-            : "The desktop app failed to download the update."),
+        reason: state.message ?? "The desktop app failed to download the update.",
       };
     }
     return { action: "download" };
@@ -96,17 +83,14 @@ export function nextRemoteDesktopUpdateStep(
     return {
       action: "done",
       outcome: "failed",
-      reason:
-        state.message ?? (isZhCn(locale) ? "电脑端更新失败。" : "The desktop app update failed."),
+      reason: state.message ?? "The desktop app update failed.",
     };
   }
   if (attempts.checks >= MAX_REMOTE_UPDATE_CHECKS) {
     return {
       action: "done",
       outcome: "failed",
-      reason: isZhCn(locale)
-        ? "电脑端未返回更新结果。"
-        : "The desktop app did not report an update result.",
+      reason: "The desktop app did not report an update result.",
     };
   }
   return { action: "check" };

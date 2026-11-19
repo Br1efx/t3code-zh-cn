@@ -8,7 +8,6 @@ import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
 
 import * as ElectronApp from "../electron/ElectronApp.ts";
-import { isZhCn, makeDesktopLocaleResolver } from "../i18n/DesktopLocale.ts";
 import * as DesktopAssets from "./DesktopAssets.ts";
 import * as DesktopEnvironment from "./DesktopEnvironment.ts";
 import * as DesktopUserData from "./DesktopUserData.ts";
@@ -45,7 +44,6 @@ export const make = Effect.gen(function* () {
   const electronApp = yield* ElectronApp.ElectronApp;
   const environment = yield* DesktopEnvironment.DesktopEnvironment;
   const fileSystem = yield* FileSystem.FileSystem;
-  const resolveLocale = yield* makeDesktopLocaleResolver;
   const userDataContext = yield* Effect.context<FileSystem.FileSystem | Path.Path>();
   const commitHashCache = yield* Ref.make<Option.Option<Option.Option<string>>>(Option.none());
 
@@ -93,7 +91,6 @@ export const make = Effect.gen(function* () {
 
   const configure = Effect.gen(function* () {
     const commitHash = yield* resolveAboutCommitHash;
-    const locale = yield* resolveLocale;
     // Electron strips spaces but keeps parentheses in its User-Agent token, breaking Turnstile in preview sessions.
     yield* electronApp.setName(
       `${environment.branding.baseName} ${environment.branding.stageLabel}`,
@@ -101,7 +98,7 @@ export const make = Effect.gen(function* () {
     yield* electronApp.setAboutPanelOptions({
       applicationName: environment.displayName,
       applicationVersion: environment.appVersion,
-      version: Option.getOrElse(commitHash, () => (isZhCn(locale) ? "未知版本" : "unknown")),
+      version: Option.getOrElse(commitHash, () => "unknown"),
     });
 
     if (environment.platform === "win32") {

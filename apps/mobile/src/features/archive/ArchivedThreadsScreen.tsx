@@ -15,6 +15,7 @@ import { useNavigation } from "@react-navigation/native";
 import { AppActivityIndicator } from "../../components/ui/AppActivityIndicator";
 import { AppBar } from "../../components/ui/AppBar";
 import { SymbolView } from "../../components/ui/AppSymbol";
+import { T, useGT } from "gt-react-native";
 import { useMemo, useRef, type ComponentProps } from "react";
 import { useWindowDimensions, View } from "react-native";
 import { RefreshControl } from "../../components/ui/RefreshControl";
@@ -49,34 +50,35 @@ function ArchivedThreadsHeader(props: {
   readonly onSortOrderChange: (sortOrder: ArchivedThreadSortOrder) => void;
 }) {
   const navigation = useNavigation();
+  const gt = useGT();
   const { width } = useWindowDimensions();
   const hasCustomFilter = props.selectedEnvironmentId !== null || props.sortOrder !== "newest";
   return (
     <AppBar
-      title="Archived threads"
+      title={gt("Archived threads")}
       onBack={() => navigation.goBack()}
       search={{
         value: props.searchQuery,
         onChangeText: props.onSearchQueryChange,
-        placeholder: "Search archived threads",
-        compactPlaceholder: "Search",
+        placeholder: gt("Search archived threads"),
+        compactPlaceholder: gt("Search", { $context: "search field placeholder" }),
         mode: "inline",
         compactToolbar: width < 700,
       }}
       menus={[
         {
-          title: "Archived thread options",
+          title: gt("Archived thread options"),
           icon: hasCustomFilter
             ? "line.3.horizontal.decrease.circle.fill"
             : "line.3.horizontal.decrease.circle",
           items: [
             {
               id: "environment",
-              title: "Environment",
+              title: gt("Environment", { $context: "filter menu heading" }),
               items: [
                 {
                   id: "environment:all",
-                  title: "All environments",
+                  title: gt("All environments"),
                   selected: props.selectedEnvironmentId === null,
                   onPress: () => props.onEnvironmentChange(null),
                 },
@@ -90,17 +92,17 @@ function ArchivedThreadsHeader(props: {
             },
             {
               id: "sort",
-              title: "Sort by archived date",
+              title: gt("Sort by archived date"),
               items: [
                 {
                   id: "sort:newest",
-                  title: "Newest first",
+                  title: gt("Newest first"),
                   selected: props.sortOrder === "newest",
                   onPress: () => props.onSortOrderChange("newest"),
                 },
                 {
                   id: "sort:oldest",
-                  title: "Oldest first",
+                  title: gt("Oldest first"),
                   selected: props.sortOrder === "oldest",
                   onPress: () => props.onSortOrderChange("oldest"),
                 },
@@ -108,7 +110,7 @@ function ArchivedThreadsHeader(props: {
             },
             {
               id: "refresh",
-              title: "Refresh archived threads",
+              title: gt("Refresh archived threads"),
               onPress: props.onRefresh,
             },
           ],
@@ -151,7 +153,6 @@ function ProjectGroupLabel(props: {
         workspaceRoot={props.project.workspaceRoot}
       />
       <Text
-        localize={false}
         className="flex-1 text-xs font-t3-medium tracking-[0.5px] uppercase text-foreground-muted"
         numberOfLines={1}
       >
@@ -164,11 +165,7 @@ function ProjectGroupLabel(props: {
             size={10}
             tintColorClassName="accent-foreground-tertiary"
           />
-          <Text
-            localize={false}
-            className="shrink text-2xs text-foreground-tertiary"
-            numberOfLines={1}
-          >
+          <Text className="shrink text-2xs text-foreground-tertiary" numberOfLines={1}>
             {props.environmentLabel}
           </Text>
         </View>
@@ -189,6 +186,7 @@ function ArchivedThreadRow(props: {
   readonly thread: EnvironmentThreadShell;
 }) {
   const { width: windowWidth } = useWindowDimensions();
+  const gt = useGT();
   const cardColor = useUniwindTheme()["--color-grouped-card"];
   const canOperateThread = useEnvironmentScope(
     props.thread.environmentId,
@@ -213,7 +211,6 @@ function ArchivedThreadRow(props: {
       <View className="min-w-0 flex-1 gap-1">
         <View className="flex-row items-center gap-2">
           <Text
-            localize={false}
             className="min-w-0 flex-1 text-base font-t3-bold leading-snug text-foreground"
             numberOfLines={1}
           >
@@ -232,7 +229,6 @@ function ArchivedThreadRow(props: {
               type="monochrome"
             />
             <Text
-              localize={false}
               className="min-w-0 flex-1 font-mono text-2xs text-foreground-tertiary"
               numberOfLines={1}
             >
@@ -263,9 +259,9 @@ function ArchivedThreadRow(props: {
       onSwipeableClose={props.onSwipeableClose}
       onSwipeableWillOpen={props.onSwipeableWillOpen}
       primaryAction={{
-        accessibilityLabel: `Unarchive ${props.thread.title}`,
+        accessibilityLabel: gt("Unarchive {title}", { title: props.thread.title }),
         icon: "arrow.uturn.backward",
-        label: "Unarchive",
+        label: gt("Unarchive", { $context: "verb, swipe action" }),
         onPress: props.onUnarchive,
       }}
       simultaneousWith={props.simultaneousSwipeGesture}
@@ -277,16 +273,15 @@ function ArchivedThreadRow(props: {
 }
 
 function ArchiveError(props: { readonly message: string; readonly onRetry: () => void }) {
+  const gt = useGT();
   return (
     <View className="rounded-[20px] border border-danger-border bg-danger p-4">
       <Text className="text-base font-t3-bold text-danger-foreground">
-        Could not load every archive
+        <T>Could not load every archive</T>
       </Text>
-      <Text localize={false} className="mt-1 text-sm text-foreground-muted">
-        {props.message}
-      </Text>
+      <Text className="mt-1 text-sm text-foreground-muted">{props.message}</Text>
       <View className="mt-3">
-        <Button label="Try again" tone="secondary" onPress={props.onRetry} />
+        <Button label={gt("Try again")} tone="secondary" onPress={props.onRetry} />
       </View>
     </View>
   );
@@ -308,6 +303,7 @@ export function ArchivedThreadsScreen(props: {
   readonly onUnarchiveThread: (thread: EnvironmentThreadShell) => void;
 }) {
   const { onDeleteThread, onUnarchiveThread } = props;
+  const gt = useGT();
   const openSwipeableRef = useRef<SwipeableMethods | null>(null);
   const archiveScrollGesture = useNativeGesture();
   const environmentLabelsById = useMemo(
@@ -390,7 +386,9 @@ export function ArchivedThreadsScreen(props: {
       return (
         <View className="items-center py-16">
           <AppActivityIndicator colorClassName="accent-icon" />
-          <Text className="mt-3 text-sm text-foreground-muted">Loading archive...</Text>
+          <Text className="mt-3 text-sm text-foreground-muted">
+            <T>Loading archive...</T>
+          </Text>
         </View>
       );
     }
@@ -399,13 +397,13 @@ export function ArchivedThreadsScreen(props: {
       <EmptyState
         detail={
           isFiltered
-            ? "Try another search or environment."
-            : "Threads you archive will appear here."
+            ? gt("Try another search or environment.")
+            : gt("Threads you archive will appear here.")
         }
-        title={isFiltered ? "No matching threads" : "No archived threads"}
+        title={isFiltered ? gt("No matching threads") : gt("No archived threads")}
       />
     );
-  }, [isFiltered, isInitialLoad]);
+  }, [gt, isFiltered, isInitialLoad]);
 
   return (
     // Without this native container, formSheet resizing mistakes the background for a header and collapses the list.

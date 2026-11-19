@@ -1,7 +1,8 @@
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
+import { thrownErrorMessage } from "@t3tools/client-runtime/errors";
 import { useAtomValue } from "@effect/atom-react";
 import { Fragment, useState, type ReactNode } from "react";
+import { msg, T, useGT, useMessages } from "gt-react";
+import { m as resolveNow, type MessageResolver } from "../../i18n/messages";
 import * as Cause from "effect/Cause";
 import * as Option from "effect/Option";
 import { AsyncResult } from "effect/reactivity";
@@ -16,7 +17,6 @@ import {
   type SimlockDeviceHostConfig,
   type SshDeviceHostConfig,
 } from "@t3tools/contracts";
-import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import { ChevronDownIcon, MoreVertical, PlusIcon } from "lucide-react";
 
 import { cn, randomUUID } from "../../lib/utils";
@@ -59,7 +59,9 @@ const deviceHostStatesAtom = environmentAtomList("web-device-host-states", (envi
 
 const failureMessage = (cause: Cause.Cause<unknown>) => {
   const error = Cause.squash(cause);
-  return error instanceof Error ? error.message : String(error);
+  return error instanceof Error
+    ? (thrownErrorMessage(error, resolveNow) ?? error.message)
+    : String(error);
 };
 
 /** Something on one environment that is in progress or needs a fix; a working source has none. */
@@ -115,33 +117,31 @@ type Editing =
 function hostStatus(
   state: DeviceServiceState | undefined,
   hostId: string,
-  locale: ResolvedAppLocale = "en",
+  resolve: MessageResolver = resolveNow,
 ): SourceStatus | undefined {
-  const isZh = locale === "zh-CN";
-  if (!state) return { tone: "pending", label: translateWebSource(locale, "Loading") };
+  if (!state) return { tone: "pending", label: resolve(msg("Loading")) };
   const status = state.hostStatuses[hostId];
   switch (status?.status) {
     case "ready": {
       const incomplete = incompleteListings(status);
       if (incomplete.length === 0) return undefined;
-      const label = isZh
-        ? incomplete.length > 1
-          ? "设备列表可能不完整"
+      const label =
+        incomplete.length > 1
+          ? resolve(msg("Device list may be incomplete"))
           : incomplete[0] === "ios"
-            ? "iOS 列表可能不完整"
-            : "Android 列表可能不完整"
-        : `${incomplete.length > 1 ? "Device" : incomplete[0] === "ios" ? "iOS" : "Android"} list may be incomplete`;
+            ? resolve(msg("iOS list may be incomplete"))
+            : resolve(msg("Android list may be incomplete"));
       return { tone: "warning", label, detail: status.detail };
     }
     case "installing":
     case "starting":
+      return { tone: "pending", label: resolve(msg("Starting")), detail: status.detail };
+    case "failed":
       return {
-        tone: "pending",
-        label: translateWebSource(locale, "Starting"),
+        tone: "error",
+        label: resolve(msg("Failed", { $context: "device host status" })),
         detail: status.detail,
       };
-    case "failed":
-      return { tone: "error", label: translateWebSource(locale, "Failed"), detail: status.detail };
     default:
       return undefined;
   }
@@ -158,8 +158,8 @@ export function DeviceSourcesSettings(props: {
   readonly supportsEas: boolean;
   readonly supportsSimlock: boolean;
 }) {
-  const { locale: translationLocale } = useI18n();
-  const isZh = translationLocale === "zh-CN";
+  const gt = useGT();
+  const m = useMessages();
   const { scope, environments, connectedEnvironments, environment: primary } = useSettingsScope();
   const projectScope = scope.kind === "project" || scope.kind === "checkout";
   const update = useAtomCommand(serverEnvironment.updateSettings, { reportFailure: false });
@@ -206,9 +206,9 @@ export function DeviceSourcesSettings(props: {
       toastManager.add({
         type: "error",
         title: failedTitle,
-        description: isZh
-          ? `此连接无法修改 ${unwritable.map((patch) => name(patch.environmentId)).join("、")} 上的设置。`
-          : `This connection cannot change settings on ${unwritable.map((patch) => name(patch.environmentId)).join(", ")}.`,
+        description: gt("This connection cannot change settings on {environments}.", {
+          environments: unwritable.map((patch) => name(patch.environmentId)).join(", "),
+        }),
       });
       return false;
     }
@@ -251,17 +251,17 @@ export function DeviceSourcesSettings(props: {
               ),
             },
           })),
-        translateWebSource(
-          translationLocale,
-          remove ? "Device host not removed everywhere" : "Device host not saved everywhere",
-        ),
+        remove ? gt("Device host not removed everywhere") : gt("Device host not saved everywhere"),
       );
       if (saved) setEditing(null);
     } catch (error) {
       toastManager.add({
         type: "error",
-        title: translateWebSource(translationLocale, "Device host not saved"),
-        description: error instanceof Error ? error.message : String(error),
+        title: gt("Device host not saved"),
+        description:
+          error instanceof Error
+            ? (thrownErrorMessage(error, resolveNow) ?? error.message)
+            : String(error),
       });
     }
   };
@@ -284,10 +284,7 @@ export function DeviceSourcesSettings(props: {
           ),
         },
       })),
-      translateWebSource(
-        translationLocale,
-        remove ? "Expo host not removed everywhere" : "Expo host not saved everywhere",
-      ),
+      remove ? gt("Expo host not removed everywhere") : gt("Expo host not saved everywhere"),
     );
     if (saved) setEditing(null);
   };
@@ -308,7 +305,7 @@ export function DeviceSourcesSettings(props: {
         environmentId: patch.environmentId,
         patch: { simlockDeviceHosts: patch.hosts },
       })),
-      translateWebSource(translationLocale, "Simlock host not saved everywhere"),
+      gt("Simlock host not saved everywhere"),
     );
     if (saved) setEditing(null);
   };
@@ -320,7 +317,7 @@ export function DeviceSourcesSettings(props: {
           environmentId: environment.environmentId,
           patch: { simlockDeviceHosts: updateSimlockDeviceHosts(environment.hosts, host, true) },
         })),
-      translateWebSource(translationLocale, "Simlock host not removed everywhere"),
+      gt("Simlock host not removed everywhere"),
     );
 
   const [testing, setTesting] = useState<ReadonlySet<string>>(new Set());
@@ -338,23 +335,19 @@ export function DeviceSourcesSettings(props: {
     toastManager.add({
       type: failed.length ? "error" : "success",
       title: failed.length
-        ? isZh
-          ? `${host.label}：${targets.length} 个环境中有 ${failed.length} 个失败`
-          : `${host.label}: ${failed.length} of ${targets.length} environments failed`
-        : isZh
-          ? `${host.label}：连接检查已通过`
-          : `${host.label}: connection checks passed`,
+        ? gt(
+            "{count, plural, one {{host}: {count} of {total} environments failed} other {{host}: {count} of {total} environments failed}}",
+            { host: host.label, count: failed.length, total: targets.length },
+          )
+        : gt("{host}: connection checks passed", { host: host.label }),
       description: failed.length
         ? failed
             .map((target) => {
               const result = checked[target.environmentId];
-              return `${target.label}: ${result?.status === "failed" ? result.error : translateWebSource(translationLocale, "failed")}`;
+              return `${target.label}: ${result?.status === "failed" ? result.error : gt("failed", { $context: "connection check result" })}`;
             })
             .join("\n")
-        : translateWebSource(
-            translationLocale,
-            "Connected or already available locally on each selected environment.",
-          ),
+        : gt("Connected or already available locally on each selected environment."),
     });
   };
 
@@ -364,7 +357,7 @@ export function DeviceSourcesSettings(props: {
   const rowActions = (onEdit: () => void, onRemove: () => void, extra?: ReactNode) => (
     <>
       <Button size="sm" variant="outline" disabled={disabled} onClick={onEdit}>
-        {translateWebSource(translationLocale, "Edit")}
+        <T>Edit</T>
       </Button>
       <Menu>
         <MenuTrigger
@@ -373,7 +366,7 @@ export function DeviceSourcesSettings(props: {
               size="icon-sm"
               variant="ghost-muted"
               disabled={disabled}
-              aria-label={translateWebSource(translationLocale, "More")}
+              aria-label={gt("More")}
             />
           }
         >
@@ -382,7 +375,7 @@ export function DeviceSourcesSettings(props: {
         <MenuPopup align="end">
           {extra}
           <MenuItem variant="destructive" onClick={onRemove}>
-            {translateWebSource(translationLocale, "Remove")}
+            {gt("Remove", { $context: "verb, removes a device source" })}
           </MenuItem>
         </MenuPopup>
       </Menu>
@@ -394,18 +387,16 @@ export function DeviceSourcesSettings(props: {
   rows.push({
     key: "local",
     shared: false,
-    title: translateWebSource(translationLocale, "Local simulators"),
-    description: translateWebSource(
-      translationLocale,
+    title: gt("Local simulators"),
+    description:
       members.length > 1
-        ? "Simulators and emulators installed on each environment's own machine."
-        : "Simulators and emulators installed on this environment's machine.",
-    ),
+        ? gt("Simulators and emulators installed on each environment's own machine.")
+        : gt("Simulators and emulators installed on this environment's machine."),
     environments: active.map((member) => {
       const local = member.state?.hosts.find((host) => host.kind === "local");
       const status = local
-        ? hostStatus(member.state, local.id, translationLocale)
-        : hostStatus(member.state, "", translationLocale);
+        ? hostStatus(member.state, local.id, m)
+        : hostStatus(member.state, "", m);
       return {
         environmentId: member.environmentId,
         label: member.label,
@@ -416,7 +407,7 @@ export function DeviceSourcesSettings(props: {
             ? {
                 ...status,
                 action: {
-                  label: translateWebSource(translationLocale, "Refresh"),
+                  label: gt("Refresh"),
                   run: () => void list({ environmentId: member.environmentId, input: {} }),
                 },
               }
@@ -457,11 +448,8 @@ export function DeviceSourcesSettings(props: {
         if (!held)
           return { environmentId: member.environmentId, label: member.label, added: false };
         const status = testing.has(host.id)
-          ? ({
-              tone: "pending",
-              label: translateWebSource(translationLocale, "Testing connection"),
-            } as const)
-          : hostStatus(member.state, held.host.id, translationLocale);
+          ? ({ tone: "pending", label: gt("Testing connection") } as const)
+          : hostStatus(member.state, held.host.id, m);
         return {
           environmentId: member.environmentId,
           label: member.label,
@@ -471,9 +459,9 @@ export function DeviceSourcesSettings(props: {
             status?.tone === "error" && member.state?.supportsHostRetry
               ? {
                   ...status,
-                  label: translateWebSource(translationLocale, "Can't connect"),
+                  label: gt("Can't connect"),
                   action: {
-                    label: translateWebSource(translationLocale, "Retry"),
+                    label: gt("Retry"),
                     run: () => retry(member.environmentId, held.host.id),
                   },
                 }
@@ -485,7 +473,7 @@ export function DeviceSourcesSettings(props: {
           setEditing({ kind: "ssh", host, original: host, ...(grouped ? {} : { only: holders }) }),
         () => void saveSsh(host, true, host, holders),
         <MenuItem onClick={() => void testSsh(host)}>
-          {translateWebSource(translationLocale, "Test connection")}
+          <T>Test connection</T>
         </MenuItem>,
       ),
     });
@@ -510,7 +498,7 @@ export function DeviceSourcesSettings(props: {
         shared: true,
         title: host.label,
         kind: "Expo",
-        description: easSessionLimits(host),
+        description: easSessionLimits(host, m),
         environments: active.map((member) => {
           const added = (member.settings?.easDeviceHosts ?? []).some(
             (candidate) => candidate.id === host.id,
@@ -521,7 +509,7 @@ export function DeviceSourcesSettings(props: {
             added,
             ...(added
               ? {
-                  status: hostStatus(member.state, host.id, translationLocale),
+                  status: hostStatus(member.state, host.id, m),
                   platforms: hostPlatforms(member.state, host.id),
                 }
               : {}),
@@ -547,7 +535,7 @@ export function DeviceSourcesSettings(props: {
         shared: true,
         title: host.label,
         kind: "Simlock",
-        description: `${host.gatewayUrl.replace(/^https?:\/\//, "")} · ${simlockLeaseLimits(host)}`,
+        description: `${host.gatewayUrl.replace(/^https?:\/\//, "")} · ${simlockLeaseLimits(host, m)}`,
         environments: active.map((member) => {
           const held = (member.settings?.simlockDeviceHosts ?? []).find(
             (candidate) => candidate.id === host.id,
@@ -560,7 +548,7 @@ export function DeviceSourcesSettings(props: {
             added: true,
             platforms: hostPlatforms(member.state, host.id),
             // A blank token can still resolve to the machine's own, so the host's answer decides.
-            status: hostStatus(member.state, host.id, translationLocale),
+            status: hostStatus(member.state, host.id, m),
           };
         }),
         actions: rowActions(edit, () => removeSimlock(host)),
@@ -573,8 +561,7 @@ export function DeviceSourcesSettings(props: {
       <MenuTrigger
         render={<Button size="sm" variant="outline" disabled={disabled || editing !== null} />}
       >
-        <PlusIcon className="size-3.5" />
-        {translateWebSource(translationLocale, "Add source")}
+        <PlusIcon className="size-3.5" /> <T>Add source</T>
         <ChevronDownIcon className="size-3.5" />
       </MenuTrigger>
       <MenuPopup align="end">
@@ -587,7 +574,7 @@ export function DeviceSourcesSettings(props: {
             })
           }
         >
-          {translateWebSource(translationLocale, "Machine over SSH")}
+          <T>Machine over SSH</T>
         </MenuItem>
         {props.supportsEas ? (
           <MenuItem
@@ -601,7 +588,7 @@ export function DeviceSourcesSettings(props: {
               })
             }
           >
-            {translateWebSource(translationLocale, "Expo Simulators")}
+            <T>Expo Simulators</T>
           </MenuItem>
         ) : null}
         {props.supportsSimlock && simlockEnabled ? (
@@ -610,7 +597,7 @@ export function DeviceSourcesSettings(props: {
               setEditing({ kind: "simlock", host: newSimlockDeviceHost(randomUUID()), isNew: true })
             }
           >
-            {translateWebSource(translationLocale, "Simlock pool (alpha)")}
+            <T>Simlock pool (alpha)</T>
           </MenuItem>
         ) : null}
       </MenuPopup>
@@ -618,11 +605,7 @@ export function DeviceSourcesSettings(props: {
   );
 
   return (
-    <SettingsSection
-      id="device-sources"
-      title={translateWebSource(translationLocale, "Device sources")}
-      headerAction={addMenu}
-    >
+    <SettingsSection id="device-sources" title={gt("Device sources")} headerAction={addMenu}>
       {rows.map((row) => (
         <DeviceSourceRow key={row.key} row={row} />
       ))}
@@ -684,8 +667,13 @@ function PlatformIcon(props: {
   row: SourceRow;
   known: ReadonlyArray<SourceEnvironment>;
 }) {
-  const { locale: i18nLocale } = useI18n();
-  const isZh = i18nLocale === "zh-CN";
+  const gt = useGT();
+  const headingLabels = {
+    Connected: gt("Connected"),
+    Available: gt("Available", { $context: "device platform status" }),
+    "Not available": gt("Not available"),
+    "Not added": gt("Not added"),
+  };
   const availability = (environment: SourceEnvironment) =>
     environment.platforms?.find((candidate) => candidate.platform === props.platform);
   const availableOn = props.known.filter((environment) => availability(environment)?.available);
@@ -713,9 +701,15 @@ function PlatformIcon(props: {
           <button
             type="button"
             aria-label={
-              isZh
-                ? `${props.row.title}：${props.label}${available ? "可用" : "不可用"}`
-                : `${props.row.title}: ${props.label} ${available ? "available" : "not available"}`
+              available
+                ? gt("{source}: {platform} available", {
+                    source: props.row.title,
+                    platform: props.label,
+                  })
+                : gt("{source}: {platform} not available", {
+                    source: props.row.title,
+                    platform: props.label,
+                  })
             }
             className={cn(
               "relative grid size-6 shrink-0 place-items-center rounded-md outline-hidden hover:bg-accent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
@@ -734,9 +728,11 @@ function PlatformIcon(props: {
       </PopoverTrigger>
       <PopoverPopup side="top" align="end" width="sm">
         <p className="text-sm font-medium">
-          {isZh
-            ? `${props.label}${available ? (partial ? "在部分环境中可用" : "可用") : "不可用"}`
-            : `${props.label} ${available ? (partial ? "available on some" : "available") : "not available"}`}
+          {available
+            ? partial
+              ? gt("{platform} available on some", { platform: props.label })
+              : gt("{platform} available", { platform: props.label })
+            : gt("{platform} not available", { platform: props.label })}
         </p>
         {props.row.shared ? (
           <>
@@ -758,9 +754,7 @@ function PlatformIcon(props: {
                 ).map(([heading, environments]) =>
                   environments.length > 0 ? (
                     <div key={heading}>
-                      <dt className="text-muted-foreground">
-                        {translateWebSource(i18nLocale, heading)}
-                      </dt>
+                      <dt className="text-muted-foreground">{headingLabels[heading]}</dt>
                       {environments.map((environment) => {
                         const reason =
                           heading === "Not available"
@@ -790,8 +784,8 @@ function PlatformIcon(props: {
                   <dt className="text-muted-foreground">{environment.label}</dt>
                   <dd className={entry?.available ? "" : "text-muted-foreground"}>
                     {entry?.available
-                      ? translateWebSource(i18nLocale, "Available")
-                      : (entry?.reason ?? translateWebSource(i18nLocale, "Not available"))}
+                      ? gt("Available", { $context: "device platform status" })
+                      : (entry?.reason ?? gt("Not available"))}
                   </dd>
                 </Fragment>
               );
@@ -799,8 +793,7 @@ function PlatformIcon(props: {
           </dl>
         ) : !available ? (
           <p className="mt-1 text-xs text-muted-foreground">
-            {availability(props.known[0]!)?.reason ??
-              translateWebSource(i18nLocale, "Not set up on this machine.")}
+            {availability(props.known[0]!)?.reason ?? gt("Not set up on this machine.")}
           </p>
         ) : null}
       </PopoverPopup>
@@ -809,7 +802,6 @@ function PlatformIcon(props: {
 }
 
 function DeviceSourceRow(props: { row: SourceRow }) {
-  const { locale: translationLocale } = useI18n();
   const { row } = props;
   const several = row.environments.length > 1;
   const issues = row.environments.filter(
@@ -848,7 +840,7 @@ function DeviceSourceRow(props: { row: SourceRow }) {
             {environment.status.tone === "warning" && environment.status.detail ? (
               <Popover>
                 <PopoverTrigger render={<InlineButton />}>
-                  {translateWebSource(translationLocale, "Details")}
+                  <T>Details</T>
                 </PopoverTrigger>
                 <PopoverPopup side="bottom" align="start" width="lg" padding="compact">
                   <p className="whitespace-pre-wrap break-words font-mono text-xs text-muted-foreground">

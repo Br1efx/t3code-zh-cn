@@ -17,7 +17,6 @@ import * as DesktopEnvironment from "./DesktopEnvironment.ts";
 import * as DesktopLifecycle from "./DesktopLifecycle.ts";
 import * as DesktopShutdown from "./DesktopShutdown.ts";
 import * as DesktopState from "./DesktopState.ts";
-import * as DesktopTray from "../window/DesktopTray.ts";
 import * as DesktopWindow from "../window/DesktopWindow.ts";
 
 function layerElectronApp(
@@ -67,13 +66,6 @@ const layerElectronTheme = Layer.succeed(ElectronTheme.ElectronTheme, {
   shouldUseDarkColors: Effect.succeed(false),
   setSource: () => Effect.void,
   onUpdated: () => Effect.void,
-});
-
-const layerDesktopTray = Layer.succeed(DesktopTray.DesktopTray, {
-  ensure: () => Effect.succeed(false),
-  refreshMenu: Effect.void,
-  markQuitRequested: () => undefined,
-  shouldHideOnClose: () => false,
 });
 
 function layerElectronWindow(destroyAll: Effect.Effect<void> = Effect.void) {
@@ -140,7 +132,6 @@ describe("DesktopLifecycle", () => {
           ),
         ),
         Layer.provideMerge(layerDesktopWindow()),
-        Layer.provideMerge(layerDesktopTray),
         Layer.provideMerge(layerEnvironment),
         Layer.provideMerge(DesktopShutdown.layer),
         Layer.provideMerge(DesktopState.layer),
@@ -213,7 +204,6 @@ describe("DesktopLifecycle", () => {
         Layer.provideMerge(layerElectronTheme),
         Layer.provideMerge(layerElectronWindow(destroyAll)),
         Layer.provideMerge(layerDesktopWindow({ flushMainWindowBounds })),
-        Layer.provideMerge(layerDesktopTray),
         Layer.provideMerge(layerEnvironment),
         Layer.provideMerge(layerDesktopShutdown),
         Layer.provideMerge(DesktopState.layer),
@@ -258,7 +248,6 @@ describe("DesktopLifecycle", () => {
         Layer.provideMerge(layerElectronTheme),
         Layer.provideMerge(layerElectronWindow()),
         Layer.provideMerge(layerDesktopWindow()),
-        Layer.provideMerge(layerDesktopTray),
         Layer.provideMerge(layerEnvironment),
         Layer.provideMerge(DesktopShutdown.layer),
         Layer.provideMerge(DesktopState.layer),
@@ -301,7 +290,6 @@ describe("DesktopLifecycle", () => {
         Layer.provideMerge(layerElectronTheme),
         Layer.provideMerge(layerElectronWindow()),
         Layer.provideMerge(layerDesktopWindow()),
-        Layer.provideMerge(layerDesktopTray),
         Layer.provideMerge(layerEnvironment),
         // Nothing marks this shutdown complete, so it stays pending.
         Layer.provideMerge(DesktopShutdown.layer),
@@ -355,7 +343,6 @@ describe("DesktopLifecycle", () => {
         Layer.provideMerge(layerElectronTheme),
         Layer.provideMerge(layerElectronWindow()),
         Layer.provideMerge(layerDesktopWindow({ activate })),
-        Layer.provideMerge(layerDesktopTray),
         Layer.provideMerge(layerEnvironment),
         Layer.provideMerge(DesktopShutdown.layer),
         Layer.provideMerge(DesktopState.layer),

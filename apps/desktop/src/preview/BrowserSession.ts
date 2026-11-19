@@ -1,6 +1,7 @@
 import * as HostProcess from "@t3tools/shared/HostProcess";
 import type { Certificate, Session, WebContents } from "electron";
 import { BrowserWindow, session } from "electron";
+import { msg } from "gt-i18n";
 import * as Context from "effect/Context";
 import * as DateTime from "effect/DateTime";
 import * as Digest from "effect/crypto/Digest";
@@ -17,11 +18,7 @@ import * as SynchronizedRef from "effect/SynchronizedRef";
 
 import * as ElectronApp from "../electron/ElectronApp.ts";
 import * as ElectronDialog from "../electron/ElectronDialog.ts";
-import {
-  isZhCn,
-  makeDesktopLocaleResolver,
-  type ResolvedAppLocale,
-} from "../i18n/DesktopLocale.ts";
+import { m } from "../i18n/messages.ts";
 
 const PREVIEW_PARTITION_PREFIX = "persist:t3code-preview-";
 /** Ephemeral partitions omit persist: but retain a product prefix so the webview gate recognizes them. */
@@ -33,7 +30,6 @@ export type BrowserSessionPartitionNamespace = "profile";
 // Electron's clipboard API uses clipboard-sanitized-write and checks both permission handlers.
 const ALLOWED_PREVIEW_PERMISSIONS: ReadonlySet<string> = new Set([
   "clipboard-sanitized-write",
-  "geolocation",
   // DesktopWindow confines HTML fullscreen to the guest's webview.
   "fullscreen",
   "pointerLock",
@@ -89,31 +85,10 @@ const permissionOrigin = (rawUrl: string | undefined): string | null => {
  * Certificate errors a user may accept for a preview page, with the reason the
  * prompt shows. Every other error keeps Electron's denial.
  */
-const OVERRIDABLE_CERTIFICATE_ERRORS: ReadonlyMap<
-  string,
-  { readonly en: string; readonly zhCn: string }
-> = new Map([
-  [
-    "net::ERR_CERT_AUTHORITY_INVALID",
-    {
-      en: "No trusted authority issued this certificate.",
-      zhCn: "该网站的安全证书并非由受信任的机构签发。",
-    },
-  ],
-  [
-    "net::ERR_CERT_COMMON_NAME_INVALID",
-    {
-      en: "This certificate is not for this address.",
-      zhCn: "该安全证书与当前访问的网址不匹配。",
-    },
-  ],
-  [
-    "net::ERR_CERT_DATE_INVALID",
-    {
-      en: "This certificate has expired or is not valid yet.",
-      zhCn: "该安全证书已过期或尚未生效。",
-    },
-  ],
+const OVERRIDABLE_CERTIFICATE_ERRORS: ReadonlyMap<string, string> = new Map([
+  ["net::ERR_CERT_AUTHORITY_INVALID", msg("No trusted authority issued this certificate.")],
+  ["net::ERR_CERT_COMMON_NAME_INVALID", msg("This certificate is not for this address.")],
+  ["net::ERR_CERT_DATE_INVALID", msg("This certificate has expired or is not valid yet.")],
 ]);
 
 /**
@@ -290,14 +265,13 @@ export const make = Effect.gen(function* BrowserSessionMake() {
   const fileSystem = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
   const platform = yield* HostProcess.Platform;
-  const resolveLocale = yield* makeDesktopLocaleResolver;
   const runFork = Effect.runForkWith(yield* Effect.context<never>());
   // One prompt at a time, so a page cannot stack dialogs by looping a deep link.
   let permissionPromptOpen = false;
   /** Settles with `undefined` when the user gave no answer: another prompt was open or the dialog failed. */
   const promptPermission = (
     requester: WebContents | null,
-    buildPrompt: (locale: ResolvedAppLocale) => {
+    prompt: {
       readonly buttons: readonly [allow: string, deny: string];
       readonly message: string;
       readonly detail?: string;
@@ -315,10 +289,8 @@ export const make = Effect.gen(function* BrowserSessionMake() {
         callback(answer);
       });
     runFork(
-      Effect.gen(function* () {
-        const locale = yield* resolveLocale;
-        const prompt = buildPrompt(locale);
-        return yield* electronDialog.showMessageBox(
+      electronDialog
+        .showMessageBox(
           {
             type: "question",
             buttons: [...prompt.buttons],
@@ -328,14 +300,14 @@ export const make = Effect.gen(function* BrowserSessionMake() {
             message: prompt.message,
             ...(prompt.detail === undefined ? {} : { detail: prompt.detail }),
           },
-          previewHostWindow(requester),
-        );
-      }).pipe(
-        Effect.map(({ response }): boolean | undefined => response === 0),
-        Effect.orElseSucceed(() => undefined),
-        Effect.flatMap(settle),
-        Effect.onInterrupt(() => settle(undefined)),
-      ),
+          platform === "win32" ? undefined : previewHostWindow(requester),
+        )
+        .pipe(
+          Effect.map(({ response }): boolean | undefined => response === 0),
+          Effect.orElseSucceed(() => undefined),
+          Effect.flatMap(settle),
+          Effect.onInterrupt(() => settle(undefined)),
+        ),
     );
   };
   /** Electron launches external protocols after granting openExternal; untrusted pages require confirmation. */
@@ -349,22 +321,20 @@ export const make = Effect.gen(function* BrowserSessionMake() {
       callback(false);
       return;
     }
-    const protocol = new URL(url).protocol.slice(0, -1);
-    const truncated = truncateForPrompt(url);
     promptPermission(
       requester,
-      (locale) =>
-        isZhCn(locale)
-          ? {
-              buttons: ["打开", "取消"],
-              message: `要用外部应用打开此 ${protocol} 链接吗？`,
-              detail: `内置浏览器中的网页请求打开电脑上的其他软件：\n\n${truncated}`,
-            }
-          : {
-              buttons: ["Open", "Cancel"],
-              message: `Open this ${protocol} link?`,
-              detail: `A page in the browser wants to open another application:\n\n${truncated}`,
-            },
+      {
+        buttons: [
+          m(msg("Open", { $context: "button, opens a link in another app" })),
+          m(msg("Cancel")),
+        ],
+        message: m(msg("Open this {protocol} link?"), {
+          protocol: new URL(url).protocol.slice(0, -1),
+        }),
+        detail: m(msg("A page in the browser wants to open another application:\n\n{url}"), {
+          url: truncateForPrompt(url),
+        }),
+      },
       (answer) => callback(answer === true),
     );
   };
@@ -452,7 +422,7 @@ export const make = Effect.gen(function* BrowserSessionMake() {
     trust: CertificateTrust,
     approval: CertificateApproval,
     certificate: Certificate,
-    reason: { readonly en: string; readonly zhCn: string },
+    reason: string,
     callback: (trusted: boolean) => void,
   ): void => {
     const key = certificateApprovalKey(approval);
@@ -488,66 +458,65 @@ export const make = Effect.gen(function* BrowserSessionMake() {
     const host = new URL(approval.origin).host;
     const revocations = trust.revocations;
     runFork(
-      Effect.gen(function* () {
-        const locale = yield* resolveLocale;
-        const zh = isZhCn(locale);
-        const { response } = yield* electronDialog.showMessageBox(
+      electronDialog
+        .showMessageBox(
           {
             type: "warning",
-            buttons: zh ? ["信任并记住", "取消"] : ["Trust and Remember", "Cancel"],
+            buttons: [m(msg("Trust and Remember")), m(msg("Cancel"))],
             defaultId: 1,
             cancelId: 1,
             signal: dismiss.signal,
-            message: zh ? `${host} 的安全证书不受信任` : `${host} has an untrusted certificate`,
-            detail: zh
-              ? [
-                  reason.zhCn,
-                  "",
-                  `颁发给：${promptCertificateName(certificate.subjectName)}`,
-                  `颁发机构：${promptCertificateName(certificate.issuerName)}`,
-                  `有效期：${promptCertificateDate(certificate.validStart)} – ${promptCertificateDate(certificate.validExpiry)}`,
-                  `证书指纹：${approval.fingerprint}`,
-                  "",
-                  "仅在你确认该证书确实属于此网站时才选择信任（例如本地开发服务）。清除此浏览器的 Cookie 后将取消信任。",
-                ].join("\n")
-              : [
-                  reason.en,
-                  "",
-                  `Issued to: ${promptCertificateName(certificate.subjectName)}`,
-                  `Issued by: ${promptCertificateName(certificate.issuerName)}`,
-                  `Valid: ${promptCertificateDate(certificate.validStart)} – ${promptCertificateDate(certificate.validExpiry)}`,
-                  `Fingerprint: ${approval.fingerprint}`,
-                  "",
+            message: m(msg("{host} has an untrusted certificate"), { host }),
+            detail: [
+              m(reason),
+              "",
+              m(msg("Issued to: {name}"), {
+                name: promptCertificateName(certificate.subjectName),
+              }),
+              m(msg("Issued by: {name}"), { name: promptCertificateName(certificate.issuerName) }),
+              m(msg("Valid: {start} – {end}"), {
+                start: promptCertificateDate(certificate.validStart),
+                end: promptCertificateDate(certificate.validExpiry),
+              }),
+              m(msg("Fingerprint: {fingerprint}"), { fingerprint: approval.fingerprint }),
+              "",
+              m(
+                msg(
                   "Trust it only if you know this certificate belongs to the site. Clearing this browser profile's cookies forgets it.",
-                ].join("\n"),
+                ),
+              ),
+            ].join("\n"),
           },
           // In the reporter's Windows test, a box owned by the host window
           // blocked all mouse input, its own buttons included, until it closed.
           platform === "win32" ? undefined : previewHostWindow(contents),
-        );
-        if (response !== 0 || dismiss.signal.aborted) return false;
-        return yield* rememberCertificate(trust, key, approval, revocations).pipe(
-          Effect.catch((cause) =>
-            Effect.logWarning("Failed to save a certificate approval.", { cause }).pipe(
-              Effect.andThen(
-                electronDialog.showErrorBox(
-                  zh
-                    ? `无法保存对 ${host} 的证书信任设置`
-                    : `Could not trust the certificate for ${host}`,
-                  zh
-                    ? "无法保存此次信任记录，为保障安全已继续拦截该网页。请检查磁盘空间是否充足且数据文件夹可写，然后重试。"
-                    : "T3 Code could not save this approval, so the page stays blocked. Check that the disk is not full and its data folder is writable, then try again.",
-                ),
-              ),
-              Effect.as(false),
-            ),
+        )
+        .pipe(
+          Effect.flatMap(({ response }) =>
+            response === 0 && !dismiss.signal.aborted
+              ? rememberCertificate(trust, key, approval, revocations).pipe(
+                  Effect.catch((cause) =>
+                    Effect.logWarning("Failed to save a certificate approval.", { cause }).pipe(
+                      Effect.andThen(
+                        electronDialog.showErrorBox(
+                          m(msg("Could not trust the certificate for {host}"), { host }),
+                          m(
+                            msg(
+                              "T3 Code could not save this approval, so the page stays blocked. Check that the disk is not full and its data folder is writable, then try again.",
+                            ),
+                          ),
+                        ),
+                      ),
+                      Effect.as(false),
+                    ),
+                  ),
+                )
+              : Effect.succeed(false),
           ),
-        );
-      }).pipe(
-        Effect.orElseSucceed(() => false),
-        Effect.flatMap(settle),
-        Effect.onInterrupt(() => settle(false)),
-      ),
+          Effect.orElseSucceed(() => false),
+          Effect.flatMap(settle),
+          Effect.onInterrupt(() => settle(false)),
+        ),
     );
   };
   yield* electronApp.on(
@@ -637,38 +606,47 @@ export const make = Effect.gen(function* BrowserSessionMake() {
       return Effect.try({
         try: () => {
           const browserSession = session.fromPartition(partition);
-          // Like Chrome, clipboard reads ask once per origin; both answers last for the session.
-          const clipboardReadDecisions = new Map<string, boolean>();
-          const confirmClipboardRead = (
+          // Location and clipboard decisions are remembered separately for each origin.
+          const permissionDecisions = {
+            "clipboard-read": new Map<string, boolean>(),
+            geolocation: new Map<string, boolean>(),
+          };
+          const confirmOriginPermission = (
             requester: WebContents,
+            permission: keyof typeof permissionDecisions,
             rawUrl: string | undefined,
             callback: (granted: boolean) => void,
           ): void => {
             const origin = permissionOrigin(rawUrl);
             if (origin === null) {
+              // A frame URL such as about:srcdoc cannot establish whether its origin is inherited or opaque.
               callback(false);
               return;
             }
-            const remembered = clipboardReadDecisions.get(origin);
+            const decisions = permissionDecisions[permission];
+            const remembered = decisions.get(origin);
             if (remembered !== undefined) {
               callback(remembered);
               return;
             }
-            const truncatedOrigin = truncateForPrompt(origin);
             promptPermission(
               requester,
-              (locale) =>
-                isZhCn(locale)
-                  ? {
-                      buttons: ["允许", "拒绝"],
-                      message: `${truncatedOrigin} 想要读取你剪贴板中的文字和图片`,
-                    }
-                  : {
-                      buttons: ["Allow", "Block"],
-                      message: `${truncatedOrigin} wants to see text and images copied to the clipboard`,
-                    },
+              {
+                buttons: [
+                  m(msg("Allow", { $context: "button, grants a site permission" })),
+                  m(msg("Block", { $context: "button, denies a site permission" })),
+                ],
+                message:
+                  permission === "geolocation"
+                    ? m(msg("{origin} wants to know your location"), {
+                        origin: truncateForPrompt(origin),
+                      })
+                    : m(msg("{origin} wants to see text and images copied to the clipboard"), {
+                        origin: truncateForPrompt(origin),
+                      }),
+              },
               (answer) => {
-                if (answer !== undefined) clipboardReadDecisions.set(origin, answer);
+                if (answer !== undefined) decisions.set(origin, answer);
                 callback(answer === true);
               },
             );
@@ -684,9 +662,10 @@ export const make = Effect.gen(function* BrowserSessionMake() {
                 );
                 return;
               }
-              if (permission === "clipboard-read") {
-                confirmClipboardRead(
+              if (permission === "clipboard-read" || permission === "geolocation") {
+                confirmOriginPermission(
                   webContents,
+                  permission,
                   "requestingUrl" in details ? details.requestingUrl : undefined,
                   callback,
                 );
@@ -696,8 +675,9 @@ export const make = Effect.gen(function* BrowserSessionMake() {
             },
           );
           browserSession.setPermissionCheckHandler((_webContents, permission, requestingOrigin) =>
-            permission === "clipboard-read"
-              ? clipboardReadDecisions.get(permissionOrigin(requestingOrigin) ?? "") === true
+            permission === "clipboard-read" || permission === "geolocation"
+              ? permissionDecisions[permission].get(permissionOrigin(requestingOrigin) ?? "") ===
+                true
               : ALLOWED_PREVIEW_PERMISSIONS.has(permission),
           );
           browserSession.webRequest.onBeforeSendHeaders(

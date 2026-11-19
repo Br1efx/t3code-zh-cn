@@ -29,13 +29,13 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  UPSTREAM_VERSION: 0.1.10
-  CLIENT_VERSION: 0.1.10-zh.2
+  UPSTREAM_VERSION: 0.1.11-nightly.20261119.4941
+  CLIENT_VERSION: 0.1.11-preview.1
   T3CODE_DESKTOP_UPDATE_REPOSITORY: Br1efx/t3code-zh-cn
   CI: "true"
   CSC_IDENTITY_AUTO_DISCOVERY: "false"
   T3CODE_DESKTOP_SIGNED: "false"
-  # Public distribution endpoints, never production relay credentials.
+  # Public distribution endpoints. Public T3 Connect identifiers (.env.example) are scoped to build jobs below.
   ELECTRON_MIRROR: https://github.com/electron/electron/releases/download/
   ELECTRON_BUILDER_BINARIES_MIRROR: https://github.com/electron-userland/electron-builder-binaries/releases/download/
 
@@ -72,15 +72,16 @@ jobs:
               throw new Error('Expected SHA must equal the selected branch commit exactly.');
             }
             const version = process.env.UPSTREAM_VERSION;
-            if (!/^\d+\.\d+\.\d+$/.test(version) ||
-                !new RegExp(`^${version.replaceAll('.', '\\.')}\\-zh\\.\\d+$`).test(process.env.CLIENT_VERSION)) {
-              throw new Error('Only stable upstream versions with a Chinese build suffix are supported.');
+            const baseSemver = version.split('-')[0];
+            if (!/^\d+\.\d+\.\d+(?:-nightly\.\d{8}\.\d+)?$/.test(version) ||
+                !new RegExp(`^${baseSemver.replaceAll('.', '\\.')}\\-(?:zh|preview)\\.\\d+$`).test(process.env.CLIENT_VERSION)) {
+              throw new Error('Only official upstream release versions with a Chinese or preview build suffix are supported.');
             }
             const release = await github.rest.repos.getReleaseByTag({
               owner: 'pingdotgg', repo: 't3code', tag: `v${version}`,
             });
-            if (release.data.prerelease || release.data.draft) {
-              throw new Error('The upstream base must be an official stable release.');
+            if (release.data.draft) {
+              throw new Error('The upstream base must be a published official release.');
             }
             let ref = (await github.rest.git.getRef({
               owner: 'pingdotgg', repo: 't3code', ref: `tags/v${version}`,
@@ -140,6 +141,7 @@ jobs:
       - run: vp run --filter @t3tools/desktop ensure:electron
       - run: vp run lint
       - run: vp run typecheck
+      - run: vp run i18n:check
 
   mobile_static:
     if: inputs.client_targets != 'windows'
@@ -254,6 +256,12 @@ jobs:
       (needs.mobile_static.result == 'success' || (inputs.client_targets == 'windows' && needs.mobile_static.result == 'skipped'))
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    env:
+      # Official public T3 Connect identifiers from .env.example (not secrets).
+      T3CODE_CLERK_PUBLISHABLE_KEY: pk_live_Y2xlcmsudDMuY29kZXMk
+      T3CODE_CLERK_JWT_TEMPLATE: t3-relay
+      T3CODE_CLERK_CLI_OAUTH_CLIENT_ID: hzxSgY2cH10sDU2r
+      T3CODE_RELAY_URL: https://relay.t3.codes
     steps:
       - name: Checkout exact source without credentials
         shell: bash
@@ -307,6 +315,12 @@ jobs:
       needs.bundle.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    env:
+      # Official public T3 Connect identifiers from .env.example (not secrets).
+      T3CODE_CLERK_PUBLISHABLE_KEY: pk_live_Y2xlcmsudDMuY29kZXMk
+      T3CODE_CLERK_JWT_TEMPLATE: t3-relay
+      T3CODE_CLERK_CLI_OAUTH_CLIENT_ID: hzxSgY2cH10sDU2r
+      T3CODE_RELAY_URL: https://relay.t3.codes
     steps:
       - name: Checkout exact source without credentials
         shell: bash
@@ -388,6 +402,12 @@ jobs:
       needs.linux.result == 'success'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
+    env:
+      # Official public T3 Connect identifiers from .env.example (not secrets).
+      T3CODE_CLERK_PUBLISHABLE_KEY: pk_live_Y2xlcmsudDMuY29kZXMk
+      T3CODE_CLERK_JWT_TEMPLATE: t3-relay
+      T3CODE_CLERK_CLI_OAUTH_CLIENT_ID: hzxSgY2cH10sDU2r
+      T3CODE_RELAY_URL: https://relay.t3.codes
     defaults:
       run:
         shell: bash
@@ -469,10 +489,14 @@ jobs:
     timeout-minutes: 120
     env:
       APP_VARIANT: community
-      T3CODE_MOBILE_VERSION: 0.1.10-zh.2
+      T3CODE_MOBILE_VERSION: 0.1.11-preview.1
       # Candidate only. A publishable versionCode must exceed the installed release.
-      T3CODE_MOBILE_VERSION_CODE: "11001"
+      T3CODE_MOBILE_VERSION_CODE: "11101"
       T3CODE_MOBILE_UPDATES_ENABLED: "0"
+      T3CODE_CLERK_PUBLISHABLE_KEY: pk_live_Y2xlcmsudDMuY29kZXMk
+      T3CODE_CLERK_JWT_TEMPLATE: t3-relay
+      T3CODE_CLERK_CLI_OAUTH_CLIENT_ID: hzxSgY2cH10sDU2r
+      T3CODE_RELAY_URL: https://relay.t3.codes
       EXPO_NO_GIT_STATUS: "1"
       EXPO_NO_TELEMETRY: "1"
     steps:

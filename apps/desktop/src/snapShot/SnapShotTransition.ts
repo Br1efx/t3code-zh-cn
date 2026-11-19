@@ -44,7 +44,6 @@ type ActiveTransition = {
   readonly id: string;
   readonly source: Electron.Rectangle;
   readonly snapshotDataUrl: string;
-  readonly locale: "en" | "zh-CN";
   readonly overlays: Array<{
     readonly window: Electron.BrowserWindow;
     readonly requestedBounds: Electron.Rectangle;
@@ -104,9 +103,7 @@ export function snapShotAnimationDisplayBounds(
 function createWindow(
   bounds: Electron.Rectangle,
   alwaysOnTopLevel: SnapShotTransitionOptions["alwaysOnTopLevel"],
-  locale: "en" | "zh-CN" = "en",
 ): Electron.BrowserWindow {
-  const isZh = locale === "zh-CN";
   const window = new Electron.BrowserWindow({
     ...bounds,
     alwaysOnTop: true,
@@ -117,7 +114,7 @@ function createWindow(
     resizable: false,
     show: false,
     skipTaskbar: true,
-    title: isZh ? "T3 Code 快捷截图动画" : "T3 Code Snapshot Animation",
+    title: "T3 Code Snapshot Animation",
     transparent: true,
     webPreferences: {
       backgroundThrottling: false,
@@ -135,9 +132,7 @@ function transitionHtml(
   sourceBounds: Electron.Rectangle,
   overlayBounds: Electron.Rectangle,
   flash: boolean,
-  locale: "en" | "zh-CN" = "en",
 ): string {
-  const fallbackWindowTitle = locale === "zh-CN" ? "已截取的窗口" : "Captured window";
   const source = {
     x: sourceBounds.x - overlayBounds.x,
     y: sourceBounds.y - overlayBounds.y,
@@ -168,7 +163,7 @@ const applyDetails=value=>{
   if(!value)return;
   details.dataset.ready="";
   document.getElementById("app").textContent=value.appName;
-  document.getElementById("title").textContent=value.windowTitle||${JSON.stringify(fallbackWindowTitle)};
+  document.getElementById("title").textContent=value.windowTitle||"Captured window";
   document.getElementById("fallback").textContent=value.appName.slice(0,1);
   if(value.appIconDataUrl){
     const icon=document.getElementById("icon");icon.src=value.appIconDataUrl;icon.style.display="block";document.getElementById("fallback").style.display="none";
@@ -229,7 +224,6 @@ export class SnapShotTransition {
     snapshotDataUrl: string,
     flash: boolean,
     destinationWindowBounds?: Electron.Rectangle,
-    locale: "en" | "zh-CN" = "en",
   ): Promise<void> {
     this.dispose();
     const sourceDisplay = Electron.screen.getDisplayMatching(source);
@@ -247,7 +241,6 @@ export class SnapShotTransition {
       id,
       source,
       snapshotDataUrl,
-      locale,
       overlays: [],
     };
     active.timer = Effect.runFork(
@@ -276,7 +269,7 @@ export class SnapShotTransition {
     const overlays: ActiveTransition["overlays"] = [];
     try {
       for (const bounds of requestedBounds) {
-        const window = createWindow(bounds, this.alwaysOnTopLevel, active.locale);
+        const window = createWindow(bounds, this.alwaysOnTopLevel);
         const overlay = { window, requestedBounds: bounds, bounds: window.getBounds() };
         active.overlays.push(overlay);
         overlays.push(overlay);
@@ -285,9 +278,7 @@ export class SnapShotTransition {
         overlays.map(async (overlay) => {
           await overlay.window.loadURL(
             "data:text/html;charset=utf-8," +
-              encodeURIComponent(
-                transitionHtml(active.source, overlay.bounds, flash, active.locale),
-              ),
+              encodeURIComponent(transitionHtml(active.source, overlay.bounds, flash)),
           );
           if (this.active === active && !overlay.window.isDestroyed()) {
             await overlay.window.webContents.executeJavaScript(

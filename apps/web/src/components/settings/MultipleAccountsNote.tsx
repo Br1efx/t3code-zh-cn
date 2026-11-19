@@ -1,7 +1,6 @@
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { useAtomValue } from "@effect/atom-react";
 import type { EnvironmentId, ProviderDriverKind } from "@t3tools/contracts";
+import { T, Var } from "gt-react";
 import { InfoIcon } from "lucide-react";
 
 import { serverEnvironment } from "../../state/server";
@@ -23,7 +22,6 @@ export function MultipleAccountsNote({
   readonly environmentId: EnvironmentId;
   readonly driver: ProviderDriverKind;
 }) {
-  const { locale: translationLocale } = useI18n();
   const providers = useAtomValue(serverEnvironment.providersValueAtom(environmentId));
   const providerName = PROVIDER_NAMES.get(driver);
   const hasSignedInAccount =
@@ -37,17 +35,17 @@ export function MultipleAccountsNote({
       <InfoIcon aria-hidden />
       <AlertDescription>
         <p>
-          {translationLocale === "zh-CN"
-            ? `不建议在 T3 Code 中同时管理多个 ${providerName} 账号。`
-            : `We do not recommend managing multiple ${providerName} accounts in T3 Code. `}
-          <a
-            href={MULTIPLE_ACCOUNTS_FAQ_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="underline underline-offset-2 hover:text-foreground"
-          >
-            {translateWebSource(translationLocale, "More info")}
-          </a>
+          <T>
+            We do not recommend managing multiple <Var>{providerName}</Var> accounts in T3 Code.{" "}
+            <a
+              href={MULTIPLE_ACCOUNTS_FAQ_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              More info
+            </a>
+          </T>
         </p>
       </AlertDescription>
     </Alert>

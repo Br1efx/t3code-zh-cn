@@ -1,12 +1,11 @@
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
 import type { PullRequestReviewGuideStop } from "@t3tools/contracts";
+import { T, useGT, useMessages } from "gt-react";
 import { CheckIcon } from "lucide-react";
 
 import { cn } from "~/lib/utils";
 
 import { Badge } from "../../ui/badge";
-import { stopFilePaths } from "@t3tools/client-runtime/review-guide-tour";
+import { stopSubline } from "@t3tools/client-runtime/review-guide-tour";
 
 export function GuideRail({
   stops,
@@ -19,7 +18,8 @@ export function GuideRail({
   seen: ReadonlySet<number>;
   onSelect: (position: number) => void;
 }) {
-  const { t, locale: uiLocale } = useI18n();
+  const gt = useGT();
+  const messages = useMessages();
   const reviewed = seen.size;
   const renderStop = (stop: PullRequestReviewGuideStop, index: number) => (
     <li key={index}>
@@ -32,19 +32,10 @@ export function GuideRail({
           <>
             {stop.attention !== null ? (
               <Badge size="sm" variant="warning">
-                {translateWebSource(uiLocale, "Look closely")}
+                <T>Look closely</T>
               </Badge>
             ) : null}
-            <span>
-              {stopFilePaths(stop).length === 0
-                ? translateWebSource(uiLocale, "Context, no code")
-                : t(
-                    stopFilePaths(stop).length === 1
-                      ? "pullRequests.guide.fileOne"
-                      : "pullRequests.guide.fileMany",
-                    { count: stopFilePaths(stop).length },
-                  )}
-            </span>
+            <span>{stopSubline(stop, messages)}</span>
           </>
         }
       />
@@ -52,12 +43,12 @@ export function GuideRail({
   );
 
   return (
-    <nav
-      aria-label={translateWebSource(uiLocale, "Review tour")}
-      className="flex min-h-0 flex-col gap-4"
-    >
+    <nav aria-label={gt("Review tour")} className="flex min-h-0 flex-col gap-4">
       <p className="text-xs text-muted-foreground tabular-nums @max-[56rem]/guide:hidden">
-        {t("pullRequests.guide.readCount", { read: reviewed, total: stops.length })}
+        {gt(
+          "{total, plural, one {{reviewed} of {total} read} other {{reviewed} of {total} read}}",
+          { reviewed, total: stops.length },
+        )}
       </p>
       <div className="flex flex-col gap-4">
         <ol className="flex flex-col gap-0.5">{stops.map(renderStop)}</ol>
@@ -103,7 +94,7 @@ function RailRow({
 }
 
 function StopBullet({ number, seen }: { number: number; seen: boolean }) {
-  const { t } = useI18n();
+  const gt = useGT();
   return (
     <span
       className={cn(
@@ -112,7 +103,7 @@ function StopBullet({ number, seen }: { number: number; seen: boolean }) {
       )}
     >
       {seen ? (
-        <CheckIcon aria-label={t("pullRequests.guide.stopRead", { number })} className="size-3" />
+        <CheckIcon aria-label={gt("Stop {number}, read", { number })} className="size-3" />
       ) : (
         number
       )}

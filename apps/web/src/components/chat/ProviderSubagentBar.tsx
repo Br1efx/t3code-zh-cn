@@ -1,10 +1,9 @@
-import { useI18n } from "~/i18n/WebI18nContext";
-import { translateWebSource } from "~/i18n/messages";
 import {
   formatProviderSubagentStatus,
   type ProviderSubagentStatus,
 } from "@t3tools/client-runtime/state/thread-execution";
 import { isOrchestrationV2WorkActive } from "@t3tools/contracts";
+import { T, useGT, useMessages } from "gt-react";
 import { ArrowUpLeftIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -22,14 +21,16 @@ export function ProviderSubagentBar(props: {
   readonly onOpenParent: (() => void) | null;
   readonly actions?: ReactNode;
 }) {
-  const { locale: i18nLocale } = useI18n();
   const { status } = props;
+  const gt = useGT();
+  const messages = useMessages();
   const live = status !== null && isOrchestrationV2WorkActive(status.status);
   const modelDescription =
     props.effortLabel === null ? props.modelLabel : `${props.modelLabel}, ${props.effortLabel}`;
   const announcement = formatProviderSubagentStatus(
     status === null ? null : { ...status, startedAt: null },
     0,
+    messages,
   );
 
   // Sized by the composer, not the viewport: a docked side panel narrows the
@@ -58,25 +59,26 @@ export function ProviderSubagentBar(props: {
           )}
         </span>
         <span
-          ref={tickTextContent((nowMs) => formatProviderSubagentStatus(status, nowMs), live)}
+          ref={tickTextContent(
+            (nowMs) => formatProviderSubagentStatus(status, nowMs, messages),
+            live,
+          )}
           aria-hidden
           className="min-w-0 max-w-full truncate text-muted-foreground tabular-nums @max-[560px]/composer-surface:text-xs"
         />
       </div>
       <span role="status" className="sr-only">
-        {i18nLocale === "zh-CN"
-          ? `${modelDescription} 子智能体：${announcement}`
-          : `${modelDescription} subagent: ${announcement}`}
+        {gt("{model} subagent: {status}", { model: modelDescription, status: announcement })}
       </span>
       <span className="shrink-0 text-muted-foreground @max-[640px]/composer-surface:sr-only">
-        {translateWebSource(i18nLocale, "Runs on its own")}
+        <T>Runs on its own</T>
       </span>
       {props.actions}
       {props.onOpenParent ? (
         <Button size="sm" variant="ghost" onClick={props.onOpenParent}>
           <ArrowUpLeftIcon />
           <span className="@max-[320px]/composer-surface:sr-only">
-            {translateWebSource(i18nLocale, "Open parent")}
+            <T>Open parent</T>
           </span>
         </Button>
       ) : null}

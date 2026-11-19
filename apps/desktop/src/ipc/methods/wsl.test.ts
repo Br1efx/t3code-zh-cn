@@ -14,7 +14,6 @@ import * as ElectronTheme from "../../electron/ElectronTheme.ts";
 import * as ElectronWindow from "../../electron/ElectronWindow.ts";
 import * as DesktopAppSettings from "../../settings/DesktopAppSettings.ts";
 import * as DesktopClientSettings from "../../settings/DesktopClientSettings.ts";
-import * as DesktopTray from "../../window/DesktopTray.ts";
 import * as DesktopWindow from "../../window/DesktopWindow.ts";
 import * as DesktopWslBackend from "../../wsl/DesktopWslBackend.ts";
 import * as DesktopWslEnvironment from "../../wsl/DesktopWslEnvironment.ts";
@@ -64,10 +63,6 @@ const layerUnusedLifecycleRuntime = Layer.mergeAll(
   Layer.succeed(
     DesktopWindow.DesktopWindow,
     DesktopWindow.DesktopWindow.of({} as DesktopWindow.DesktopWindow["Service"]),
-  ),
-  Layer.succeed(
-    DesktopTray.DesktopTray,
-    DesktopTray.DesktopTray.of({} as DesktopTray.DesktopTray["Service"]),
   ),
   Layer.succeed(
     ElectronApp.ElectronApp,

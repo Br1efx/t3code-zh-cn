@@ -1,4 +1,3 @@
-import { localizeMobileString } from "../../i18n/mobileStrings";
 import { Slider } from "@expo/ui/swift-ui";
 import {
   accessibilityLabel,
@@ -55,8 +54,8 @@ export function SliderRow(props: SliderRowProps) {
             modifiers={[
               tint(colors["--color-primary"]),
               disabled(Boolean(props.disabled)),
-              accessibilityLabel(localizeMobileString(props.label)),
-              accessibilityValue(localizeMobileString(props.valueLabel)),
+              accessibilityLabel(props.label),
+              accessibilityValue(props.valueLabel),
             ]}
             onValueChange={(value) => {
               // Accessibility adjustments do not begin a touch editing session.

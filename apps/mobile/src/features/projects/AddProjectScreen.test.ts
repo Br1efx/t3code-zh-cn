@@ -567,8 +567,6 @@ describe("local project navigation", () => {
     expect(state.alert).toHaveBeenCalledExactlyOnceWith(
       "Project added",
       "The project was created but has not reached this device yet. It will appear in the project list once the connection catches up.",
-      undefined,
-      undefined,
     );
   });
 

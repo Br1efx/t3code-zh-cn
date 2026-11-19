@@ -1,6 +1,5 @@
-import { localizeWebString } from "~/i18n/localizeWebChildren";
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
+import { thrownErrorMessage } from "@t3tools/client-runtime/errors";
+import { m } from "~/i18n/messages";
 import type { EnvironmentId, SourceControlSignInPrompt } from "@t3tools/contracts";
 import {
   readHostCredentialSettings,
@@ -9,6 +8,7 @@ import {
 } from "@t3tools/client-runtime/source-control-clients";
 import { useAtomValue } from "@effect/atom-react";
 import * as Cause from "effect/Cause";
+import { msg, T, useGT, Var } from "gt-react";
 import { CheckIcon, ExternalLinkIcon, CopyIcon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
@@ -31,7 +31,7 @@ type SignInState =
 
 const failureMessage = (cause: Cause.Cause<unknown>) => {
   const error = Cause.squash(cause);
-  return error instanceof Error ? error.message : String(error);
+  return error instanceof Error ? (thrownErrorMessage(error, m) ?? error.message) : String(error);
 };
 
 const expiryTime = (expiresAt: number) =>
@@ -97,7 +97,7 @@ export function SourceControlAppSignInSettings({
   readonly account: string | null;
   readonly onChanged: () => void;
 }) {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
   const host = appSignIn.hosts[0] ?? "";
   const { signIns, tokens } = useEnvironmentSettings(environmentId, (settings) =>
     readHostCredentialSettings(settings, definition.kind),
@@ -117,7 +117,11 @@ export function SourceControlAppSignInSettings({
   });
   const { copyToClipboard, isCopied } = useCopyToClipboard({
     timeout: 1500,
-    target: "sign-in code",
+    target: {
+      target: "sign-in code",
+      unavailableMessage: msg("Clipboard API is unavailable while copying sign-in code."),
+      failureMessage: msg("Failed to copy sign-in code to the clipboard."),
+    },
   });
   const [state, setState] = useState<SignInState>({ status: "idle" });
 
@@ -164,26 +168,28 @@ export function SourceControlAppSignInSettings({
     subtitle =
       account !== null && !tokenOverrides ? (
         <span className="flex min-w-0 items-center gap-1">
-          {translateWebSource(translationLocale, "Signed in as")}{" "}
-          <RedactedSensitiveText
-            value={account}
-            ariaLabel="Signed-in GitHub account"
-            revealTooltip="Show account"
-            hideTooltip="Hide account"
-          />
+          <T>
+            Signed in as
+            <RedactedSensitiveText
+              value={account}
+              ariaLabel={gt("Signed-in GitHub account")}
+              revealTooltip={gt("Show account")}
+              hideTooltip={gt("Hide account")}
+            />
+          </T>
         </span>
       ) : tokenOverrides ? (
-        "Signed in, but the token saved below is used while it can be read."
+        gt("Signed in, but the token saved below is used while it can be read.")
       ) : (
-        "Signed in"
+        gt("Signed in")
       );
     action = (
       <Button size="xs" variant="outline" disabled={!canSignIn} onClick={() => void signOut()}>
-        {translateWebSource(translationLocale, "Sign out")}
+        <T>Sign out</T>
       </Button>
     );
   } else if (waiting !== null) {
-    subtitle = "Approve the app on GitHub to finish signing in.";
+    subtitle = gt("Approve the app on GitHub to finish signing in.");
     action = (
       <Button
         size="xs"
@@ -193,11 +199,11 @@ export function SourceControlAppSignInSettings({
           void cancel({ environmentId, input: { provider: definition.kind, host } });
         }}
       >
-        {translateWebSource(translationLocale, "Cancel")}
+        <T>Cancel</T>
       </Button>
     );
   } else {
-    subtitle = "A far higher GitHub API rate limit than a personal token or gh login.";
+    subtitle = gt("A far higher GitHub API rate limit than a personal token or gh login.");
     action = (
       <Button
         size="xs"
@@ -205,7 +211,7 @@ export function SourceControlAppSignInSettings({
         onClick={() => void signIn()}
       >
         {state.status === "starting" ? <Spinner /> : null}
-        {state.status === "failed" ? "Try again" : "Sign in with GitHub"}
+        {state.status === "failed" ? gt("Try again") : gt("Sign in with GitHub")}
       </Button>
     );
   }
@@ -233,7 +239,7 @@ export function SourceControlAppSignInSettings({
             <Button
               size="icon-xs"
               variant="ghost"
-              aria-label={translateWebSource(translationLocale, "Copy code")}
+              aria-label={gt("Copy code")}
               onClick={() => copyToClipboard(waiting.userCode, undefined)}
             >
               {isCopied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}
@@ -247,13 +253,14 @@ export function SourceControlAppSignInSettings({
               }
               onClick={() => copyToClipboard(waiting.userCode, undefined)}
             >
-              Copy code & open GitHub
+              <T>Copy code & open GitHub</T>
               <ExternalLinkIcon aria-hidden className="size-3.5" />
             </Button>
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <span aria-hidden className="size-1.5 rounded-full bg-warning" />
-              {localizeWebString(translationLocale, "Waiting for approval · code expires at ")}
-              {expiryTime(waiting.expiresAt)}
+              <T>
+                Waiting for approval · code expires at <Var>{expiryTime(waiting.expiresAt)}</Var>
+              </T>
             </p>
           </div>
         </div>
@@ -262,16 +269,13 @@ export function SourceControlAppSignInSettings({
       {signedIn ? (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
           <span className="min-w-0 flex-1">
-            {translateWebSource(
-              translationLocale,
-              "Reaches repositories in accounts and organizations that installed the app.",
-            )}
+            <T>Reaches repositories in accounts and organizations that installed the app.</T>
           </span>
           <ExternalLink href={appSignIn.installUrl}>
-            {translateWebSource(translationLocale, "Install on an organization")}
+            <T>Install on an organization</T>
           </ExternalLink>
           <ExternalLink href={appSignIn.revokeUrl}>
-            {translateWebSource(translationLocale, "Manage on GitHub")}
+            <T>Manage on GitHub</T>
           </ExternalLink>
         </div>
       ) : null}

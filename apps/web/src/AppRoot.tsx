@@ -1,4 +1,3 @@
-import { WebI18nProvider } from "./i18n/WebI18nProvider";
 import { RouterProvider } from "@tanstack/react-router";
 
 import { ElectronBrowserHost } from "./browser/ElectronBrowserHost";
@@ -12,11 +11,9 @@ export function AppRoot({ router }: { readonly router: AppRouter }) {
   return (
     <I18nProvider>
       <AppAtomRegistryProvider>
-        <WebI18nProvider>
-          <RouterProvider router={router} />
-          <ElectronBrowserHost />
-          <QuitHoldOverlay />
-        </WebI18nProvider>
+        <RouterProvider router={router} />
+        <ElectronBrowserHost />
+        <QuitHoldOverlay />
       </AppAtomRegistryProvider>
     </I18nProvider>
   );

@@ -11,7 +11,6 @@ import {
   ClientSettingsSchema,
   ClientSettingsPatch,
   ClientServerSettingsPatch,
-  DEFAULT_APP_LOCALE_PREFERENCE,
   ClaudeSettings,
   DEFAULT_SERVER_SETTINGS,
   globalIdleCompaction,
@@ -43,26 +42,6 @@ const decodeClientServerSettingsPatch = Schema.decodeUnknownSync(ClientServerSet
 const encodeServerSettings = Schema.encodeSync(ServerSettings);
 const encodeServerSettingsPatch = Schema.encodeSync(ServerSettingsPatch);
 const decodeClaudeSettings = Schema.decodeUnknownSync(ClaudeSettings);
-
-describe("ClientSettings app locale", () => {
-  it("opens fresh and legacy settings in Simplified Chinese", () => {
-    expect(decodeClientSettings({}).appLocale).toBe("zh-CN");
-    expect(DEFAULT_APP_LOCALE_PREFERENCE).toBe("zh-CN");
-  });
-
-  it.each(["system", "en", "zh-CN"] as const)(
-    "accepts a supported app locale preference: %s",
-    (appLocale) => {
-      expect(decodeClientSettings({ appLocale }).appLocale).toBe(appLocale);
-      expect(decodeClientSettingsPatch({ appLocale }).appLocale).toBe(appLocale);
-    },
-  );
-
-  it.each(["zh-TW", "fr", "", null])("rejects an unsupported app locale: %s", (appLocale) => {
-    expect(() => decodeClientSettings({ appLocale })).toThrow();
-    expect(() => decodeClientSettingsPatch({ appLocale })).toThrow();
-  });
-});
 
 it("drops theme defaults from a client's settings patch", () => {
   expect(
@@ -147,6 +126,12 @@ describe("storage cleanup settings", () => {
     expect(() =>
       decodeServerSettingsPatch({ storageCleanup: { worktreeKeepWhen: "unknown" } }),
     ).toThrow();
+  });
+});
+
+describe("ClientSettings terminal close confirmation", () => {
+  it("keeps confirmation enabled for settings without a saved preference", () => {
+    expect(decodeClientSettings({}).confirmTerminalClose).toBe(true);
   });
 });
 

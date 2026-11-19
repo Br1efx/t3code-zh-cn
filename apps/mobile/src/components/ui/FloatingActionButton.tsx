@@ -1,4 +1,3 @@
-import { localizeMobileString } from "../../i18n/mobileStrings";
 import { Pressable } from "react-native";
 import type { FloatingActionButtonProps } from "./FloatingActionButton.types";
 import { AppText } from "./AppText";
@@ -9,7 +8,7 @@ export function FloatingActionButton(props: FloatingActionButtonProps) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={localizeMobileString(props.label)}
+      accessibilityLabel={props.label}
       onPress={props.onPress}
       className={cn(
         "min-h-14 min-w-14 flex-row items-center justify-center gap-2 rounded-2xl px-4",
@@ -32,7 +31,7 @@ export function FloatingActionButton(props: FloatingActionButtonProps) {
             props.tone === "primary" ? "text-primary-foreground" : "text-secondary-foreground",
           )}
         >
-          {localizeMobileString(props.label)}
+          {props.label}
         </AppText>
       ) : null}
     </Pressable>

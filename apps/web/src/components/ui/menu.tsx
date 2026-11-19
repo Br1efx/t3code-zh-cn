@@ -2,8 +2,6 @@ import { Menu as MenuPrimitive } from "@base-ui/react/menu";
 import { CheckIcon, ChevronRightIcon, SearchIcon } from "lucide-react";
 import type * as React from "react";
 
-import { localizeWebChildren } from "~/i18n/localizeWebChildren";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 import { buttonVariants } from "./button";
 import { renderClosingPositioner } from "./closing-positioner";
@@ -122,14 +120,12 @@ function MenuItem({
   inset,
   density = "default",
   variant = "default",
-  children,
   ...props
 }: MenuPrimitive.Item.Props & {
   inset?: boolean;
   density?: "default" | "touch";
   variant?: "default" | "destructive" | "ghost";
 }) {
-  const { locale } = useI18n();
   return (
     <MenuPrimitive.Item
       className={cn(
@@ -148,14 +144,11 @@ function MenuItem({
       data-slot="menu-item"
       data-variant={variant}
       {...props}
-    >
-      {localizeWebChildren(locale, children)}
-    </MenuPrimitive.Item>
+    />
   );
 }
 
-function MenuItemLabel({ className, children, ...props }: React.ComponentProps<"span">) {
-  const { locale } = useI18n();
+function MenuItemLabel({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       data-slot="menu-item-label"
@@ -164,9 +157,7 @@ function MenuItemLabel({ className, children, ...props }: React.ComponentProps<"
         className,
       )}
       {...props}
-    >
-      {localizeWebChildren(locale, children)}
-    </span>
+    />
   );
 }
 
@@ -179,8 +170,6 @@ function MenuCheckboxItem({
 }: MenuPrimitive.CheckboxItem.Props & {
   variant?: "default" | "icon" | "switch";
 }) {
-  const { locale } = useI18n();
-  const localizedChildren = localizeWebChildren(locale, children);
   return (
     <MenuPrimitive.CheckboxItem
       checked={checked}
@@ -197,7 +186,7 @@ function MenuCheckboxItem({
     >
       {variant === "switch" ? (
         <>
-          <span className="col-start-1">{localizedChildren}</span>
+          <span className="col-start-1">{children}</span>
           <MenuPrimitive.CheckboxItemIndicator
             className="inset-shadow-[0_1px_--theme(--color-black/4%)] inline-flex h-[calc(var(--thumb-size)+2px)] w-[calc(var(--thumb-size)*2-2px)] shrink-0 items-center rounded-full p-px outline-none transition-[background-color,box-shadow] duration-200 [--thumb-size:--spacing(4)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background data-checked:bg-primary data-unchecked:bg-input data-disabled:opacity-64 sm:[--thumb-size:--spacing(3)]"
             keepMounted
@@ -225,7 +214,7 @@ function MenuCheckboxItem({
               <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
             </svg>
           </MenuPrimitive.CheckboxItemIndicator>
-          <span className="col-start-2">{localizedChildren}</span>
+          <span className="col-start-2">{children}</span>
         </>
       )}
     </MenuPrimitive.CheckboxItem>
@@ -244,7 +233,6 @@ function MenuRadioItem({
 }: MenuPrimitive.RadioItem.Props & {
   hideIndicator?: boolean;
 }) {
-  const { locale } = useI18n();
   return (
     <MenuPrimitive.RadioItem
       className={cn(
@@ -254,7 +242,7 @@ function MenuRadioItem({
       data-slot="menu-radio-item"
       {...props}
     >
-      <span className="min-w-0 flex-1">{localizeWebChildren(locale, children)}</span>
+      <span className="min-w-0 flex-1">{children}</span>
     </MenuPrimitive.RadioItem>
   );
 }
@@ -279,12 +267,10 @@ function MenuRadioItemIndicator({
 function MenuGroupLabel({
   className,
   inset,
-  children,
   ...props
 }: MenuPrimitive.GroupLabel.Props & {
   inset?: boolean;
 }) {
-  const { locale } = useI18n();
   return (
     <MenuPrimitive.GroupLabel
       className={cn(
@@ -294,9 +280,7 @@ function MenuGroupLabel({
       data-inset={inset}
       data-slot="menu-label"
       {...props}
-    >
-      {localizeWebChildren(locale, children)}
-    </MenuPrimitive.GroupLabel>
+    />
   );
 }
 
@@ -349,7 +333,6 @@ function MenuSubTrigger({
   inset?: boolean;
   density?: "default" | "touch";
 }) {
-  const { locale } = useI18n();
   return (
     <MenuPrimitive.SubmenuTrigger
       className={cn(
@@ -363,7 +346,7 @@ function MenuSubTrigger({
       data-slot="menu-sub-trigger"
       {...props}
     >
-      {localizeWebChildren(locale, children)}
+      {children}
       <ChevronRightIcon className="-me-0.5 ms-auto opacity-80" />
     </MenuPrimitive.SubmenuTrigger>
   );

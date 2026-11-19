@@ -1,7 +1,6 @@
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { Discovery } from "@t3tools/client-runtime/relay";
 import type { EnvironmentId } from "@t3tools/contracts";
+import { T, useGT, Var } from "gt-react";
 import { useState } from "react";
 
 import { useRelayEnvironmentDiscovery } from "../../state/environments";
@@ -28,8 +27,8 @@ export function RemoveT3ConnectEnvironmentDialog({
   readonly onCancel: () => void;
   readonly onConfirm: () => void;
 }) {
-  const { locale: translationLocale } = useI18n();
   const accountPage = useT3ConnectAccountPage();
+  const gt = useGT();
   const discovery = useRelayEnvironmentDiscovery();
   const registration = environmentId
     ? Discovery.relayEnvironmentRegistration(discovery, environmentId)
@@ -42,7 +41,6 @@ export function RemoveT3ConnectEnvironmentDialog({
     setShown({ label: environmentLabel, registration });
   }
   const openAccountPage = accountPage.open;
-  const accountPageLabel = translateWebSource(translationLocale, "T3 Connect settings");
   const accountPageLink = openAccountPage ? (
     <InlineButton
       onClick={() => {
@@ -50,10 +48,10 @@ export function RemoveT3ConnectEnvironmentDialog({
         openAccountPage();
       }}
     >
-      {accountPageLabel}
+      <T>T3 Connect settings</T>
     </InlineButton>
   ) : (
-    accountPageLabel
+    gt("T3 Connect settings")
   );
 
   return (
@@ -67,50 +65,35 @@ export function RemoveT3ConnectEnvironmentDialog({
         <AlertDialogPopup>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {translationLocale === "zh-CN" ? (
-                `要从当前设备移除 ${shown.label} 吗？`
-              ) : (
-                <>
-                  {translateWebSource(translationLocale, "Remove")} {shown.label} from this device?
-                </>
-              )}
+              <T>
+                Remove <Var>{shown.label}</Var> from this device?
+              </T>
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This forgets its pairing, credentials, and cached threads here.
+              <T>This forgets its pairing, credentials, and cached threads here.</T>
             </AlertDialogDescription>
             <AlertDialogDescription>
               {shown.registration === "registered" ? (
-                translationLocale === "zh-CN" ? (
-                  <>
-                    该设备仍会保留在你的 T3 Connect 账号中并占用远程名额。如需释放名额，请前往{" "}
-                    {accountPageLink} 取消注册。
-                  </>
-                ) : (
-                  <>
-                    It stays on your T3 Connect account and keeps its host space. Deregister it in{" "}
-                    {accountPageLink} to free it.
-                  </>
-                )
+                <T>
+                  It stays on your T3 Connect account and keeps its host space. Deregister it in{" "}
+                  <Var>{accountPageLink}</Var> to free it.
+                </T>
               ) : shown.registration === "unregistered" ? (
-                translateWebSource(translationLocale, "It's no longer on your T3 Connect account.")
-              ) : translationLocale === "zh-CN" ? (
-                <>
-                  这不会修改你的 T3 Connect 账号。如需在账号中取消注册，请前往 {accountPageLink}。
-                </>
+                gt("It's no longer on your T3 Connect account.")
               ) : (
-                <>
+                <T>
                   This doesn't change your T3 Connect account. To deregister it there, use{" "}
-                  {accountPageLink}.
-                </>
+                  <Var>{accountPageLink}</Var>.
+                </T>
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogClose render={<Button variant="outline" />}>
-              {translateWebSource(translationLocale, "Cancel")}
+              <T>Cancel</T>
             </AlertDialogClose>
             <Button variant="destructive" onClick={onConfirm}>
-              Remove from this device
+              <T>Remove from this device</T>
             </Button>
           </AlertDialogFooter>
         </AlertDialogPopup>

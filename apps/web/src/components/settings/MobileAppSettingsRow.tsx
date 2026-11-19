@@ -1,15 +1,15 @@
-import { translateWebSource } from "../../i18n/messages";
-import { useI18n } from "../../i18n/WebI18nContext";
+import { msg, T, useGT, useMessages, Var } from "gt-react";
+
 import { AndroidIcon, AppleIcon } from "../Icons";
 import { Button } from "../ui/button";
 import { Popover, PopoverPopup, PopoverTitle, PopoverTrigger } from "../ui/popover";
 import { QRCodeSvg } from "../ui/qr-code";
 import { SettingsRow } from "./settingsLayout";
-import { searchableSetting } from "./settingsSearch";
+import { useSearchableSetting } from "./settingsSearch";
 
 const stores = [
   {
-    label: "iPhone and iPad",
+    label: msg("iPhone and iPad"),
     store: "App Store",
     url: "https://apps.apple.com/us/app/t3-code-remote-claude-more/id6787819824",
     Icon: AppleIcon,
@@ -23,32 +23,26 @@ const stores = [
 ];
 
 export function MobileAppSettingsRow() {
-  const { locale: sourceLocale } = useI18n();
+  const searchableSetting = useSearchableSetting();
+  const gt = useGT();
+  const m = useMessages();
   return (
     <SettingsRow
       {...searchableSetting("mobile-app")}
-      description={
-        <>
-          {translateWebSource(sourceLocale, "Connect to your server from your phone or tablet.")}{" "}
-          {translateWebSource(sourceLocale, "Official version (not translated)")}
-        </>
-      }
+      description={gt("Connect to your server from your phone or tablet.")}
       control={
         <div className="flex items-center gap-2">
           {stores.map(({ label, store, url, Icon }) => (
             <Popover key={store}>
               <PopoverTrigger render={<Button size="sm" variant="outline" />}>
                 <Icon />
-                {label}
+                {m(label)}
               </PopoverTrigger>
               <PopoverPopup align="end">
                 <div className="flex flex-col items-center gap-3">
-                  <PopoverTitle>
-                    {store} ·{" "}
-                    {translateWebSource(sourceLocale, "Official version (not translated)")}
-                  </PopoverTitle>
+                  <PopoverTitle>{store}</PopoverTitle>
                   <p className="text-xs text-muted-foreground">
-                    {translateWebSource(sourceLocale, "Scan with your phone camera.")}
+                    <T>Scan with your phone camera.</T>
                   </p>
                   <div className="rounded-lg bg-white p-1.5">
                     <QRCodeSvg
@@ -56,7 +50,7 @@ export function MobileAppSettingsRow() {
                       size={128}
                       level="M"
                       marginSize={1}
-                      title={sourceLocale === "zh-CN" ? `${store}链接` : `${store} link`}
+                      title={gt("{store} link", { store })}
                     />
                   </div>
                   <Button
@@ -64,7 +58,9 @@ export function MobileAppSettingsRow() {
                     variant="outline"
                     render={<a href={url} target="_blank" rel="noreferrer noopener" />}
                   >
-                    {translateWebSource(sourceLocale, "Open")} {store}
+                    <T>
+                      Open <Var>{store}</Var>
+                    </T>
                   </Button>
                 </div>
               </PopoverPopup>

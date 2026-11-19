@@ -6,14 +6,15 @@ import {
   type ResolvedKeybindingRule,
   type ResolvedKeybindingsConfig,
 } from "@t3tools/contracts";
-import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import {
   DEFAULT_RESOLVED_KEYBINDINGS,
   parseKeybindingShortcut,
   parseKeybindingWhenExpression,
   US_SHIFTED_TO_UNSHIFTED_KEYS,
 } from "@t3tools/shared/keybindings";
+import { msg } from "gt-react";
 
+import { m, type MessageResolver } from "../../i18n/messages";
 import { shortcutConflictKey, shortcutKeyFromEvent } from "../../keybindings";
 import { isMacPlatform } from "../../lib/utils";
 import { METRIC_OPTIONS, WINDOW_OPTIONS } from "../usage/usageShortcuts";
@@ -49,6 +50,7 @@ export interface KeybindingRow {
   readonly key: string;
   readonly when: string;
   readonly source: KeybindingSource;
+  readonly isUnassigned: boolean;
   readonly defaultKey: string | null;
   readonly defaultWhen: string;
   readonly binding: ResolvedKeybindingRule;
@@ -57,50 +59,6 @@ export interface KeybindingRow {
 
 export type WhenVariableOption = string;
 export type KeybindingCommandOption = KeybindingCommand;
-export type KeybindingCommandLabeler = (command: KeybindingCommand) => string;
-
-const STATIC_COMMAND_MESSAGE_KEYS = {
-  "sidebar.toggle": "keybindings.command.sidebarToggle",
-  "terminal.toggle": "keybindings.command.terminalToggle",
-  "rightPanel.toggle": "keybindings.command.rightPanelToggle",
-  "terminal.split": "keybindings.command.terminalSplit",
-  "terminal.splitVertical": "keybindings.command.terminalSplitVertical",
-  "terminal.new": "keybindings.command.terminalNew",
-  "terminal.close": "keybindings.command.terminalClose",
-  "diff.toggle": "keybindings.command.diffToggle",
-  "preview.toggle": "keybindings.command.previewToggle",
-  "preview.refresh": "keybindings.command.previewRefresh",
-  "preview.focusUrl": "keybindings.command.previewFocusUrl",
-  "preview.zoomIn": "keybindings.command.previewZoomIn",
-  "preview.zoomOut": "keybindings.command.previewZoomOut",
-  "preview.resetZoom": "keybindings.command.previewResetZoom",
-  "commandPalette.toggle": "keybindings.command.commandPaletteToggle",
-  "filePicker.toggle": "keybindings.command.filePickerToggle",
-  "projectSearch.toggle": "keybindings.command.projectSearchToggle",
-  "themeEditor.toggle": "keybindings.command.themeEditorToggle",
-  "composer.stash": "keybindings.command.composerStash",
-  "chat.new": "keybindings.command.chatNew",
-  "chat.newLocal": "keybindings.command.chatNewLocal",
-  "chat.newWithoutProject": "keybindings.command.chatNewWithoutProject",
-  "modelPicker.toggle": "keybindings.command.modelPickerToggle",
-  "editor.openFavorite": "keybindings.command.editorOpenFavorite",
-  "thread.previous": "keybindings.command.threadPrevious",
-  "thread.next": "keybindings.command.threadNext",
-  "thread.settle": "keybindings.command.threadSettle",
-} as const;
-
-type StaticCommandMessageKey =
-  (typeof STATIC_COMMAND_MESSAGE_KEYS)[keyof typeof STATIC_COMMAND_MESSAGE_KEYS];
-type DynamicCommandMessageKey =
-  | "keybindings.command.threadJump"
-  | "keybindings.command.modelPickerJump"
-  | "keybindings.command.runScript";
-type KeybindingCommandMessageKey = StaticCommandMessageKey | DynamicCommandMessageKey;
-
-export type KeybindingCommandTranslator = (
-  key: KeybindingCommandMessageKey,
-  values?: Readonly<Record<string, string | number>>,
-) => string;
 
 const CORE_WHEN_VARIABLES = [
   "terminalFocus",
@@ -151,14 +109,13 @@ export function whenAstToExpression(node: KeybindingWhenNode | undefined): strin
 export function whenNodeRemoveLabel(
   node: KeybindingWhenNode,
   depth: number,
-  locale: ResolvedAppLocale = "en",
+  resolve: MessageResolver = m,
 ): string {
-  const isZh = locale === "zh-CN";
-  if (depth === 0) return isZh ? "清除所有条件" : "Clear all conditions";
+  if (depth === 0) return resolve(msg("Clear all conditions"));
   if (node.type === "identifier" || (node.type === "not" && node.node.type === "identifier")) {
-    return isZh ? "移除条件" : "Remove condition";
+    return resolve(msg("Remove condition"));
   }
-  return isZh ? "移除条件组及其条件" : "Remove group and its conditions";
+  return resolve(msg("Remove group and its conditions"));
 }
 
 function wrapWhenExpression(node: KeybindingWhenNode): string {
@@ -168,7 +125,7 @@ function wrapWhenExpression(node: KeybindingWhenNode): string {
 
 export function parseWhenExpressionDraft(
   expression: string,
-  locale: ResolvedAppLocale = "en",
+  resolve: MessageResolver = m,
 ): { ok: true; value: KeybindingWhenNode | undefined } | { ok: false; message: string } {
   const trimmed = expression.trim();
   if (trimmed.length === 0) return { ok: true, value: undefined };
@@ -177,10 +134,7 @@ export function parseWhenExpressionDraft(
   if (!ast) {
     return {
       ok: false,
-      message:
-        locale === "zh-CN"
-          ? "请使用变量以及 !、&&、|| 和括号。"
-          : "Use variables with !, &&, ||, and parentheses.",
+      message: resolve(msg("Use variables with !, &&, ||, and parentheses.")),
     };
   }
 
@@ -189,7 +143,8 @@ export function parseWhenExpressionDraft(
 
 function sourceForBinding(binding: ResolvedKeybindingRule): KeybindingSource {
   if (String(binding.command).startsWith("script.")) {
-    return "Project";
+    const source: KeybindingSource = "Project";
+    return source;
   }
 
   const bindingKey = shortcutToKeybindingInput(binding.shortcut);
@@ -201,7 +156,8 @@ function sourceForBinding(binding: ResolvedKeybindingRule): KeybindingSource {
       whenAstToExpression(entry.whenAst) === bindingWhen,
   );
 
-  return isDefault ? "Default" : "Custom";
+  const source: KeybindingSource = isDefault ? "Default" : "Custom";
+  return source;
 }
 
 function defaultBindingForBinding(
@@ -217,6 +173,13 @@ function defaultBindingForBinding(
         shortcutToKeybindingInput(entry.shortcut) === bindingKey &&
         whenAstToExpression(entry.whenAst) === bindingWhen,
     ) ??
+    (bindingWhen === "false"
+      ? DEFAULT_RESOLVED_KEYBINDINGS.find(
+          (entry) =>
+            entry.command === binding.command &&
+            shortcutToKeybindingInput(entry.shortcut) === bindingKey,
+        )
+      : undefined) ??
     DEFAULT_RESOLVED_KEYBINDINGS.find(
       (entry) =>
         entry.command === binding.command && whenAstToExpression(entry.whenAst) === bindingWhen,
@@ -230,17 +193,16 @@ function keybindingRowId(command: KeybindingCommand, key: string, when: string):
 }
 
 function conflictsWithWhen(leftWhen: string, rightWhen: string): boolean {
+  if (leftWhen === "false" || rightWhen === "false") return false;
   return leftWhen.length === 0 || rightWhen.length === 0 || leftWhen === rightWhen;
 }
 
 export function keybindingConflictLabels(
   rows: ReadonlyArray<KeybindingRow>,
   input: { readonly rowId: string; readonly key: string; readonly when: string },
-  labelOrPlatform: KeybindingCommandLabeler | string = commandLabel,
   platform = navigator.platform,
+  resolve: MessageResolver = m,
 ): ReadonlyArray<string> {
-  const labelCommand = typeof labelOrPlatform === "function" ? labelOrPlatform : commandLabel;
-  if (typeof labelOrPlatform === "string") platform = labelOrPlatform;
   if (input.key.trim().length === 0) return [];
   const shortcut = parseKeybindingShortcut(input.key);
   if (!shortcut) return [];
@@ -253,7 +215,7 @@ export function keybindingConflictLabels(
       shortcutConflictKey(candidate.binding.shortcut, platform) === conflictKey &&
       conflictsWithWhen(candidate.when, input.when)
     ) {
-      conflicts.push(labelCommand(candidate.command));
+      conflicts.push(commandLabel(candidate.command, resolve));
     }
   }
   return [...new Set(conflicts)].toSorted();
@@ -268,17 +230,24 @@ export interface KeybindingGroup {
 const KEYBINDING_GROUPS = [
   {
     id: "navigation",
-    title: "Navigation",
+    title: msg("Navigation"),
     prefixes: ["sidebar", "rightPanel", "commandPalette", "filePicker", "projectSearch", "editor"],
   },
-  { id: "threads", title: "Threads", prefixes: ["thread", "chat", "pullRequest"] },
-  { id: "composer", title: "Composer", prefixes: ["composer", "modelPicker"] },
-  { id: "terminal", title: "Terminal", prefixes: ["terminal"] },
-  { id: "preview", title: "Preview & diff", prefixes: ["preview", "diff"] },
-  { id: "appearance", title: "Appearance", prefixes: ["theme", "appearance", "themeEditor"] },
-  { id: "scripts", title: "Project scripts", prefixes: ["script"] },
+  { id: "threads", title: msg("Threads"), prefixes: ["thread", "chat", "pullRequest"] },
+  { id: "composer", title: msg("Composer"), prefixes: ["composer", "modelPicker"] },
+  { id: "terminal", title: msg("Terminal"), prefixes: ["terminal"] },
+  { id: "preview", title: msg("Preview & diff"), prefixes: ["preview", "diff"] },
+  {
+    id: "appearance",
+    title: msg("Appearance"),
+    prefixes: ["theme", "appearance", "themeEditor"],
+  },
+  { id: "scripts", title: msg("Project scripts"), prefixes: ["script"] },
 ] as const;
-const OTHER_KEYBINDING_GROUP = { id: "other", title: "Other" } as const;
+const OTHER_KEYBINDING_GROUP = {
+  id: "other",
+  title: msg("Other", { $context: "keybinding group" }),
+} as const;
 
 function keybindingGroupFor(command: KeybindingCommand): { id: string; title: string } {
   const prefix = String(command).split(".")[0] ?? "";
@@ -288,20 +257,8 @@ function keybindingGroupFor(command: KeybindingCommand): { id: string; title: st
   );
 }
 
-const KEYBINDING_GROUP_ZH_TITLES: Readonly<Record<string, string>> = {
-  navigation: "导航",
-  threads: "对话",
-  composer: "输入框",
-  terminal: "终端",
-  preview: "预览与差异",
-  appearance: "外观",
-  scripts: "项目脚本",
-  other: "其他",
-};
-
 export function groupKeybindingRows(
   rows: ReadonlyArray<KeybindingRow>,
-  locale: ResolvedAppLocale = "en",
 ): ReadonlyArray<KeybindingGroup> {
   const rowsByGroup = new Map<string, Array<KeybindingRow>>();
   for (const row of rows) {
@@ -312,28 +269,15 @@ export function groupKeybindingRows(
   }
   return [...KEYBINDING_GROUPS, OTHER_KEYBINDING_GROUP].flatMap((group) => {
     const groupRows = rowsByGroup.get(group.id);
-    return groupRows
-      ? [
-          {
-            id: group.id,
-            title:
-              locale === "zh-CN"
-                ? (KEYBINDING_GROUP_ZH_TITLES[group.id] ?? group.title)
-                : group.title,
-            rows: groupRows,
-          },
-        ]
-      : [];
+    return groupRows ? [{ id: group.id, title: group.title, rows: groupRows }] : [];
   });
 }
 
 export function buildKeybindingRows(
   keybindings: ResolvedKeybindingsConfig,
-  labelOrPlatform: KeybindingCommandLabeler | string = commandLabel,
   platform = navigator.platform,
+  resolve: MessageResolver = m,
 ): ReadonlyArray<KeybindingRow> {
-  const labelCommand = typeof labelOrPlatform === "function" ? labelOrPlatform : commandLabel;
-  if (typeof labelOrPlatform === "string") platform = labelOrPlatform;
   const rowsById = new Map<string, KeybindingRow>();
   for (const binding of keybindings) {
     const defaultBinding = defaultBindingForBinding(binding);
@@ -346,6 +290,10 @@ export function buildKeybindingRows(
       key,
       when,
       source: sourceForBinding(binding),
+      isUnassigned:
+        when === "false" &&
+        defaultBinding !== undefined &&
+        key === shortcutToKeybindingInput(defaultBinding.shortcut),
       defaultKey: defaultBinding ? shortcutToKeybindingInput(defaultBinding.shortcut) : null,
       defaultWhen: whenAstToExpression(defaultBinding?.whenAst),
       binding,
@@ -362,8 +310,8 @@ export function buildKeybindingRows(
         key: row.key,
         when: row.when,
       },
-      labelCommand,
       platform,
+      resolve,
     );
     return conflicts.length > 0
       ? Object.assign({}, row, { conflicts: [...new Set(conflicts)].toSorted() })
@@ -371,10 +319,9 @@ export function buildKeybindingRows(
   });
 
   rowsWithConflicts.sort((left, right) => {
-    const commandCompare = compareCommands(left.command, right.command, labelCommand);
+    const commandCompare = compareCommands(left.command, right.command, (command) => command);
     if (commandCompare !== 0) return commandCompare;
-    const commandIdCompare = left.command.localeCompare(right.command);
-    return commandIdCompare !== 0 ? commandIdCompare : left.key.localeCompare(right.key);
+    return left.key.localeCompare(right.key);
   });
 
   return rowsWithConflicts;
@@ -383,15 +330,14 @@ export function buildKeybindingRows(
 export function filterKeybindingRows(
   rows: ReadonlyArray<KeybindingRow>,
   query: string,
-  labelCommand: KeybindingCommandLabeler = commandLabel,
+  resolve: MessageResolver = m,
 ): ReadonlyArray<KeybindingRow> {
   const normalizedQuery = query.trim().toLowerCase();
   if (normalizedQuery.length === 0) return rows;
   return rows.filter((row) => {
     return (
       row.command.toLowerCase().includes(normalizedQuery) ||
-      labelCommand(row.command).toLowerCase().includes(normalizedQuery) ||
-      commandLabel(row.command).toLowerCase().includes(normalizedQuery) ||
+      commandLabel(row.command, resolve).toLowerCase().includes(normalizedQuery) ||
       row.key.toLowerCase().includes(normalizedQuery) ||
       row.when.toLowerCase().includes(normalizedQuery) ||
       row.source.toLowerCase().includes(normalizedQuery)
@@ -447,113 +393,123 @@ export function buildWhenVariableOptions(): ReadonlyArray<WhenVariableOption> {
 
 export function buildKeybindingCommandOptions(
   keybindings: ResolvedKeybindingsConfig,
-  labelCommand: KeybindingCommandLabeler = commandLabel,
+  resolve: MessageResolver = m,
 ): ReadonlyArray<KeybindingCommandOption> {
   const commands = new Set<KeybindingCommand>(STATIC_KEYBINDING_COMMANDS);
   for (const binding of keybindings) {
     commands.add(binding.command);
   }
-  return [...commands].toSorted((left, right) => compareCommands(left, right, labelCommand));
+  return [...commands].toSorted((left, right) =>
+    compareCommands(left, right, (command) => commandLabel(command, resolve)),
+  );
 }
 
-const USAGE_METRIC_ZH_LABELS: Readonly<Record<string, string>> = {
-  cost: "费用",
-  tokens: "Token",
-  limits: "限额",
+const COMMAND_LABELS: Partial<Record<KeybindingCommand, string>> = {
+  "workspace.focusNext": msg("Focus Next Workspace Area"),
+  "workspace.focusPrevious": msg("Focus Previous Workspace Area"),
+  "composer.sendAlternate": msg("Composer: Opposite Queue or Steer Action"),
+  "composer.sendBackground": msg("Composer: Start in Background"),
+  "composer.sendAndNewThread": msg("Composer: Send and Start New Thread"),
+  "composer.dictation": msg("Composer: Start or Finish Dictation"),
+  "thread.steerQueuedMessage": msg("Queue: Send First Queued Message"),
+  "thread.editQueuedMessage": msg("Queue: Edit Last Queued Message"),
+  "thread.copyReference": msg("Pull Request: Copy Link or Thread"),
+  "sidebar.toggle": msg("Sidebar: Toggle"),
+  "navigation.back": msg("Navigation: Back"),
+  "navigation.forward": msg("Navigation: Forward"),
+  "terminal.toggle": msg("Terminal: Toggle"),
+  "terminal.split": msg("Terminal: Split"),
+  "terminal.splitVertical": msg("Terminal: Split Vertical"),
+  "terminal.new": msg("Terminal: New"),
+  "terminal.close": msg("Terminal: Close"),
+  "rightPanel.toggle": msg("Right Panel: Toggle"),
+  "rightPanel.new": msg("Right Panel: New"),
+  "threadPanel.toggle": msg("Thread Panel: Toggle"),
+  "rightPanel.toggleMaximized": msg("Right Panel: Toggle Maximized"),
+  "rightPanel.close": msg("Right Panel: Close"),
+  "pullRequest.copyNumber": msg("Pull Request: Copy Number"),
+  "diff.toggle": msg("Diff: Toggle"),
+  "preview.toggle": msg("Preview: Toggle"),
+  "preview.refresh": msg("Preview: Refresh"),
+  "preview.zoomIn": msg("Preview: Zoom In"),
+  "preview.zoomOut": msg("Preview: Zoom Out"),
+  "preview.resetZoom": msg("Preview: Reset Zoom"),
+  "commandPalette.toggle": msg("Command Palette: Toggle"),
+  "filePicker.toggle": msg("File Picker: Toggle"),
+  "projectSearch.toggle": msg("Project Search: Toggle"),
+  "usage.open": msg("Usage: Open"),
+  "theme.select": msg("Theme: Select"),
+  "appearance.cycle": msg("Appearance: Cycle"),
+  "themeEditor.toggle": msg("Theme Editor: Toggle"),
+  "composer.stash": msg("Composer: Stash"),
+  "composer.host": msg("Composer: Host"),
+  "composer.cycleHost": msg("Composer: Cycle Host"),
+  "composer.effort": msg("Composer: Effort"),
+  "composer.increaseEffort": msg("Composer: Increase Effort"),
+  "composer.decreaseEffort": msg("Composer: Decrease Effort"),
+  "composer.mode": msg("Composer: Mode"),
+  "composer.workspace": msg("Composer: Workspace"),
+  "composer.previousWorktree": msg("Composer: Previous Worktree"),
+  "composer.branch": msg("Composer: Branch"),
+  "chat.new": msg("Chat: New"),
+  "chat.newLocal": msg("Chat: New Local"),
+  "chat.newWithoutProject": msg("Chat: New Without Project"),
+  "chat.find": msg("Chat: Find"),
+  "editor.openFavorite": msg("Editor: Open Favorite"),
+  "modelPicker.toggle": msg("Model Picker: Toggle"),
+  "modelPicker.previousProvider": msg("Model Picker: Previous Provider"),
+  "modelPicker.nextProvider": msg("Model Picker: Next Provider"),
+  "thread.stop": msg("Thread: Stop"),
+  "thread.previous": msg("Thread: Previous"),
+  "thread.next": msg("Thread: Next"),
+  "thread.settle": msg("Thread: Settle"),
+  "thread.pin": msg("Thread: Pin"),
+  "thread.regenerateTitle": msg("Thread: Regenerate Title"),
+  "thread.undo": msg("Thread: Undo"),
 };
 
-const USAGE_WINDOW_ZH_LABELS: Readonly<Record<number, string>> = {
-  1: "过去 24 小时",
-  7: "7 天",
-  30: "30 天",
-  90: "90 天",
+// Whole labels: search titles keep the encoded message, which cannot nest another one.
+const USAGE_COMMAND_LABELS: Record<
+  (typeof METRIC_OPTIONS)[number]["command"] | (typeof WINDOW_OPTIONS)[number]["command"],
+  string
+> = {
+  "usage.cost": msg("Usage: Cost"),
+  "usage.tokens": msg("Usage: Tokens"),
+  "usage.limits": msg("Usage: Limits"),
+  "usage.period.day": msg("Usage: Period: Past 24h"),
+  "usage.period.week": msg("Usage: Period: 7 days"),
+  "usage.period.month": msg("Usage: Period: 30 days"),
+  "usage.period.quarter": msg("Usage: Period: 90 days"),
 };
 
-export function commandLabel(command: KeybindingCommand, locale: ResolvedAppLocale = "en"): string {
-  const isZh = locale === "zh-CN";
-  if (command === "workspace.focusNext") {
-    return isZh ? "聚焦下一个工作区区域" : "Focus Next Workspace Area";
-  }
-  if (command === "workspace.focusPrevious") {
-    return isZh ? "聚焦上一个工作区区域" : "Focus Previous Workspace Area";
-  }
-  if (command === "composer.sendAlternate") {
-    return isZh ? "输入框：切换排队或即时引导发送" : "Composer: Opposite Queue or Steer Action";
-  }
-  if (command === "composer.sendBackground") {
-    return isZh ? "输入框：在后台启动" : "Composer: Start in Background";
-  }
-  if (command === "composer.sendAndNewThread") {
-    return isZh ? "输入框：发送并新建对话" : "Composer: Send and Start New Thread";
-  }
-  if (command === "composer.dictation") {
-    return isZh ? "输入框：开始或结束语音输入" : "Composer: Start or Finish Dictation";
-  }
-  if (command === "thread.steerQueuedMessage") {
-    return isZh ? "队列：发送第一条排队消息" : "Queue: Send First Queued Message";
-  }
-  if (command === "thread.editQueuedMessage") {
-    return isZh ? "队列：编辑最后一条排队消息" : "Queue: Edit Last Queued Message";
-  }
-  if (command === "thread.copyReference") {
-    return isZh ? "Pull Request：复制链接或对话" : "Pull Request: Copy Link or Thread";
-  }
-  if (command === "usage.open" && isZh) {
-    return "用量：打开";
-  }
-  const usageMetric = METRIC_OPTIONS.find((option) => option.command === command);
-  if (usageMetric) {
-    return isZh
-      ? `用量：${USAGE_METRIC_ZH_LABELS[usageMetric.value] ?? usageMetric.label}`
-      : `Usage: ${usageMetric.label}`;
-  }
-  const usagePeriod = WINDOW_OPTIONS.find((option) => option.command === command);
-  if (usagePeriod) {
-    return isZh
-      ? `用量：时间范围：${USAGE_WINDOW_ZH_LABELS[usagePeriod.days] ?? usagePeriod.label}`
-      : `Usage: Period: ${usagePeriod.label}`;
-  }
-  if (command === "view.reopenClosed") {
-    return isZh ? "重新打开已关闭的标签页" : "Reopen Closed Tab";
-  }
-  if (command === "preview.focusUrl") {
-    return isZh ? "预览：聚焦地址栏" : "Preview: Focus URL";
-  }
-  if (command === "preview.find") {
-    return isZh ? "预览：页内查找" : "Preview: Find on Page";
-  }
+const LATE_COMMAND_LABELS: Partial<Record<KeybindingCommand, string>> = {
+  "view.reopenClosed": msg("Reopen Closed Tab"),
+  "preview.focusUrl": msg("Preview: Focus URL"),
+  "preview.find": msg("Preview: Find on Page"),
+};
+
+export function commandLabel(command: KeybindingCommand, resolve: MessageResolver = m): string {
+  const label = COMMAND_LABELS[command];
+  if (label) return resolve(label);
+  const usageLabel = USAGE_COMMAND_LABELS[command as keyof typeof USAGE_COMMAND_LABELS];
+  if (usageLabel) return resolve(usageLabel);
+  const lateLabel = LATE_COMMAND_LABELS[command];
+  if (lateLabel) return resolve(lateLabel);
   const raw = String(command);
+  if (raw.startsWith("thread.jump.")) {
+    return resolve(msg("Thread: Jump: {n}", { n: raw.slice("thread.jump.".length) }));
+  }
+  if (raw.startsWith("modelPicker.jump.")) {
+    return resolve(msg("Model Picker: Jump: {n}", { n: raw.slice("modelPicker.jump.".length) }));
+  }
   if (raw.startsWith("script.") && raw.endsWith(".run")) {
-    const scriptName = titleCaseCommandSegment(raw.slice("script.".length, -".run".length));
-    return isZh ? `运行脚本：${scriptName}` : `Run Script: ${scriptName}`;
+    return resolve(
+      msg("Run Script: {name}", {
+        name: titleCaseCommandSegment(raw.slice("script.".length, -".run".length)),
+      }),
+    );
   }
   return raw.split(".").map(titleCaseCommandSegment).join(": ");
-}
-
-export function localizedCommandLabel(
-  command: KeybindingCommand,
-  translate: KeybindingCommandTranslator,
-  locale: ResolvedAppLocale = "en",
-): string {
-  const raw = String(command);
-  const threadJumpMatch = /^thread\.jump\.(\d+)$/.exec(raw);
-  if (threadJumpMatch?.[1]) {
-    return translate("keybindings.command.threadJump", { index: threadJumpMatch[1] });
-  }
-
-  const modelPickerJumpMatch = /^modelPicker\.jump\.(\d+)$/.exec(raw);
-  if (modelPickerJumpMatch?.[1]) {
-    return translate("keybindings.command.modelPickerJump", { index: modelPickerJumpMatch[1] });
-  }
-
-  if (raw.startsWith("script.") && raw.endsWith(".run")) {
-    return translate("keybindings.command.runScript", {
-      name: titleCaseCommandSegment(raw.slice("script.".length, -".run".length)),
-    });
-  }
-
-  const messageKey = STATIC_COMMAND_MESSAGE_KEYS[raw as keyof typeof STATIC_COMMAND_MESSAGE_KEYS];
-  return messageKey ? translate(messageKey) : commandLabel(command, locale);
 }
 
 function titleCaseCommandSegment(segment: string): string {

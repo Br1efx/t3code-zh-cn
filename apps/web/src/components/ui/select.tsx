@@ -1,78 +1,13 @@
 import { mergeProps } from "@base-ui/react/merge-props";
 import { Select as SelectPrimitive } from "@base-ui/react/select";
 import { useRender } from "@base-ui/react/use-render";
-import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import { cva, type VariantProps } from "class-variance-authority";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import type * as React from "react";
 
-import {
-  localizeOptionalWebAttr,
-  localizeWebChildren,
-  localizeWebString,
-} from "~/i18n/localizeWebChildren";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 
-function localizeSelectItems<Value, Multiple extends boolean | undefined>(
-  locale: ResolvedAppLocale,
-  items: SelectPrimitive.Root.Props<Value, Multiple>["items"],
-): SelectPrimitive.Root.Props<Value, Multiple>["items"] {
-  if (locale === "en" || items === undefined) {
-    return items;
-  }
-  if (Array.isArray(items)) {
-    return items.map((entry) => {
-      if (entry && typeof entry === "object") {
-        if ("items" in entry && Array.isArray(entry.items)) {
-          return {
-            ...entry,
-            items: entry.items.map((item: unknown) =>
-              item && typeof item === "object" && "label" in item
-                ? { ...item, label: localizeWebChildren(locale, item.label as ReactNode) }
-                : item,
-            ),
-          };
-        }
-        if ("label" in entry) {
-          return {
-            ...entry,
-            label: localizeWebChildren(locale, entry.label),
-          };
-        }
-      }
-      return entry;
-    }) as SelectPrimitive.Root.Props<Value, Multiple>["items"];
-  }
-  const localizedRecord: Record<string, ReactNode> = {};
-  for (const [key, label] of Object.entries(items)) {
-    localizedRecord[key] = localizeWebChildren(locale, label);
-  }
-  return localizedRecord;
-}
-
-function Select<Value, Multiple extends boolean | undefined = false>({
-  items,
-  itemToStringLabel,
-  ...props
-}: SelectPrimitive.Root.Props<Value, Multiple>) {
-  const { locale } = useI18n();
-  const localizedItems = localizeSelectItems(locale, items);
-  const localizedItemToStringLabel =
-    !itemToStringLabel || locale === "en"
-      ? itemToStringLabel
-      : (itemValue: Value) => localizeWebString(locale, itemToStringLabel(itemValue));
-
-  return (
-    <SelectPrimitive.Root
-      {...props}
-      {...(localizedItems !== undefined ? { items: localizedItems } : {})}
-      {...(localizedItemToStringLabel !== undefined
-        ? { itemToStringLabel: localizedItemToStringLabel }
-        : {})}
-    />
-  );
-}
+const Select = SelectPrimitive.Root;
 
 const selectTriggerVariants = cva(
   "relative inline-flex cursor-pointer select-none items-center justify-between gap-2 border rounded-lg text-left text-base outline-none transition-[color,box-shadow,background-color] data-disabled:pointer-events-none data-disabled:opacity-64 sm:text-sm [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4",
@@ -108,15 +43,12 @@ function SelectTrigger({
   icon,
   ...props
 }: SelectPrimitive.Trigger.Props &
-  VariantProps<typeof selectTriggerVariants> & { icon?: ReactNode }) {
-  const { locale } = useI18n();
+  VariantProps<typeof selectTriggerVariants> & { icon?: React.ReactNode }) {
   return (
     <SelectPrimitive.Trigger
       className={cn(selectTriggerVariants({ size, variant }), className)}
       data-slot="select-trigger"
       {...props}
-      aria-label={localizeOptionalWebAttr(locale, props["aria-label"])}
-      title={localizeOptionalWebAttr(locale, props.title)}
     >
       {children}
       <SelectPrimitive.Icon data-slot="select-icon">
@@ -133,7 +65,6 @@ function SelectButton({
   render,
   ...props
 }: useRender.ComponentProps<"button"> & Pick<VariantProps<typeof selectTriggerVariants>, "size">) {
-  const { locale } = useI18n();
   const defaultProps = {
     className: cn(selectTriggerVariants({ size }), className),
     "data-slot": "select-trigger",
@@ -142,16 +73,10 @@ function SelectButton({
   return useRender({
     defaultTagName: "button",
     props: {
-      ...mergeProps<"button">(defaultProps, {
-        ...props,
-        "aria-label": localizeOptionalWebAttr(locale, props["aria-label"]),
-        title: localizeOptionalWebAttr(locale, props.title),
-      }),
+      ...mergeProps<"button">(defaultProps, props),
       children: (
         <>
-          <span className="min-w-0 flex-1 truncate text-left">
-            {localizeWebChildren(locale, children)}
-          </span>
+          <span className="min-w-0 flex-1 truncate text-left">{children}</span>
           <ChevronDownIcon aria-hidden className="-me-1 size-3.5 shrink-0 opacity-70" />
         </>
       ),
@@ -160,19 +85,13 @@ function SelectButton({
   });
 }
 
-function SelectValue({ className, placeholder, children, ...props }: SelectPrimitive.Value.Props) {
-  const { locale } = useI18n();
+function SelectValue({ className, ...props }: SelectPrimitive.Value.Props) {
   return (
     <SelectPrimitive.Value
       className={cn("flex-1 truncate data-placeholder:text-placeholder", className)}
       data-slot="select-value"
-      placeholder={localizeWebChildren(locale, placeholder)}
       {...props}
-    >
-      {typeof children === "function"
-        ? (value) => localizeWebChildren(locale, children(value))
-        : localizeWebChildren(locale, children)}
-    </SelectPrimitive.Value>
+    />
   );
 }
 
@@ -253,7 +172,6 @@ function SelectItem({
 }: SelectPrimitive.Item.Props & {
   hideIndicator?: boolean;
 }) {
-  const { locale } = useI18n();
   return (
     <SelectPrimitive.Item
       className={cn(
@@ -267,7 +185,7 @@ function SelectItem({
         className="min-w-0 flex-1 [&_svg:not([class*='text-'])]:text-muted-foreground"
         data-slot="select-item-text"
       >
-        {localizeWebChildren(locale, children)}
+        {children}
       </SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
   );
@@ -277,16 +195,13 @@ function SelectGroup(props: SelectPrimitive.Group.Props) {
   return <SelectPrimitive.Group data-slot="select-group" {...props} />;
 }
 
-function SelectGroupLabel({ children, ...props }: SelectPrimitive.GroupLabel.Props) {
-  const { locale } = useI18n();
+function SelectGroupLabel(props: SelectPrimitive.GroupLabel.Props) {
   return (
     <SelectPrimitive.GroupLabel
       className="px-2 py-1.5 font-medium text-muted-foreground text-xs"
       data-slot="select-group-label"
       {...props}
-    >
-      {localizeWebChildren(locale, children)}
-    </SelectPrimitive.GroupLabel>
+    />
   );
 }
 

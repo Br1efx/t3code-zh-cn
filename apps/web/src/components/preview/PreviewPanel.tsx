@@ -1,5 +1,4 @@
-import { useI18n } from "~/i18n/WebI18nContext";
-import { translateWebSource } from "~/i18n/messages";
+import { useGT } from "gt-react";
 import {
   AuthPreviewOperateScope,
   type PreviewAnnotationPayload,
@@ -33,8 +32,8 @@ export function PreviewPanel({
   visible,
   onSendAnnotation,
 }: Props) {
-  const { locale: i18nLocale } = useI18n();
   const available = usePreviewAvailable(threadRef.environmentId);
+  const gt = useGT();
   const canOperatePreview = useEnvironmentScope(threadRef.environmentId, AuthPreviewOperateScope);
   if (!canOperatePreview || !available) {
     return (
@@ -42,14 +41,8 @@ export function PreviewPanel({
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
           <p className="max-w-sm text-sm text-muted-foreground">
             {canOperatePreview
-              ? translateWebSource(
-                  i18nLocale,
-                  "Preview is only available in the T3 Code desktop app.",
-                )
-              : translateWebSource(
-                  i18nLocale,
-                  "Pair this client again with preview access to control browser previews.",
-                )}
+              ? gt("Preview is only available in the T3 Code desktop app.")
+              : gt("Pair this client again with preview access to control browser previews.")}
           </p>
         </div>
       </PreviewPanelShell>

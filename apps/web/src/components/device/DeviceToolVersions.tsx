@@ -1,5 +1,4 @@
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
+import { msg, T, useGT, useMessages } from "gt-react";
 import type { ReactNode } from "react";
 import type { DeviceToolVersions as ToolVersions } from "@t3tools/contracts";
 import { InlineButton } from "~/components/ui/button";
@@ -18,7 +17,6 @@ export function DeviceToolVersions({
   owner?: string | undefined;
   error?: string | undefined;
 }) {
-  const { locale: translationLocale } = useI18n();
   const selected = kind ? tools?.[kind] : undefined;
   const version =
     selected?.runningVersion ??
@@ -27,16 +25,19 @@ export function DeviceToolVersions({
       : selected?.installedVersions
           .toSorted((a, b) => a.localeCompare(b, undefined, { numeric: true }))
           .at(-1));
-  const label = kind === "hub" ? "Device hub" : "Agent device";
-  const localizedLabel = translateWebSource(translationLocale, label);
+  const gt = useGT();
+  const m = useMessages();
+  const label = kind === "hub" ? msg("Device hub") : msg("Agent device");
   return (
     <Popover>
       <PopoverTrigger
         aria-label={
           kind
-            ? translationLocale === "zh-CN"
-              ? `${localizedLabel}：${version ? `版本 ${version}` : selected ? "未安装" : "版本未知"}。显示详情`
-              : `${label}: ${version ? `version ${version}` : selected ? "not installed" : "version unknown"}. Show details`
+            ? version
+              ? gt("{tool}: version {version}. Show details", { tool: m(label), version })
+              : selected
+                ? gt("{tool}: not installed. Show details", { tool: m(label) })
+                : gt("{tool}: version unknown. Show details", { tool: m(label) })
             : undefined
         }
         render={<InlineButton tone="muted" />}
@@ -44,46 +45,43 @@ export function DeviceToolVersions({
         {kind
           ? version
             ? `v${version}`
-            : translateWebSource(translationLocale, selected ? "Not installed" : "Version unknown")
-          : translateWebSource(translationLocale, error ? "Versions unavailable" : "Versions")}
+            : selected
+              ? gt("Not installed")
+              : gt("Version unknown")
+          : error
+            ? gt("Versions unavailable")
+            : gt("Versions")}
       </PopoverTrigger>
       <PopoverPopup align="end" width="md">
-        <PopoverTitle>
-          {kind ? localizedLabel : translateWebSource(translationLocale, "Device tools")}
-        </PopoverTitle>
+        <PopoverTitle>{kind ? m(label) : gt("Device tools")}</PopoverTitle>
         {tools ? (
           <div className="mt-4 divide-y divide-border/50">
             {(
               [
-                ["Device hub", tools.hub],
-                ["Agent device", tools.agent],
+                [msg("Device hub"), tools.hub],
+                [msg("Agent device"), tools.agent],
               ] as const
             )
               .filter(([name]) => !kind || name === label)
               .map(([name, tool]) => (
                 <div key={name} className="space-y-2 py-3 first:pt-0 last:pb-0">
-                  {!kind ? (
-                    <p className="text-xs font-medium">
-                      {translateWebSource(translationLocale, name)}
-                    </p>
-                  ) : null}
+                  {!kind ? <p className="text-xs font-medium">{m(name)}</p> : null}
                   <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-xs">
                     <dt className="text-muted-foreground">
-                      {translateWebSource(translationLocale, "Running")}
+                      <T context="running tool version">Running</T>
                     </dt>
                     <dd className="text-right font-mono">
-                      {tool.runningVersion ?? translateWebSource(translationLocale, "Not running")}
+                      {tool.runningVersion ?? gt("Not running")}
                     </dd>
                     <dt className="text-muted-foreground">
-                      {translateWebSource(translationLocale, "Required")}
+                      <T context="required tool version">Required</T>
                     </dt>
                     <dd className="text-right font-mono">{tool.requiredVersion}</dd>
                     <dt className="text-muted-foreground">
-                      {translateWebSource(translationLocale, "Installed")}
+                      <T context="installed tool versions">Installed</T>
                     </dt>
                     <dd className="text-right font-mono break-words">
-                      {tool.installedVersions.join(", ") ||
-                        translateWebSource(translationLocale, "None")}
+                      {tool.installedVersions.join(", ") || gt("None", { $context: "no versions" })}
                     </dd>
                   </dl>
                 </div>
@@ -91,13 +89,12 @@ export function DeviceToolVersions({
           </div>
         ) : (
           <p className="mt-3 text-xs text-muted-foreground">
-            {translateWebSource(translationLocale, "Versions have not been checked.")}
+            <T>Versions have not been checked.</T>
           </p>
         )}
         <p className="mt-4 border-t border-border/50 pt-3 text-xs text-muted-foreground">
-          {translationLocale === "zh-CN"
-            ? `${owner ? `由 ${owner} 管理。` : ""}此主机上的工具会在需要时自动更新。`
-            : `${owner ? `Managed by ${owner}. ` : ""}Tools update automatically on this host when needed.`}
+          {owner ? `${gt("Managed by {owner}.", { owner })} ` : ""}
+          {gt("Tools update automatically on this host when needed.")}
         </p>
         {error ? (
           <p role="status" className="mt-2 text-xs text-destructive">

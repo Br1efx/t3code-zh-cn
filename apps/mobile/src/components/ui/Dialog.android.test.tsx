@@ -40,14 +40,6 @@ vi.mock("../../features/settings/appearance/useScaledTextRole", () => ({
 }));
 vi.mock("../../lib/mobileTheme", () => ({ themeColorWithContrast: () => "#ffffff" }));
 
-vi.mock("../../i18n/mobileStrings", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../i18n/mobileStrings")>();
-  return {
-    ...actual,
-    localizeMobileString: (value: string) => actual.localizeMobileString(value, "zh-CN"),
-  };
-});
-
 import * as Dialog from "./Dialog.android";
 
 const roots: Root[] = [];
@@ -80,42 +72,12 @@ it("keeps presenting dialogs after an older root's Host unmounts", () => {
   expect(current.container.textContent).toContain("Saved");
 });
 
-it("localizes native dialog actions without changing their callbacks", () => {
-  const { container } = mountHost();
-  const onConfirm = vi.fn();
-  const onCancel = vi.fn();
-  act(() =>
-    Dialog.confirm({ title: "Commit changes", confirmText: "Commit", onConfirm, onCancel }),
-  );
-  expect(container.textContent).toContain("提交改动");
-  const buttons = Array.from(container.querySelectorAll("button"));
-  expect(buttons.map((button) => button.textContent)).toEqual(["取消", "提交保存"]);
-  act(() => buttons[1]!.click());
-  expect(onConfirm).toHaveBeenCalledOnce();
-  expect(onCancel).not.toHaveBeenCalled();
-  expect(container.textContent).toBe("");
-});
-
-it("keeps a prompt's repository-owned default value unchanged", () => {
-  const { container } = mountHost();
-  const onConfirm = vi.fn();
-  act(() =>
-    Dialog.prompt({ title: "Name", confirmText: "Save", initialValue: "Settings", onConfirm }),
-  );
-  expect(container.textContent).toContain("名称");
-  const save = Array.from(container.querySelectorAll("button")).find(
-    (button) => button.textContent === "保存",
-  );
-  act(() => save!.click());
-  expect(onConfirm).toHaveBeenCalledWith("Settings");
-});
-
 it("presents a dialog requested before any Host mounted", () => {
   Dialog.alert("Could not import shared content", undefined, [{ text: "Dismiss" }]);
 
   const { container } = mountHost();
 
-  expect(container.textContent).toContain("未能导入分享内容");
+  expect(container.textContent).toContain("Could not import shared content");
 });
 
 it("keeps a dialog raised while the activity is replaced", () => {
@@ -128,13 +90,60 @@ it("keeps a dialog raised while the activity is replaced", () => {
   expect(current.container.textContent).toContain("Shared content imported");
 });
 
-it("tells a replaced alert it was dismissed", () => {
+it.each([
+  {
+    kind: "alert",
+    present: (onClose: () => void) =>
+      Dialog.alert("Older", undefined, [{ text: "OK" }], { onDismiss: onClose }),
+  },
+  {
+    kind: "confirm",
+    present: (onClose: () => void) =>
+      Dialog.confirm({
+        title: "Remove project",
+        confirmText: "Remove",
+        onConfirm: () => {},
+        onCancel: onClose,
+      }),
+  },
+  {
+    kind: "text-input",
+    present: (onClose: () => void) =>
+      Dialog.prompt({
+        title: "Rename",
+        initialValue: "",
+        confirmText: "Save",
+        onConfirm: () => {},
+        onCancel: onClose,
+      }),
+  },
+])("tells a replaced $kind it was closed without an answer", ({ present }) => {
   mountHost();
-  const onDismiss = vi.fn();
-  act(() => Dialog.alert("Older", undefined, [{ text: "OK" }], { onDismiss }));
+  const onClose = vi.fn();
+  act(() => present(onClose));
   act(() => Dialog.alert("Newer", undefined, [{ text: "OK" }]));
 
-  expect(onDismiss).toHaveBeenCalledOnce();
+  expect(onClose).toHaveBeenCalledOnce();
+});
+
+it.each([
+  { action: "confirm", clickIndex: -1 },
+  { action: "cancel", clickIndex: -2 },
+])("ignores a late $action click from a replaced confirmation", ({ clickIndex }) => {
+  const { container } = mountHost();
+  const onConfirm = vi.fn();
+  const onCancel = vi.fn();
+  act(() =>
+    Dialog.confirm({ title: "Remove project", confirmText: "Remove", onConfirm, onCancel }),
+  );
+  const lateClick = renderedClicks.at(clickIndex)!;
+  act(() => Dialog.alert("Newer", undefined, [{ text: "OK" }]));
+
+  act(() => lateClick());
+
+  expect(onConfirm).not.toHaveBeenCalled();
+  expect(onCancel).toHaveBeenCalledOnce();
+  expect(container.textContent).toContain("Newer");
 });
 
 it("ignores a late action from a dialog that a newer one replaced", () => {

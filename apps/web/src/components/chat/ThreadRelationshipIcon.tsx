@@ -1,6 +1,7 @@
 import type { ProviderDriverKind, ServerProvider } from "@t3tools/contracts";
+import { msg } from "gt-react";
 import { BotIcon, type LucideIcon } from "lucide-react";
-import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
+import { m, type MessageResolver } from "../../i18n/messages";
 import { cn } from "../../lib/utils";
 import {
   hasInstanceBadge,
@@ -11,44 +12,43 @@ import { ProviderInstanceIcon } from "./ProviderInstanceIcon";
 
 export function threadRelationshipStatusLabel(
   status: string | null,
-  locale?: ResolvedAppLocale,
+  resolve: MessageResolver = m,
 ): string {
-  const zh = locale === "zh-CN";
   switch (status) {
     case "preparing":
     case "starting":
-      return zh ? "启动中" : "Starting";
+      return resolve(msg("Starting", { $context: "agent status" }));
     case "running":
     case "in_progress":
-      return zh ? "运行中" : "Running";
+      return resolve(msg("Running", { $context: "agent status" }));
     case "pending":
     case "queued":
-      return zh ? "排队中" : "Queued";
+      return resolve(msg("Queued", { $context: "agent status" }));
     case "waiting":
     case "blocked":
-      return zh ? "等待中" : "Waiting";
+      return resolve(msg("Waiting", { $context: "agent status" }));
     case "completed":
-      return zh ? "已完成" : "Done";
+      return resolve(msg("Done", { $context: "agent status" }));
     case "failed":
     case "error":
-      return zh ? "失败" : "Failed";
+      return resolve(msg("Failed", { $context: "agent status" }));
     case "cancelled":
     case "interrupted":
-      return zh ? "已停止" : "Stopped";
+      return resolve(msg("Stopped", { $context: "agent status" }));
     case "rolled_back":
-      return zh ? "已回退" : "Reverted";
+      return resolve(msg("Reverted", { $context: "agent status" }));
     case "resolved_native":
-      return zh ? "已处理（原生）" : "Resolved (native)";
+      return resolve(msg("Resolved (native)", { $context: "agent status" }));
     case "resolved_portable":
-      return zh ? "已处理（兼容）" : "Resolved (portable)";
+      return resolve(msg("Resolved (portable)", { $context: "agent status" }));
     case "consumed":
-      return zh ? "已消费" : "Consumed";
+      return resolve(msg("Consumed", { $context: "agent status" }));
     case "superseded":
-      return zh ? "已被替代" : "Superseded";
+      return resolve(msg("Superseded", { $context: "agent status" }));
     case "idle":
-      return zh ? "空闲" : "Idle";
+      return resolve(msg("Idle", { $context: "agent status" }));
     default:
-      return zh ? "未知" : "Unknown";
+      return resolve(msg("Unknown", { $context: "agent status" }));
   }
 }
 

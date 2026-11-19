@@ -1,4 +1,3 @@
-import { localizeMobileString } from "../../i18n/mobileStrings";
 import { type ComponentProps, type ReactNode, useRef } from "react";
 import { Platform, Pressable, View } from "react-native";
 import { cn } from "../../lib/cn";
@@ -120,7 +119,7 @@ export function ControlPill(props: {
 
   return (
     <Pressable
-      accessibilityLabel={localizeMobileString(props.accessibilityLabel ?? props.label ?? "")}
+      accessibilityLabel={props.accessibilityLabel ?? props.label}
       accessibilityRole="button"
       onPress={props.activateOnPressIn ? handlePress : props.onPress}
       onPressIn={props.activateOnPressIn ? handlePressIn : undefined}

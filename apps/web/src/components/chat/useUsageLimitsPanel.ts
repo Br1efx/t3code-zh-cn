@@ -1,6 +1,5 @@
-import { useI18n } from "~/i18n/WebI18nContext";
-import { translateWebSource } from "~/i18n/messages";
-
+import { msg, useMessages } from "gt-react";
+import { m } from "~/i18n/messages";
 import type {
   EnvironmentId,
   ProviderInstanceId,
@@ -23,7 +22,6 @@ export function useUsageLimitsPanel(input: {
   readonly providers: readonly ServerProvider[];
   readonly sources: UsageLimitSourceSnapshots;
 }) {
-  const { t, locale } = useI18n();
   const {
     environmentId,
     threadKey,
@@ -33,6 +31,7 @@ export function useUsageLimitsPanel(input: {
     providers,
     sources,
   } = input;
+  const messages = useMessages();
   const [panel, setPanel] = useState<{
     readonly key: string;
     readonly threadKey: string;
@@ -53,7 +52,7 @@ export function useUsageLimitsPanel(input: {
           report,
           environmentId,
           () => setPanel(null),
-          t,
+          messages,
         )
       : null;
   // Intercept /usage-limits only when Limits has selected-provider data.
@@ -73,7 +72,7 @@ export function useUsageLimitsPanel(input: {
     setPanel(null);
     toastManager.add({
       type: "info",
-      title: translateWebSource(locale, "Usage limits are unavailable for this provider"),
+      title: m(msg("Usage limits are unavailable for this provider")),
     });
     return false;
   });

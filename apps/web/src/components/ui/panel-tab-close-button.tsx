@@ -1,8 +1,6 @@
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "~/components/ui/tooltip";
-import { localizeWebString } from "~/i18n/localizeWebChildren";
-import { useI18n } from "~/i18n/WebI18nContext";
 
 interface PanelTabCloseButtonProps {
   children: ReactNode;
@@ -17,12 +15,11 @@ export function PanelTabCloseButton({
   onClick,
   tooltip,
 }: PanelTabCloseButtonProps) {
-  const { locale } = useI18n();
   const button = (
     <button
       type="button"
       className="cursor-pointer group/close relative flex size-4 shrink-0 items-center justify-center rounded-sm hover:bg-muted"
-      aria-label={localizeWebString(locale, label)}
+      aria-label={label}
       onClick={onClick}
     >
       <span className="relative flex size-3 items-center justify-center group-hover/tab:hidden group-focus-visible/close:hidden">

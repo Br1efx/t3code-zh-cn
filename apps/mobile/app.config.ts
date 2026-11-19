@@ -3,7 +3,7 @@ import type { ExpoConfig } from "expo/config";
 import { BRAND_ASSET_PATHS } from "../../scripts/lib/brand-assets.ts";
 import { loadRepoEnv } from "../../scripts/lib/public-config.ts";
 
-type AppVariant = "community" | "development" | "preview" | "production";
+type AppVariant = "development" | "preview" | "production";
 
 const repoEnv = loadRepoEnv();
 Object.assign(process.env, repoEnv);
@@ -11,18 +11,6 @@ Object.assign(process.env, repoEnv);
 process.env.EXPO_NO_TYPESCRIPT_SETUP = "1";
 
 const APP_VARIANT = resolveAppVariant(repoEnv.APP_VARIANT);
-if (APP_VARIANT === "community") {
-  process.env.EXPO_PUBLIC_APP_LOCALE = "zh-CN";
-}
-const appVersion =
-  repoEnv.T3CODE_MOBILE_VERSION?.trim() || (APP_VARIANT === "community" ? "0.1.10" : "2.0.0");
-const androidVersionCode = Number.parseInt(
-  APP_VARIANT === "community" ? (repoEnv.T3CODE_MOBILE_VERSION_CODE?.trim() ?? "11001") : "1",
-  10,
-);
-if (!Number.isSafeInteger(androidVersionCode) || androidVersionCode <= 0) {
-  throw new Error("T3CODE_MOBILE_VERSION_CODE must be a positive integer.");
-}
 const isIosPersonalTeamBuild = repoEnv.T3CODE_IOS_PERSONAL_TEAM === "1";
 const runtimeVersionPolicy =
   process.env.MOBILE_VERSION_POLICY ??
@@ -106,14 +94,6 @@ const VARIANT_CONFIG = {
     relyingParty: "clerk.t3.codes",
     assets: PREVIEW_ASSETS,
   },
-  community: {
-    appName: "T3 Code 中文版",
-    scheme: "t3code-zhcn",
-    iosBundleIdentifier: "com.zhiweixiao.t3code.zhcn",
-    androidPackage: "com.zhiweixiao.t3code.zhcn",
-    relyingParty: "clerk.t3.codes",
-    assets: RELEASE_ASSETS,
-  },
   production: {
     appName: "T3 Code",
     scheme: "t3code",
@@ -126,7 +106,6 @@ const VARIANT_CONFIG = {
 
 function resolveAppVariant(value: string | undefined): AppVariant {
   switch (value) {
-    case "community":
     case "development":
     case "preview":
     case "production":
@@ -151,9 +130,6 @@ const dmSansFonts = {
   bold: "@expo-google-fonts/dm-sans/700Bold/DMSans_700Bold.ttf",
 } as const;
 
-const widgetCopy = (english: string, chinese: string): string =>
-  process.env.EXPO_PUBLIC_APP_LOCALE === "zh-CN" ? chinese : english;
-
 const widgetsPlugin: NonNullable<ExpoConfig["plugins"]>[number] = [
   "expo-widgets",
   {
@@ -166,37 +142,32 @@ const widgetsPlugin: NonNullable<ExpoConfig["plugins"]>[number] = [
     widgets: [
       {
         name: "SubscriptionUsage",
-        displayName: widgetCopy("Subscription usage", "订阅用量"),
-        description: widgetCopy(
-          "Subscription quotas from your connected T3 Code environments.",
-          "已连接 T3 Code 环境的订阅额度。",
-        ),
+        displayName: "Subscription usage",
+        description: "Subscription quotas from your connected T3 Code environments.",
         ios: {
           configuration: {
-            title: widgetCopy("Subscription usage", "订阅用量"),
-            description: widgetCopy(
+            title: "Subscription usage",
+            description:
               "Both shows Session and Weekly when available. The Lock Screen shows the tightest selected limit.",
-              "选择“两者”可同时显示会话和每周额度（若可用）。锁定屏幕显示所选额度中剩余最少的一项。",
-            ),
             parameters: {
               codexPeriod: {
-                title: widgetCopy("Codex limits", "Codex 额度"),
+                title: "Codex limits",
                 type: "enum",
                 default: "auto",
                 values: [
-                  { name: widgetCopy("Both", "两者"), value: "auto" },
-                  { name: widgetCopy("Session", "会话"), value: "session" },
-                  { name: widgetCopy("Weekly", "每周"), value: "weekly" },
+                  { name: "Both", value: "auto" },
+                  { name: "Session", value: "session" },
+                  { name: "Weekly", value: "weekly" },
                 ],
               },
               claudePeriod: {
-                title: widgetCopy("Claude limits", "Claude 额度"),
+                title: "Claude limits",
                 type: "enum",
                 default: "auto",
                 values: [
-                  { name: widgetCopy("Both", "两者"), value: "auto" },
-                  { name: widgetCopy("Session", "会话"), value: "session" },
-                  { name: widgetCopy("Weekly", "每周"), value: "weekly" },
+                  { name: "Both", value: "auto" },
+                  { name: "Session", value: "session" },
+                  { name: "Weekly", value: "weekly" },
                 ],
               },
             },
@@ -221,11 +192,8 @@ const widgetsPlugin: NonNullable<ExpoConfig["plugins"]>[number] = [
       },
       {
         name: "AgentActivity",
-        displayName: widgetCopy("Agent Activity", "Agent 动态"),
-        description: widgetCopy(
-          "Shows the current state of active T3 Code agents.",
-          "显示活跃 T3 Code Agent 的当前状态。",
-        ),
+        displayName: "Agent Activity",
+        description: "Shows the current state of active T3 Code agents.",
         android: null,
         ios: {
           supportedFamilies: ["systemSmall", "systemMedium", "accessoryRectangular"],
@@ -269,7 +237,7 @@ const config: ExpoConfig = {
   slug: "t3-code",
   platforms: ["ios", "android"],
   scheme: variant.scheme,
-  version: APP_VARIANT === "community" ? appVersion : (repoEnv.T3CODE_MOBILE_VERSION ?? "2.3.0"),
+  version: repoEnv.T3CODE_MOBILE_VERSION ?? "2.3.0",
   runtimeVersion: {
     // Skip costly fingerprinting on dev launches; preview and production OTAs require matching native projects.
     policy: runtimeVersionPolicy,
@@ -277,18 +245,12 @@ const config: ExpoConfig = {
   orientation: "portrait",
   icon: variant.assets.appIcon,
   userInterfaceStyle: "automatic",
-  updates:
-    APP_VARIANT === "community"
-      ? {
-          enabled: false,
-          checkAutomatically: "NEVER",
-        }
-      : {
-          enabled: repoEnv.T3CODE_MOBILE_UPDATES_ENABLED !== "0",
-          url: "https://u.expo.dev/d763fcb8-d37c-41ea-a773-b54a0ab4a454",
-          checkAutomatically: "ON_LOAD",
-          fallbackToCacheTimeout: 0,
-        },
+  updates: {
+    enabled: repoEnv.T3CODE_MOBILE_UPDATES_ENABLED !== "0",
+    url: "https://u.expo.dev/d763fcb8-d37c-41ea-a773-b54a0ab4a454",
+    checkAutomatically: "ON_LOAD",
+    fallbackToCacheTimeout: 0,
+  },
   ios: {
     icon: variant.assets.iosIcon,
     supportsTablet: true,
@@ -315,6 +277,8 @@ const config: ExpoConfig = {
       },
       NSLocalNetworkUsageDescription:
         "Allow T3 Code to connect to T3 Code servers on your local network or tailnet.",
+      // Built with the iOS 27 SDK, only view controllers can hide or style the status bar.
+      UIViewControllerBasedStatusBarAppearance: true,
       NSPhotoLibraryAddUsageDescription: "Allow T3 Code to save images to your photo library.",
       // System picture in picture needs background audio to start and survive outside the app.
       UIBackgroundModes: ["audio"],
@@ -335,7 +299,6 @@ const config: ExpoConfig = {
   android: {
     icon: variant.assets.appIcon,
     package: variant.androidPackage,
-    versionCode: androidVersionCode,
     ...(repoEnv.T3CODE_ANDROID_GOOGLE_SERVICES_FILE
       ? { googleServicesFile: repoEnv.T3CODE_ANDROID_GOOGLE_SERVICES_FILE }
       : {}),
@@ -431,10 +394,7 @@ const config: ExpoConfig = {
     [
       "expo-camera",
       {
-        cameraPermission:
-          APP_VARIANT === "community"
-            ? "允许 T3 Code 中文版使用相机，以便扫描配对二维码。"
-            : "Allow T3 Code to access your camera so you can scan pairing QR codes.",
+        cameraPermission: "Allow T3 Code to access your camera so you can scan pairing QR codes.",
         microphonePermission: false,
         barcodeScannerEnabled: true,
         recordAudioAndroid: false,

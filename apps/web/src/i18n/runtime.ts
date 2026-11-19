@@ -8,6 +8,7 @@ import {
 } from "../hooks/useSettings";
 import { initializeI18n } from "./initializeI18n";
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "./locales";
+import { setActiveLocale } from "./messages";
 
 type LocaleTranslations = Awaited<ReturnType<typeof getTranslationsSnapshot>>;
 
@@ -46,16 +47,15 @@ function activateLocale(locale: string): void {
     return;
   }
   snapshot = { locale, translations: { ...loadedTranslations } };
-  document.documentElement.lang = locale === "zh" ? "zh-CN" : locale;
+  setActiveLocale(locale);
+  document.documentElement.lang = locale;
   for (const listener of listeners) listener();
 }
 
 function applyLanguageSetting(): void {
-  const { appLocale } = getClientSettings();
-  const effectivePreference = appLocale === "zh-CN" ? "zh" : appLocale;
   // Not desktopBridge.getSystemLocale(): that is the regional/time locale, not the UI language.
   requestedLocale = resolveLocale(
-    effectivePreference,
+    getClientSettings().language,
     navigator.languages,
     SUPPORTED_LOCALES,
     DEFAULT_LOCALE,
@@ -65,8 +65,7 @@ function applyLanguageSetting(): void {
 
 /** GT's own locale setters write the saved setting, which stays the only source of truth. */
 export function persistGTLocale(locale: string): void {
-  const appLocale = locale.startsWith("zh") ? "zh-CN" : locale === "en" ? "en" : "system";
-  void updateClientSettings({ language: locale, appLocale });
+  void updateClientSettings({ language: locale });
 }
 
 export function startI18n(): void {

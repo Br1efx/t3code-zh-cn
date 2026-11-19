@@ -5,7 +5,6 @@ import * as Path from "effect/Path";
 import * as Schema from "effect/Schema";
 import * as Electron from "electron";
 import * as DesktopEnvironment from "../app/DesktopEnvironment.ts";
-import * as DesktopLocale from "../i18n/DesktopLocale.ts";
 import { MacPermissionHelper } from "./MacPermissionHelper.ts";
 import type { MacPermission } from "./MacPermission.ts";
 
@@ -39,7 +38,6 @@ export const layer = Layer.effect(
     return MacPermissions.of({
       showHelper: Effect.fn("MacPermissions.showHelper")(function* (permission, owner, isGranted) {
         if (environment.platform !== "darwin" || !environment.isPackaged) return;
-        const locale = yield* DesktopLocale.resolveCurrentDesktopLocale;
         yield* Effect.tryPromise({
           try: () =>
             helper.show(
@@ -48,7 +46,6 @@ export const layer = Layer.effect(
               owner,
               environment.resolveResourcePathCandidates("icon.png"),
               isGranted,
-              locale,
             ),
           catch: (cause) => new MacPermissionHelperError({ cause }),
         }).pipe(

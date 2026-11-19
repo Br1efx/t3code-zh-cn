@@ -1,44 +1,30 @@
 import type { ExecutionEnvironmentPlatformOs, FileManagerRevealKind } from "@t3tools/contracts";
+import { msg } from "gt-react";
 
-export interface FileExplorerRevealLabels {
-  finder: string;
-  fileExplorer: string;
-  files: string;
-}
+import { m, type MessageResolver } from "~/i18n/messages";
 
-const DEFAULT_REVEAL_LABELS: FileExplorerRevealLabels = {
-  finder: "Reveal in Finder",
-  fileExplorer: "Reveal in File Explorer",
-  files: "Reveal in Files",
-};
-
-export function revealInFileExplorerLabel(
-  platform: string,
-  labels: FileExplorerRevealLabels = DEFAULT_REVEAL_LABELS,
-): string {
+/** Components pass `useMessages()` so labels follow a language switch. */
+export function revealInFileExplorerLabel(platform: string, resolve: MessageResolver = m): string {
   const normalized = platform.toLowerCase();
-  if (normalized.includes("mac")) return labels.finder;
-  if (normalized.includes("win")) return labels.fileExplorer;
-  return labels.files;
+  if (normalized.includes("mac")) return resolve(msg("Reveal in Finder"));
+  if (normalized.includes("win")) return resolve(msg("Reveal in File Explorer"));
+  return resolve(msg("Reveal in Files"));
 }
 
-/** Same wording keyed by an environment's reported OS rather than a
-    navigator platform string, for actions that reveal on the server machine. */
 export function revealInFileExplorerLabelForOs(
   os: ExecutionEnvironmentPlatformOs,
-  labels: FileExplorerRevealLabels = DEFAULT_REVEAL_LABELS,
+  resolve: MessageResolver = m,
 ): string {
-  if (os === "darwin") return labels.finder;
-  if (os === "windows") return labels.fileExplorer;
-  return labels.files;
+  if (os === "darwin") return resolve(msg("Reveal in Finder"));
+  if (os === "windows") return resolve(msg("Reveal in File Explorer"));
+  return resolve(msg("Reveal in Files"));
 }
 
-/** Server-selected wording, including Windows File Explorer reached from WSL. */
 export function revealInFileExplorerLabelForKind(
   kind: FileManagerRevealKind,
-  labels: FileExplorerRevealLabels = DEFAULT_REVEAL_LABELS,
+  resolve: MessageResolver = m,
 ): string {
-  if (kind === "finder") return labels.finder;
-  if (kind === "file-explorer") return labels.fileExplorer;
-  return labels.files;
+  if (kind === "finder") return resolve(msg("Reveal in Finder"));
+  if (kind === "file-explorer") return resolve(msg("Reveal in File Explorer"));
+  return resolve(msg("Reveal in Files"));
 }

@@ -10,7 +10,6 @@ export interface ListRowContentProps {
   /** Drawn in the icon column for marks a single symbol can't express. */
   readonly leading?: ReactNode;
   readonly label: string;
-  readonly localizeLabel?: boolean;
   readonly description?: string;
   readonly detail?: string;
   /** Rich secondary content under the description, such as scores with emphasized values. */
@@ -22,7 +21,6 @@ export function ListRowLayout({
   icon,
   leading,
   label,
-  localizeLabel = true,
   description,
   detail,
   meta,
@@ -55,7 +53,6 @@ export function ListRowLayout({
       ) : null}
       <View className="min-w-0 flex-1 gap-1">
         <AppText
-          localize={localizeLabel}
           textRole="body"
           className={tone === "danger" ? "text-danger-foreground" : "text-foreground"}
         >

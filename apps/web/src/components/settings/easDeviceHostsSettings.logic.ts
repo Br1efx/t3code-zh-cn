@@ -1,16 +1,21 @@
-import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import {
   EasDeviceHostConfig,
   type EasDeviceHostConfig as EasDeviceHostConfigType,
 } from "@t3tools/contracts";
 import * as Schema from "effect/Schema";
+import { msg } from "gt-react";
+
+import { m, type MessageResolver } from "../../i18n/messages";
 
 export const parseEasDeviceHostDraft = Schema.decodeUnknownOption(EasDeviceHostConfig);
 
-export const newEasDeviceHost = (id: string): EasDeviceHostConfigType => ({
+export const newEasDeviceHost = (
+  id: string,
+  resolve: MessageResolver = m,
+): EasDeviceHostConfigType => ({
   kind: "eas",
   id,
-  label: "Expo Simulators",
+  label: resolve(msg("Expo Simulators")),
   accessToken: "",
   maxSessionMinutes: 30,
   idleMinutes: 10,
@@ -36,10 +41,15 @@ export function updateEasDeviceHosts(
     : [...hosts, next];
 }
 
-export function easSessionLimits(host: EasDeviceHostConfigType, locale: ResolvedAppLocale = "en") {
-  if (locale === "zh-CN")
-    return `最多同时运行 ${host.maxConcurrentSessions} 个会话，每个会话在 ${host.maxSessionMinutes} 分钟后或空闲 ${host.idleMinutes} 分钟后停止`;
-  const sessions =
-    host.maxConcurrentSessions === 1 ? "1 session" : `${host.maxConcurrentSessions} sessions`;
-  return `Up to ${sessions} at once, each stopped after ${host.maxSessionMinutes} min or ${host.idleMinutes} idle min`;
+export function easSessionLimits(host: EasDeviceHostConfigType, resolve: MessageResolver = m) {
+  return resolve(
+    msg(
+      "Up to {sessions, plural, one {{sessions} session} other {{sessions} sessions}} at once, each stopped after {maxMinutes} min or {idleMinutes} idle min",
+      {
+        sessions: host.maxConcurrentSessions,
+        maxMinutes: host.maxSessionMinutes,
+        idleMinutes: host.idleMinutes,
+      },
+    ),
+  );
 }

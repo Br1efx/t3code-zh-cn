@@ -1,11 +1,13 @@
+import { thrownErrorMessage } from "@t3tools/client-runtime/errors";
 import * as DateTime from "effect/DateTime";
+import { msg } from "gt-react";
 
-import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
-import { translateWebSource } from "~/i18n/messages";
 import { resolveDesktopPairingUrl, resolveHostedPairingUrl } from "./pairingUrls";
 import { getPairingTokenFromUrl, setPairingTokenOnUrl } from "@t3tools/shared/remote";
 import { readHostedPairingRequest } from "../../hostedPairing";
+import { m, type MessageResolver } from "../../i18n/messages";
 import {
+  isLoopbackHostname,
   type ServerClientSessionRecord,
   type ServerPairingLinkRecord,
 } from "~/environments/primary";
@@ -67,14 +69,11 @@ export function isQrShareableEndpoint(endpoint: AdvertisedEndpoint): boolean {
  * means unchecked. */
 export function missingTailscaleEndpointDescription(
   state: Pick<DesktopServerExposureState, "mode" | "tailscaleServeEnabled"> | null,
-  locale: ResolvedAppLocale = "en",
+  resolve: MessageResolver = m,
 ): string {
-  return translateWebSource(
-    locale,
-    state && state.mode !== "network-accessible" && !state.tailscaleServeEnabled
-      ? "Turn on Network access to detect Tailscale."
-      : "Start Tailscale to set up HTTPS access through MagicDNS.",
-  );
+  return state && state.mode !== "network-accessible" && !state.tailscaleServeEnabled
+    ? resolve(msg("Turn on Network access to detect Tailscale."))
+    : resolve(msg("Start Tailscale to set up HTTPS access through MagicDNS."));
 }
 
 export function resolveTailscaleServeBaseUrl(
@@ -107,16 +106,13 @@ export function isWslSettingsRowVisible(input: {
  */
 export function resolveLocalVersionStatusLabel(
   state: DesktopUpdateState | null,
-  locale: ResolvedAppLocale = "en",
+  resolve: MessageResolver = m,
 ): string {
-  if (!state) return translateWebSource(locale, "Up to date");
+  if (!state) return resolve(msg("Up to date"));
   if (state.status === "downloading") {
-    if (locale === "zh-CN") {
-      return state.availableVersion ? `正在下载更新 ${state.availableVersion}` : "正在下载更新";
-    }
     return state.availableVersion
-      ? `Downloading update ${state.availableVersion}`
-      : "Downloading update";
+      ? resolve(msg("Downloading update {version}", { version: state.availableVersion }))
+      : resolve(msg("Downloading update"));
   }
   const action = resolveDesktopUpdateButtonAction(state);
   if (
@@ -125,20 +121,16 @@ export function resolveLocalVersionStatusLabel(
     (state.status === "checking" && state.downloadedVersion !== null)
   ) {
     const version = getDesktopUpdateDownloadedVersion(state);
-    if (locale === "zh-CN") {
-      return version ? `更新 ${version} 已下载` : "更新已下载";
-    }
-    return version ? `Update ${version} downloaded` : "Update downloaded";
+    return version
+      ? resolve(msg("Update {version} downloaded", { version }))
+      : resolve(msg("Update downloaded"));
   }
   if (action === "download") {
-    if (locale === "zh-CN") {
-      return state.availableVersion ? `有可用更新 ${state.availableVersion}` : "有可用更新";
-    }
     return state.availableVersion
-      ? `Update ${state.availableVersion} available`
-      : "Update available";
+      ? resolve(msg("Update {version} available", { version: state.availableVersion }))
+      : resolve(msg("Update available"));
   }
-  return translateWebSource(locale, "Up to date");
+  return resolve(msg("Up to date"));
 }
 
 export type QrEndpointOption = {
@@ -185,29 +177,25 @@ const accessTimestampFormatter = new Intl.DateTimeFormat(undefined, {
   timeStyle: "short",
 });
 
-const zhCnAccessTimestampFormatter = new Intl.DateTimeFormat("zh-CN", {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
-
-export function formatAccessTimestamp(value: string, locale: ResolvedAppLocale = "en"): string {
+export function formatAccessTimestamp(value: string): string {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
     return value;
   }
-  return (locale === "zh-CN" ? zhCnAccessTimestampFormatter : accessTimestampFormatter).format(
-    parsed,
-  );
+  return accessTimestampFormatter.format(parsed);
 }
 
-export function parseManualDesktopSshTarget(input: {
-  readonly host: string;
-  readonly username: string;
-  readonly port: string;
-}): DesktopSshEnvironmentTarget {
+export function parseManualDesktopSshTarget(
+  input: {
+    readonly host: string;
+    readonly username: string;
+    readonly port: string;
+  },
+  resolve: MessageResolver = m,
+): DesktopSshEnvironmentTarget {
   const rawHost = input.host.trim();
   if (rawHost.length === 0) {
-    throw new Error("SSH host or alias is required.");
+    throw new Error(resolve(msg("SSH host or alias is required.")));
   }
 
   let hostname = rawHost;
@@ -243,11 +231,11 @@ export function parseManualDesktopSshTarget(input: {
   }
 
   if (hostname.length === 0) {
-    throw new Error("SSH host or alias is required.");
+    throw new Error(resolve(msg("SSH host or alias is required.")));
   }
 
   if (port !== null && (!Number.isInteger(port) || port <= 0 || port > 65_535)) {
-    throw new Error("SSH port must be between 1 and 65535.");
+    throw new Error(resolve(msg("SSH port must be between 1 and 65535.")));
   }
 
   return {
@@ -289,10 +277,13 @@ export function parsePairingUrlFields(
   }
 }
 
-export function parseRemotePairingFields(input: {
-  readonly host: string;
-  readonly pairingCode: string;
-}): {
+export function parseRemotePairingFields(
+  input: {
+    readonly host: string;
+    readonly pairingCode: string;
+  },
+  resolve: MessageResolver = m,
+): {
   readonly host: string;
   readonly pairingCode: string;
 } {
@@ -302,17 +293,21 @@ export function parseRemotePairingFields(input: {
   const host = input.host.trim();
   const pairingCode = input.pairingCode.trim();
   if (!host) {
-    throw new Error("Enter a backend host.");
+    throw new Error(resolve(msg("Enter a backend host.")));
   }
   if (!pairingCode) {
-    throw new Error("Enter a pairing code.");
+    throw new Error(resolve(msg("Enter a pairing code.")));
   }
   return { host, pairingCode };
 }
 
-export function formatDesktopSshConnectionError(error: unknown): string {
-  const fallback = "Failed to connect SSH host.";
-  const rawMessage = error instanceof Error ? error.message : fallback;
+export function formatDesktopSshConnectionError(
+  error: unknown,
+  resolve: MessageResolver = m,
+): string {
+  const fallback = resolve(msg("Failed to connect SSH host."));
+  const rawMessage =
+    error instanceof Error ? (thrownErrorMessage(error, m) ?? error.message) : fallback;
   const withoutIpcPrefix = rawMessage.replace(
     /^Error invoking remote method 'desktop:ensure-ssh-environment':\s*/u,
     "",
@@ -330,19 +325,20 @@ export function sortDesktopPairingLinks(links: ReadonlyArray<ServerPairingLinkRe
 export function summarizeAuthorizedClients(
   sessions: ReadonlyArray<ServerClientSessionRecord>,
   links: ReadonlyArray<ServerPairingLinkRecord>,
-  locale: ResolvedAppLocale = "en",
+  resolve: MessageResolver = m,
 ): string {
-  if (locale === "zh-CN") {
-    const parts = [
-      `${sessions.length} 个客户端`,
-      links.length > 0 ? `${links.length} 个配对链接` : null,
-    ];
-    return parts.filter((part): part is string => part !== null).join(" · ");
-  }
   const parts = [
-    `${sessions.length} ${sessions.length === 1 ? "client" : "clients"}`,
+    resolve(
+      msg("{count, plural, one {{count} client} other {{count} clients}}", {
+        count: sessions.length,
+      }),
+    ),
     links.length > 0
-      ? `${links.length} ${links.length === 1 ? "pairing link" : "pairing links"}`
+      ? resolve(
+          msg("{count, plural, one {{count} pairing link} other {{count} pairing links}}", {
+            count: links.length,
+          }),
+        )
       : null,
   ];
   return parts.filter((part): part is string => part !== null).join(" · ");
@@ -453,8 +449,15 @@ export function resolveAdvertisedEndpointPairingUrl(
   return resolveDesktopPairingUrl(endpoint.httpBaseUrl, credential);
 }
 
-export function resolveCurrentOriginPairingUrl(credential: string): string {
-  const url = new URL("/pair", window.location.href);
+export function resolveCurrentOriginPairingUrl(
+  credential: string,
+  currentHref: string = window.location.href,
+): string | null {
+  const url = new URL("/pair", currentHref);
+  // The packaged desktop window loads from t3code://app, which no other device can open.
+  if ((url.protocol !== "http:" && url.protocol !== "https:") || isLoopbackHostname(url.hostname)) {
+    return null;
+  }
   return setPairingTokenOnUrl(url, credential).toString();
 }
 
@@ -470,20 +473,20 @@ export function isHostedAppPairingUrl(value: string): boolean {
 export function endpointShareHint(
   endpoint: AdvertisedEndpoint,
   url: string,
-  locale: ResolvedAppLocale = "en",
+  resolve: MessageResolver = m,
 ): string {
   if (isHostedAppPairingUrl(url)) {
-    return translateWebSource(locale, "Opens the hosted app, no install needed");
+    return resolve(msg("Opens the hosted app, no install needed"));
   }
   switch (endpoint.reachability) {
     case "lan":
-      return translateWebSource(locale, "Devices on the same network");
+      return resolve(msg("Devices on the same network"));
     case "private-network":
-      return translateWebSource(locale, "Devices on your private network");
+      return resolve(msg("Devices on your private network"));
     case "public":
-      return translateWebSource(locale, "Reachable from anywhere");
+      return resolve(msg("Reachable from anywhere"));
     case "loopback":
-      return translateWebSource(locale, "Clients on this machine");
+      return resolve(msg("Clients on this machine"));
   }
 }
 
@@ -513,11 +516,9 @@ export function connectDeviceName(
   }: {
     readonly client?: AuthClientMetadata | undefined;
   },
-  locale: ResolvedAppLocale = "en",
+  resolve: MessageResolver = m,
 ): string {
-  return (
-    client?.label ?? client?.os ?? client?.browser ?? translateWebSource(locale, "this device")
-  );
+  return client?.label ?? client?.os ?? client?.browser ?? resolve(msg("this device"));
 }
 
 /** How a T3 Connect device describes itself. It can say anything, so the code is what to trust. */
@@ -527,12 +528,10 @@ export function describeConnectDeviceClient(
   }: {
     readonly client?: AuthClientMetadata | undefined;
   },
-  locale: ResolvedAppLocale = "en",
+  resolve: MessageResolver = m,
 ): string {
   const bits = [client?.label, client?.os, client?.browser, client?.ipAddress].filter(
     (value): value is string => typeof value === "string" && value.length > 0,
   );
-  return bits.length > 0
-    ? [...new Set(bits)].join(" · ")
-    : translateWebSource(locale, "Unknown device");
+  return bits.length > 0 ? [...new Set(bits)].join(" · ") : resolve(msg("Unknown device"));
 }

@@ -35,13 +35,6 @@ import * as DesktopObservability from "../app/DesktopObservability.ts";
 import * as DesktopState from "../app/DesktopState.ts";
 import * as ElectronUpdater from "../electron/ElectronUpdater.ts";
 import * as ElectronWindow from "../electron/ElectronWindow.ts";
-import {
-  isZhCn,
-  makeDesktopLocaleResolver,
-  OptionalDesktopLocaleField,
-  withDesktopLocale,
-  type ResolvedAppLocale,
-} from "../i18n/DesktopLocale.ts";
 import * as IpcChannels from "../ipc/channels.ts";
 import * as DesktopAppSettings from "../settings/DesktopAppSettings.ts";
 import * as DesktopSshEnvironment from "../ssh/DesktopSshEnvironment.ts";
@@ -110,13 +103,9 @@ export class DesktopUpdateActionInProgressError extends Schema.TaggedError<Deskt
   {
     action: Schema.Literals(["check", "download", "install", "channel"]),
     requestedChannel: DesktopUpdateChannelSchema,
-    locale: OptionalDesktopLocaleField,
   },
 ) {
   override get message(): string {
-    if (isZhCn(this.locale)) {
-      return "正在检查或下载更新，暂时无法切换更新通道，请稍后再试。";
-    }
     return `Cannot change the desktop update channel to ${this.requestedChannel} while an update ${this.action} action is in progress.`;
   }
 }
@@ -126,13 +115,9 @@ export class DesktopUpdateChannelPersistenceError extends Schema.TaggedError<Des
   {
     channel: DesktopUpdateChannelSchema,
     cause: Schema.instanceOf(DesktopAppSettings.DesktopSettingsWriteError),
-    locale: OptionalDesktopLocaleField,
   },
 ) {
   override get message(): string {
-    if (isZhCn(this.locale)) {
-      return "保存更新通道设置失败，请重试。";
-    }
     return `Failed to persist the ${this.channel} desktop update channel.`;
   }
 }
@@ -166,24 +151,9 @@ export class DesktopUpdaterReportedError extends Schema.TaggedError<DesktopUpdat
   {
     operation: Schema.Literals(["check", "download", "install", "channel", "background"]),
     cause: Schema.Defect(),
-    locale: OptionalDesktopLocaleField,
   },
 ) {
   override get message(): string {
-    if (isZhCn(this.locale)) {
-      switch (this.operation) {
-        case "check":
-          return "检查更新时出错，请稍后重试。";
-        case "download":
-          return "下载更新时出错，请检查网络后重试。";
-        case "install":
-          return "安装更新时出错，请重试。";
-        case "channel":
-          return "切换更新通道时出错，请稍后重试。";
-        case "background":
-          return "后台检查更新时出错，请稍后重试。";
-      }
-    }
     return `Desktop updater ${this.operation} operation reported an error.`;
   }
 }
@@ -193,15 +163,9 @@ export class DesktopUpdateUnexpectedActionError extends Schema.TaggedError<Deskt
   {
     action: Schema.Literals(["download", "install"]),
     cause: Schema.Defect(),
-    locale: OptionalDesktopLocaleField,
   },
 ) {
   override get message(): string {
-    if (isZhCn(this.locale)) {
-      return this.action === "download"
-        ? "下载更新失败，请检查网络后重试。"
-        : "启动更新安装失败，请重试。";
-    }
     return `Desktop update ${this.action} action failed unexpectedly.`;
   }
 }
@@ -211,13 +175,9 @@ export class DesktopUpdateChannelManagedError extends Schema.TaggedError<Desktop
   {
     channel: DesktopUpdateChannelSchema,
     policyMessage: Schema.String,
-    locale: OptionalDesktopLocaleField,
   },
 ) {
   override get message(): string {
-    if (isZhCn(this.locale)) {
-      return `${this.policyMessage} 当前无法切换到测试版通道。`;
-    }
     return `${this.policyMessage} The ${this.channel} channel is not available.`;
   }
 }
@@ -389,37 +349,21 @@ function getAutoUpdateDisabledReason(args: {
   isDebPackage: boolean;
   disabledByEnv: boolean;
   hasUpdateFeedConfig: boolean;
-  locale: ResolvedAppLocale;
 }): string | null {
-  const policyMessage = DesktopUpdatePolicy.localizeManagedUpdatePolicyMessage(
-    args.policy.message,
-    args.locale,
-  );
   if (args.policy.mode === "off") {
-    return (
-      policyMessage ??
-      (isZhCn(args.locale) ? "当前电脑已关闭自动更新。" : "Updates are turned off on this machine.")
-    );
+    return args.policy.message ?? "Updates are turned off on this machine.";
   }
   if (!args.hasUpdateFeedConfig) {
-    return isZhCn(args.locale)
-      ? "当前版本未配置更新源，无法自动更新。"
-      : "Automatic updates are not available because no update feed is configured.";
+    return "Automatic updates are not available because no update feed is configured.";
   }
   if (args.isDevelopment || !args.isPackaged) {
-    return isZhCn(args.locale)
-      ? "开发调试版本不支持自动更新，请使用正式安装包。"
-      : "Automatic updates are only available in packaged production builds.";
+    return "Automatic updates are only available in packaged production builds.";
   }
   if (args.disabledByEnv) {
-    return isZhCn(args.locale)
-      ? "环境变量已禁用自动更新（T3CODE_DISABLE_AUTO_UPDATE）。"
-      : "Automatic updates are disabled by the T3CODE_DISABLE_AUTO_UPDATE setting.";
+    return "Automatic updates are disabled by the T3CODE_DISABLE_AUTO_UPDATE setting.";
   }
   if (args.platform === "linux" && !args.appImage && !args.isDebPackage) {
-    return isZhCn(args.locale)
-      ? "Linux 系统下仅 AppImage 或 .deb 安装版支持自动更新。"
-      : "Automatic updates on Linux require the AppImage or the .deb package.";
+    return "Automatic updates on Linux require the AppImage or the .deb package.";
   }
   return null;
 }
@@ -440,7 +384,6 @@ export const make = Effect.gen(function* () {
   const fileSystem = yield* FileSystem.FileSystem;
   const desktopSettings = yield* DesktopAppSettings.DesktopAppSettings;
   const policy = yield* DesktopUpdatePolicy.DesktopUpdatePolicy;
-  const resolveLocale = yield* makeDesktopLocaleResolver;
   // Any user can set the mock flag, so it never replaces an administrator's update source.
   const mockUpdates = config.mockUpdates && policy.message === null;
 
@@ -530,7 +473,6 @@ export const make = Effect.gen(function* () {
 
   const resolveDisabledReason = Effect.gen(function* () {
     const hasFeedConfig = yield* hasUpdateFeedConfig;
-    const locale = yield* resolveLocale;
     return Option.fromNullishOr(
       getAutoUpdateDisabledReason({
         policy,
@@ -541,37 +483,21 @@ export const make = Effect.gen(function* () {
         isDebPackage,
         disabledByEnv: config.disableAutoUpdate,
         hasUpdateFeedConfig: hasFeedConfig,
-        locale,
       }),
     );
   });
 
   // Without nightly, an install on that channel stays put until its user picks stable: moving it
   // silently would be a downgrade nobody asked for, and checking nightly would break the policy.
-  const channelBlockedReason = (
-    channel: DesktopUpdateChannel,
-    locale: ResolvedAppLocale,
-  ): Option.Option<string> => {
-    if (channel !== "nightly" || policy.allowNightly) {
-      return Option.none();
-    }
-    const localizedPolicy = DesktopUpdatePolicy.localizeManagedUpdatePolicyMessage(
-      policy.message,
-      locale,
-    );
-    return Option.some(
-      isZhCn(locale)
-        ? `${localizedPolicy ?? "当前电脑已关闭每日构建版（Nightly）更新。"}请切换到稳定版通道以继续接收更新。`
-        : `${policy.message ?? "Nightly updates are turned off on this machine."} Switch to the stable channel to keep getting updates.`,
-    );
-  };
+  const channelBlockedReason = (channel: DesktopUpdateChannel): Option.Option<string> =>
+    channel === "nightly" && !policy.allowNightly
+      ? Option.some(
+          `${policy.message ?? "Nightly updates are turned off on this machine."} Switch to the stable channel to keep getting updates.`,
+        )
+      : Option.none();
 
   const resolveStateDisabledReason = (channel: DesktopUpdateChannel) =>
-    Effect.all([resolveDisabledReason, resolveLocale]).pipe(
-      Effect.map(([disabledReason, locale]) =>
-        Option.orElse(disabledReason, () => channelBlockedReason(channel, locale)),
-      ),
-    );
+    resolveDisabledReason.pipe(Effect.map(Option.orElse(() => channelBlockedReason(channel))));
 
   const activeUpdateAction = Ref.get(activeUpdateActionRef);
 
@@ -678,12 +604,8 @@ export const make = Effect.gen(function* () {
             "desktop.updates.handleCheckForUpdatesFailure",
           )(function* (error) {
             const failedAt = yield* currentIsoTimestamp;
-            const locale = yield* resolveLocale;
-            const userMessage = isZhCn(locale)
-              ? "无法连接更新服务器检查新版本，请检查网络后重试。"
-              : error.message;
             yield* updateState((current) =>
-              reduceDesktopUpdateStateOnCheckFailure(current, userMessage, failedAt),
+              reduceDesktopUpdateStateOnCheckFailure(current, error.message, failedAt),
             );
             yield* logUpdaterError(error.message, {
               errorTag: error._tag,
@@ -766,12 +688,8 @@ export const make = Effect.gen(function* () {
         ElectronUpdaterDownloadUpdateError: Effect.fn("desktop.updates.handleDownloadFailure")(
           function* (error) {
             const cause = describeUpdateErrorCause(error.cause);
-            const locale = yield* resolveLocale;
-            const userMessage = isZhCn(locale)
-              ? `下载更新包失败，请检查网络连接后重试。（${cause}）`
-              : `${error.message} ${cause}`;
             yield* updateState((current) =>
-              reduceDesktopUpdateStateOnDownloadFailure(current, userMessage),
+              reduceDesktopUpdateStateOnDownloadFailure(current, `${error.message} ${cause}`),
             );
             yield* logUpdaterError(error.message, {
               errorTag: error._tag,
@@ -787,27 +705,23 @@ export const make = Effect.gen(function* () {
           Effect.asVoid,
         ),
       ),
-      Effect.catchCauseIf(
-        (cause) => !Cause.hasInterruptsOnly(cause),
-        (cause) =>
-          Effect.gen(function* () {
-            const locale = yield* resolveLocale;
-            const error = new DesktopUpdateUnexpectedActionError({
-              action: "download",
-              cause,
-              ...withDesktopLocale(locale),
-            });
-            yield* updateState((current) =>
-              reduceDesktopUpdateStateOnDownloadFailure(current, error.message),
-            );
-            yield* logUpdaterError(error.message, {
-              errorTag: error._tag,
-              cause: describeUpdateErrorCause(error.cause),
-              action: error.action,
-            });
-            return { accepted: true, completed: false };
-          }),
-      ),
+      Effect.catchCause((cause) => {
+        if (Cause.hasInterruptsOnly(cause)) {
+          return Effect.failCause(cause);
+        }
+        const error = new DesktopUpdateUnexpectedActionError({ action: "download", cause });
+        return Effect.gen(function* () {
+          yield* updateState((current) =>
+            reduceDesktopUpdateStateOnDownloadFailure(current, error.message),
+          );
+          yield* logUpdaterError(error.message, {
+            errorTag: error._tag,
+            cause: describeUpdateErrorCause(error.cause),
+            action: error.action,
+          });
+          return { accepted: true, completed: false };
+        });
+      }),
       Effect.ensuring(finishUpdateAction("download")),
     );
   });
@@ -887,17 +801,13 @@ export const make = Effect.gen(function* () {
     ),
   );
 
-  const baseUpdateState = (
-    channel: DesktopUpdateChannel,
-    disabledReason: Option.Option<string>,
-    locale: ResolvedAppLocale,
-  ) =>
+  const baseUpdateState = (channel: DesktopUpdateChannel, disabledReason: Option.Option<string>) =>
     Ref.get(notAppliedVersionRef).pipe(
       Effect.map((notAppliedVersion) => ({
         ...createBaseUpdateState(channel, disabledReason, environment),
         // Callers fall back to the channel's reason only when nothing else turns updates off.
         ...(Option.isSome(disabledReason) &&
-        disabledReason.value === Option.getOrUndefined(channelBlockedReason(channel, locale))
+        disabledReason.value === Option.getOrUndefined(channelBlockedReason(channel))
           ? { channelBlockedByPolicy: true as const }
           : {}),
         ...Option.match(notAppliedVersion, {
@@ -1026,11 +936,7 @@ export const make = Effect.gen(function* () {
           Effect.catchTags({
             ElectronUpdaterQuitAndInstallError: Effect.fn("desktop.updates.handleInstallFailure")(
               function* (error) {
-                const locale = yield* resolveLocale;
-                const userMessage = isZhCn(locale)
-                  ? "无法退出并安装更新，请关闭软件后重新打开再试。"
-                  : error.message;
-                yield* recoverFailedInstall(userMessage);
+                yield* recoverFailedInstall(error.message);
                 yield* logUpdaterError(error.message, {
                   errorTag: error._tag,
                   cause: describeUpdateErrorCause(error.cause),
@@ -1048,12 +954,7 @@ export const make = Effect.gen(function* () {
               if (Cause.hasInterruptsOnly(cause)) {
                 return yield* Effect.failCause(cause);
               }
-              const locale = yield* resolveLocale;
-              const error = new DesktopUpdateUnexpectedActionError({
-                action: "install",
-                cause,
-                ...withDesktopLocale(locale),
-              });
+              const error = new DesktopUpdateUnexpectedActionError({ action: "install", cause });
               yield* recoverFailedInstall(error.message);
               yield* logUpdaterError(error.message, {
                 errorTag: error._tag,
@@ -1225,14 +1126,12 @@ export const make = Effect.gen(function* () {
     cause: unknown,
   ) {
     const activeAction = yield* activeUpdateAction;
-    const locale = yield* resolveLocale;
     const error = new DesktopUpdaterReportedError({
       operation: Option.match(activeAction, {
         onNone: () => "background" as const,
         onSome: (action) => (action === "install-recovery" ? "install" : action),
       }),
       cause,
-      ...withDesktopLocale(locale),
     });
     if (Option.isSome(activeAction) && activeAction.value === "install") {
       yield* recoverFailedInstall(error.message);
@@ -1387,15 +1286,13 @@ export const make = Effect.gen(function* () {
       }
 
       const settings = yield* desktopSettings.get;
-      const locale = yield* resolveLocale;
       const disabledReason = yield* resolveDisabledReason;
       // A blocked nightly channel still lets the user switch back to stable, so it stays updatable.
       yield* Ref.set(desktopState.canInstallUpdates, Option.isNone(disabledReason));
       yield* setState(
         yield* baseUpdateState(
           settings.updateChannel,
-          Option.orElse(disabledReason, () => channelBlockedReason(settings.updateChannel, locale)),
-          locale,
+          Option.orElse(disabledReason, () => channelBlockedReason(settings.updateChannel)),
         ),
       );
       if (Option.isSome(disabledReason)) {
@@ -1446,20 +1343,10 @@ export const make = Effect.gen(function* () {
       options?: { readonly minimumVersion?: string | undefined },
     ) {
       yield* Effect.annotateCurrentSpan({ channel: nextChannel });
-      const locale = yield* resolveLocale;
-      if (Option.isSome(channelBlockedReason(nextChannel, locale))) {
-        const localizedPolicy = DesktopUpdatePolicy.localizeManagedUpdatePolicyMessage(
-          policy.message,
-          locale,
-        );
+      if (Option.isSome(channelBlockedReason(nextChannel))) {
         return yield* new DesktopUpdateChannelManagedError({
           channel: nextChannel,
-          policyMessage:
-            localizedPolicy ??
-            (isZhCn(locale)
-              ? "T3 Code 的更新由你所在机构的管理员统一管理。"
-              : "Your administrator manages T3 Code updates."),
-          ...withDesktopLocale(locale),
+          policyMessage: policy.message ?? "Your administrator manages T3 Code updates.",
         });
       }
       // A background check holds the updater only briefly, so wait it out instead of refusing.
@@ -1474,7 +1361,6 @@ export const make = Effect.gen(function* () {
         return yield* new DesktopUpdateActionInProgressError({
           action: activeAction.value === "install-recovery" ? "install" : activeAction.value,
           requestedChannel: nextChannel,
-          ...withDesktopLocale(locale),
         });
       }
 
@@ -1498,17 +1384,12 @@ export const make = Effect.gen(function* () {
         yield* desktopSettings.setUpdateChannel(nextChannel).pipe(
           Effect.onError(() => Ref.set(releaseFloorRef, previousFloor)),
           Effect.mapError(
-            (cause) =>
-              new DesktopUpdateChannelPersistenceError({
-                channel: nextChannel,
-                cause,
-                ...withDesktopLocale(locale),
-              }),
+            (cause) => new DesktopUpdateChannelPersistenceError({ channel: nextChannel, cause }),
           ),
         );
 
         const disabledReason = yield* resolveDisabledReason;
-        yield* setState(yield* baseUpdateState(nextChannel, disabledReason, locale));
+        yield* setState(yield* baseUpdateState(nextChannel, disabledReason));
 
         if (Option.isSome(disabledReason) || !(yield* Ref.get(updaterConfiguredRef))) {
           return yield* Ref.get(updateStateRef);

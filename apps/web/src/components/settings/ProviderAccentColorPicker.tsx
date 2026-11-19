@@ -1,4 +1,4 @@
-import { translateWebSource } from "~/i18n/messages";
+import { T, useGT } from "gt-react";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useRef, useState, type PointerEvent } from "react";
 
@@ -8,7 +8,6 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Popover, PopoverClose, PopoverPopup, PopoverTrigger } from "../ui/popover";
 import { normalizeProviderAccentColor } from "../../providerInstances";
-import { useI18n } from "../../i18n/WebI18nContext";
 
 const FALLBACK_ACCENT_COLOR = "#2563eb";
 
@@ -18,7 +17,7 @@ function ProviderCustomColorPanel(props: {
   readonly onCommit: (value: string) => void;
   readonly showAddButton: boolean;
 }) {
-  const { locale: translationLocale, t } = useI18n();
+  const gt = useGT();
   const { onCommit, onPreview } = props;
   const [hsv, setHsv] = useState(() => hexToHsv(props.value));
   const currentColor = hsvToHex(hsv.h, hsv.s, hsv.v);
@@ -60,7 +59,7 @@ function ProviderCustomColorPanel(props: {
     <div className="w-56 bg-popover">
       <div onPointerDownCapture={startDrag}>
         <ColorSaturationValuePlane
-          label={translateWebSource(translationLocale, "Accent color")}
+          label={gt("Accent color")}
           value={hsv}
           onChange={changeHsv}
           onInteractionEnd={endDrag}
@@ -70,7 +69,7 @@ function ProviderCustomColorPanel(props: {
       <div className="grid gap-3 p-3">
         <div onPointerDownCapture={startDrag}>
           <ColorHueSlider
-            label={translateWebSource(translationLocale, "Accent color hue")}
+            label={gt("Accent color hue")}
             value={hsv.h}
             onChange={(h) => changeHsv({ ...hsv, h })}
             onInteractionEnd={endDrag}
@@ -89,14 +88,14 @@ function ProviderCustomColorPanel(props: {
           }}
           onBlur={() => setHexDraft(null)}
           font="mono"
-          aria-label={t("providers.accent.customHex")}
+          aria-label={gt("Custom hex accent color")}
           spellCheck={false}
         />
         {props.showAddButton ? (
           <PopoverClose
             render={
               <Button type="button" size="compact" onClick={() => onCommit(currentColor)}>
-                {translateWebSource(translationLocale, "Add color")}
+                <T>Add color</T>
               </Button>
             }
           />
@@ -114,9 +113,8 @@ function ProviderCustomColorPicker(props: {
   readonly onClear: () => void;
   readonly onClose: () => void;
 }) {
-  const { locale: translationLocale, t } = useI18n();
+  const gt = useGT();
   const normalized = normalizeProviderAccentColor(props.value);
-
   return (
     <Popover
       onOpenChange={(open) => {
@@ -130,13 +128,15 @@ function ProviderCustomColorPicker(props: {
             size="icon-sm"
             variant="ghost-muted"
             style={normalized ? { backgroundColor: normalized } : undefined}
-            aria-label={t(normalized ? "providers.accent.changeFor" : "providers.accent.addFor", {
-              provider: props.displayName,
-            })}
+            aria-label={
+              normalized
+                ? gt("Change accent color for {provider}", { provider: props.displayName })
+                : gt("Add accent color for {provider}", { provider: props.displayName })
+            }
           >
             {normalized ? (
               <span className="sr-only">
-                {translateWebSource(translationLocale, "Change accent color")}
+                <T>Change accent color</T>
               </span>
             ) : (
               <PlusIcon aria-hidden />
@@ -163,7 +163,7 @@ function ProviderCustomColorPicker(props: {
                   onClick={props.onClear}
                 >
                   <XIcon className="size-3.5" aria-hidden />
-                  {t("providers.accent.clear")}
+                  <T>Clear color</T>
                 </Button>
               }
             />
@@ -181,7 +181,6 @@ export function ProviderAccentColorPicker(props: {
   readonly description?: string;
   readonly layout?: "stacked" | "inline";
 }) {
-  const { t } = useI18n();
   const { description, displayName, layout = "stacked", onCommit } = props;
   const value = props.value ?? "";
   // The draft shows a dragged or just-committed color only while `value` is
@@ -228,7 +227,9 @@ export function ProviderAccentColorPicker(props: {
 
   return (
     <div className="grid gap-2">
-      <span className="text-xs font-medium text-foreground">{t("providers.accent.label")}</span>
+      <span className="text-xs font-medium text-foreground">
+        <T>Accent color</T>
+      </span>
       {picker}
       {description ? <span className="text-xs text-muted-foreground">{description}</span> : null}
     </div>

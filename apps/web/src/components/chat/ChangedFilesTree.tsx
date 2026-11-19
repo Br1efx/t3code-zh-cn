@@ -1,8 +1,7 @@
-import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { useSyncLayout } from "@legendapp/list/react";
 import { type OrchestrationV2CheckpointFileTotals, type RunId } from "@t3tools/contracts";
+import { T, useGT } from "gt-react";
 import { type MouseEvent, type ReactNode, memo, useLayoutEffect, useRef, useState } from "react";
-import { useI18n } from "../../i18n/WebI18nContext";
 import { type TurnDiffFileChange } from "../../types";
 import { buildTurnDiffTree, type TurnDiffTreeNode } from "../../lib/turnDiffTree";
 import {
@@ -43,7 +42,6 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
   onOpenTurnDiff: (runId: RunId, filePath?: string) => void;
   onFileContextMenu?: ChangedFileContextMenuHandler | undefined;
 }) {
-  const { locale: i18nLocale, t } = useI18n();
   const {
     runId,
     files,
@@ -54,6 +52,7 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
     onOpenTurnDiff,
     onFileContextMenu,
   } = props;
+  const gt = useGT();
   const syncTimelineLayout = useSyncLayout();
   const hiddenFileCount = totals.count - files.length;
   const hasDirectories = files.some((file) => /[/\\]/.test(file.path));
@@ -69,9 +68,10 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
       >
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-foreground">
           <span>
-            {totals.count.toLocaleString()}
-            {localizeWebString(i18nLocale, " changed file")}
-            {totals.count === 1 ? "" : "s"}
+            {gt(
+              "{count, plural, one {{formattedCount} changed file} other {{formattedCount} changed files}}",
+              { count: totals.count, formattedCount: totals.count.toLocaleString() },
+            )}
           </span>
           {hasNonZeroStat(totals) && (
             <DiffStatLabel
@@ -92,9 +92,7 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
                     size="icon-xs"
                     variant="ghost-muted"
                     aria-label={
-                      allDirectoriesExpanded
-                        ? t("changedFiles.collapseAll")
-                        : t("changedFiles.expandAll")
+                      allDirectoriesExpanded ? gt("Collapse all folders") : gt("Expand all folders")
                     }
                     data-scroll-anchor-ignore
                     onClick={() => {
@@ -111,9 +109,7 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
                 )}
               </TooltipTrigger>
               <TooltipPopup side="top">
-                {allDirectoriesExpanded
-                  ? t("changedFiles.collapseAll")
-                  : t("changedFiles.expandAll")}
+                {allDirectoriesExpanded ? gt("Collapse all folders") : gt("Expand all folders")}
               </TooltipPopup>
             </Tooltip>
           )}
@@ -124,17 +120,19 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
                   type="button"
                   size="xs"
                   variant="ghost-muted"
-                  aria-label={t("changedFiles.openDiff")}
+                  aria-label={gt("Open diff")}
                   onClick={() => onOpenTurnDiff(runId, files[0]?.path)}
                 />
               }
             >
               <FileDiffIcon className="size-3" />
               <span className="hidden @[24rem]/changed-files:inline">
-                {t("changedFiles.openDiff")}
+                <T>Open diff</T>
               </span>
             </TooltipTrigger>
-            <TooltipPopup side="top">{t("changedFiles.openFullDiff")}</TooltipPopup>
+            <TooltipPopup side="top">
+              <T>Open the full diff</T>
+            </TooltipPopup>
           </Tooltip>
         </div>
       </div>
@@ -155,8 +153,10 @@ export const ChangedFilesCard = memo(function ChangedFilesCard(props: {
             variant="ghost-muted"
             onClick={() => onOpenTurnDiff(runId, files[0]?.path)}
           >
-            {hiddenFileCount.toLocaleString()} more file{hiddenFileCount === 1 ? "" : "s"} in the
-            full diff
+            {gt(
+              "{count, plural, one {{formattedCount} more file in the full diff} other {{formattedCount} more files in the full diff}}",
+              { count: hiddenFileCount, formattedCount: hiddenFileCount.toLocaleString() },
+            )}
           </Button>
         </div>
       )}

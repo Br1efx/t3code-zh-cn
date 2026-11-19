@@ -1,4 +1,3 @@
-import { DEFAULT_APP_LOCALE_PREFERENCE } from "@t3tools/contracts";
 import * as Context from "effect/Context";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -6,18 +5,16 @@ import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
 
 import * as Electron from "electron";
+import { msg } from "gt-i18n";
 
 import { makeComponentLogger } from "../app/DesktopObservability.ts";
 import * as ElectronApp from "../electron/ElectronApp.ts";
 import * as ElectronDialog from "../electron/ElectronDialog.ts";
 import * as ElectronMenu from "../electron/ElectronMenu.ts";
-import * as DesktopClientSettings from "../settings/DesktopClientSettings.ts";
 import * as DesktopEnvironment from "../app/DesktopEnvironment.ts";
+import { applyLanguage, m, onLocaleChange } from "../i18n/messages.ts";
+import * as DesktopClientSettings from "../settings/DesktopClientSettings.ts";
 import * as DesktopUpdates from "../updates/DesktopUpdates.ts";
-import {
-  resolveDesktopApplicationMenuMessages,
-  type DesktopApplicationMenuMessages,
-} from "./DesktopApplicationMenuMessages.ts";
 import * as DesktopWindow from "./DesktopWindow.ts";
 
 export class DesktopApplicationMenuActionError extends Schema.TaggedError<DesktopApplicationMenuActionError>()(
@@ -71,9 +68,7 @@ const runMainContentsCommand = Effect.fn("desktop.menu.runMainContentsCommand")(
   yield* desktopWindow.runMainContentsCommand(command);
 });
 
-const checkForUpdatesFromMenu = Effect.fn("desktop.menu.checkForUpdates")(function* (
-  messages: DesktopApplicationMenuMessages,
-) {
+const checkForUpdatesFromMenu = Effect.gen(function* () {
   const updates = yield* DesktopUpdates.DesktopUpdates;
   const electronDialog = yield* ElectronDialog.ElectronDialog;
   const result = yield* updates.check("menu");
@@ -82,17 +77,27 @@ const checkForUpdatesFromMenu = Effect.fn("desktop.menu.checkForUpdates")(functi
   if (updateState.status === "up-to-date") {
     yield* electronDialog.showMessageBox({
       type: "info",
-      title: messages.upToDateTitle,
-      message: messages.upToDateMessage(updateState.currentVersion),
-      buttons: [messages.ok],
+      title: m(msg("You're up to date!")),
+      message: m(msg("T3 Code {version} is currently the newest version available."), {
+        version: updateState.currentVersion,
+      }),
+      buttons: [m(msg("OK"))],
     });
   } else if (updateState.status === "available") {
     const { response } = yield* electronDialog.showMessageBox({
       type: "info",
-      title: messages.updateAvailableTitle,
-      message: messages.updateAvailableMessage(updateState.availableVersion),
-      detail: messages.updateAvailableDetail(updateState.currentVersion),
-      buttons: [messages.download, messages.later],
+      title: m(msg("Update available")),
+      message:
+        updateState.availableVersion === null
+          ? m(msg("A new version of T3 Code is available."))
+          : m(msg("T3 Code {version} is available."), { version: updateState.availableVersion }),
+      detail: m(msg("You're running T3 Code {version}."), {
+        version: updateState.currentVersion,
+      }),
+      buttons: [
+        m(msg("Download", { $context: "button, downloads an app update" })),
+        m(msg("Later")),
+      ],
       defaultId: 0,
       cancelId: 1,
     });
@@ -100,19 +105,26 @@ const checkForUpdatesFromMenu = Effect.fn("desktop.menu.checkForUpdates")(functi
   } else if (updateState.status === "downloading") {
     yield* electronDialog.showMessageBox({
       type: "info",
-      title: messages.updateDownloadingTitle,
-      message: messages.updateDownloadingMessage(updateState.availableVersion),
-      buttons: [messages.ok],
+      title: m(msg("Update downloading")),
+      message:
+        updateState.availableVersion === null
+          ? m(msg("A new version of T3 Code is already downloading."))
+          : m(msg("T3 Code {version} is already downloading."), {
+              version: updateState.availableVersion,
+            }),
+      buttons: [m(msg("OK"))],
     });
   } else if (updateState.status === "downloaded") {
+    const version = updateState.downloadedVersion ?? updateState.availableVersion;
     const { response } = yield* electronDialog.showMessageBox({
       type: "info",
-      title: messages.updateReadyTitle,
-      message: messages.updateReadyMessage(
-        updateState.downloadedVersion ?? updateState.availableVersion,
-      ),
-      detail: messages.updateReadyDetail,
-      buttons: [messages.restart, messages.later],
+      title: m(msg("Update ready")),
+      message:
+        version === null
+          ? m(msg("A new version of T3 Code is ready to install."))
+          : m(msg("T3 Code {version} is ready to install."), { version }),
+      detail: m(msg("T3 Code will restart to install it. Any running tasks will be interrupted.")),
+      buttons: [m(msg("Restart", { $context: "button, restarts the app" })), m(msg("Later"))],
       defaultId: 0,
       cancelId: 1,
     });
@@ -120,48 +132,47 @@ const checkForUpdatesFromMenu = Effect.fn("desktop.menu.checkForUpdates")(functi
   } else if (updateState.status === "error") {
     yield* electronDialog.showMessageBox({
       type: "warning",
-      title: messages.updateCheckFailedTitle,
-      message: messages.updateCheckFailedMessage,
-      detail: updateState.message ?? messages.unknownUpdateError,
-      buttons: [messages.ok],
+      title: m(msg("Update check failed")),
+      message: m(msg("Could not check for updates.")),
+      detail: updateState.message ?? m(msg("An unknown error occurred. Please try again later.")),
+      buttons: [m(msg("OK"))],
     });
   }
-});
+}).pipe(Effect.withSpan("desktop.menu.checkForUpdates"));
 
-const handleCheckForUpdatesMenuClick = Effect.fn("desktop.menu.handleCheckForUpdatesClick")(
-  function* (messages: DesktopApplicationMenuMessages) {
-    const updates = yield* DesktopUpdates.DesktopUpdates;
-    const electronDialog = yield* ElectronDialog.ElectronDialog;
-    const disabledReason = yield* updates.disabledReason;
-    if (Option.isSome(disabledReason)) {
-      yield* logUpdaterInfo("manual update check requested, but updates are disabled", {
-        disabledReason: disabledReason.value,
-      });
-      yield* electronDialog.showMessageBox({
-        type: "info",
-        title: messages.updatesUnavailableTitle,
-        message: messages.updatesUnavailableMessage,
-        detail: disabledReason.value,
-        buttons: [messages.ok],
-      });
-      return;
-    }
+const handleCheckForUpdatesMenuClick = Effect.gen(function* () {
+  const updates = yield* DesktopUpdates.DesktopUpdates;
+  const electronDialog = yield* ElectronDialog.ElectronDialog;
+  const disabledReason = yield* updates.disabledReason;
+  if (Option.isSome(disabledReason)) {
+    yield* logUpdaterInfo("manual update check requested, but updates are disabled", {
+      disabledReason: disabledReason.value,
+    });
+    yield* electronDialog.showMessageBox({
+      type: "info",
+      title: m(msg("Updates unavailable")),
+      message: m(msg("Automatic updates are not available right now.")),
+      detail: disabledReason.value,
+      buttons: [m(msg("OK"))],
+    });
+    return;
+  }
 
-    // Opening a window before backend confirmation can strand it on failed auth bootstrap.
-    const desktopWindow = yield* DesktopWindow.DesktopWindow;
-    yield* desktopWindow.activate;
-    yield* checkForUpdatesFromMenu(messages);
-  },
-);
+  // Opening a window before backend confirmation can strand it on failed auth bootstrap.
+  const desktopWindow = yield* DesktopWindow.DesktopWindow;
+  yield* desktopWindow.activate;
+  yield* checkForUpdatesFromMenu;
+}).pipe(Effect.withSpan("desktop.menu.handleCheckForUpdatesClick"));
 
 /** @public */
 export const make = Effect.gen(function* () {
   const electronMenu = yield* ElectronMenu.ElectronMenu;
   const environment = yield* DesktopEnvironment.DesktopEnvironment;
-  const clientSettings = yield* DesktopClientSettings.DesktopClientSettings;
   const electronApp = yield* ElectronApp.ElectronApp;
+  const clientSettings = yield* Effect.serviceOption(DesktopClientSettings.DesktopClientSettings);
   const context = yield* Effect.context<DesktopApplicationMenuRuntimeServices>();
   const runPromise = Effect.runPromiseWith(context);
+  const runFork = Effect.runForkWith(context);
 
   const runMenuEffect = <E>(
     action: string,
@@ -180,21 +191,8 @@ export const make = Effect.gen(function* () {
   };
 
   const configure = Effect.gen(function* () {
-    const settings = yield* clientSettings.get.pipe(
-      Effect.catch((error) =>
-        logMenuError("Could not read the desktop language setting.", { error }).pipe(
-          Effect.as(Option.none()),
-        ),
-      ),
-    );
-    const systemLocale = yield* electronApp.systemLocale;
-    const appLocale = Option.match(settings, {
-      onNone: () => DEFAULT_APP_LOCALE_PREFERENCE,
-      onSome: (value) => value.appLocale,
-    });
-    const messages = resolveDesktopApplicationMenuMessages(appLocale, [systemLocale]);
     const checkForUpdatesClick = () => {
-      runMenuEffect("check-for-updates", handleCheckForUpdatesMenuClick(messages));
+      runMenuEffect("check-for-updates", handleCheckForUpdatesMenuClick);
     };
     const settingsClick = () => {
       runMenuEffect("open-settings", dispatchMenuAction("open-settings"));
@@ -220,45 +218,48 @@ export const make = Effect.gen(function* () {
       template.push({
         label: environment.displayName,
         submenu: [
-          { role: "about", label: messages.about(environment.displayName) },
+          { role: "about", label: m(msg("About {appName}"), { appName: environment.displayName }) },
           {
-            label: messages.checkForUpdates,
+            label: m(msg("Check for Updates...")),
             click: checkForUpdatesClick,
           },
           { type: "separator" },
           {
-            label: messages.settings,
+            label: m(msg("Settings...")),
             accelerator: "CmdOrCtrl+,",
             click: settingsClick,
           },
           { type: "separator" },
-          { role: "services", label: messages.services },
+          { role: "services", label: m(msg("Services", { $context: "macOS app menu item" })) },
           { type: "separator" },
-          { role: "hide", label: messages.hide(environment.displayName) },
-          { role: "hideOthers", label: messages.hideOthers },
-          { role: "unhide", label: messages.showAll },
+          { role: "hide", label: m(msg("Hide {appName}"), { appName: environment.displayName }) },
+          { role: "hideOthers", label: m(msg("Hide Others")) },
+          {
+            role: "unhide",
+            label: m(msg("Show All", { $context: "macOS app menu item, shows hidden apps" })),
+          },
           { type: "separator" },
-          { role: "quit", label: messages.quit(environment.displayName) },
+          { role: "quit", label: m(msg("Quit {appName}"), { appName: environment.displayName }) },
         ],
       });
     }
 
     template.push(
       {
-        label: messages.file,
+        label: m(msg("File", { $context: "menu bar title" })),
         submenu: [
           ...(environment.platform === "darwin"
             ? []
             : [
                 {
-                  label: messages.settings,
+                  label: m(msg("Settings...")),
                   accelerator: "CmdOrCtrl+,",
                   click: settingsClick,
                 },
                 { type: "separator" as const },
               ]),
           {
-            label: messages.closeDeveloperTools,
+            label: m(msg("Close Developer Tools")),
             accelerator: "CmdOrCtrl+W",
             visible: false,
             click: () => {
@@ -270,35 +271,41 @@ export const make = Effect.gen(function* () {
           },
           // Cmd/Ctrl+W belongs to the renderer's tab close; it must never close the window.
           environment.platform === "darwin"
-            ? { label: messages.closeWindow, click: (_item, window) => window?.close() }
-            : { role: "quit", label: messages.quit(environment.displayName) },
+            ? { label: m(msg("Close Window")), click: (_item, window) => window?.close() }
+            : {
+                role: "quit",
+                label:
+                  environment.platform === "win32"
+                    ? m(msg("Exit", { $context: "File menu item, quits the app" }))
+                    : m(msg("Quit")),
+              },
         ],
       },
       {
-        label: messages.edit,
+        label: m(msg("Edit", { $context: "menu bar title" })),
         submenu: [
-          { role: "undo", label: messages.undo },
-          { role: "redo", label: messages.redo },
+          { role: "undo", label: m(msg("Undo", { $context: "Edit menu item" })) },
+          { role: "redo", label: m(msg("Redo", { $context: "Edit menu item" })) },
           { type: "separator" },
-          { role: "cut", label: messages.cut },
-          { role: "copy", label: messages.copy },
-          { role: "paste", label: messages.paste },
+          { role: "cut", label: m(msg("Cut", { $context: "Edit menu item" })) },
+          { role: "copy", label: m(msg("Copy", { $context: "Edit menu item" })) },
+          { role: "paste", label: m(msg("Paste", { $context: "Edit menu item" })) },
           {
-            label: messages.pasteAsText,
+            label: m(msg("Paste as Text")),
             accelerator: "CmdOrCtrl+Shift+V",
             click: pasteAsTextClick,
           },
-          { role: "delete", label: messages.delete },
+          { role: "delete", label: m(msg("Delete", { $context: "Edit menu item" })) },
           { type: "separator" },
-          { role: "selectAll", label: messages.selectAll },
+          { role: "selectAll", label: m(msg("Select All", { $context: "Edit menu item" })) },
           ...(environment.platform === "darwin"
             ? [
                 { type: "separator" as const },
                 {
-                  label: messages.speech,
+                  label: m(msg("Speech", { $context: "menu, text-to-speech" })),
                   submenu: [
-                    { role: "startSpeaking" as const, label: messages.startSpeaking },
-                    { role: "stopSpeaking" as const, label: messages.stopSpeaking },
+                    { role: "startSpeaking" as const, label: m(msg("Start Speaking")) },
+                    { role: "stopSpeaking" as const, label: m(msg("Stop Speaking")) },
                   ],
                 },
               ]
@@ -306,29 +313,29 @@ export const make = Effect.gen(function* () {
         ],
       },
       {
-        label: messages.view,
+        label: m(msg("View", { $context: "menu bar title" })),
         submenu: [
           /* Native reload/DevTools/zoom roles target focused guests; these commands must target the app. */
           {
-            label: messages.reload,
+            label: m(msg("Reload")),
             accelerator: "CmdOrCtrl+R",
             click: mainContentsClick("reload"),
           },
           {
-            label: messages.forceReload,
+            label: m(msg("Force Reload")),
             accelerator: "Shift+CmdOrCtrl+R",
             click: mainContentsClick("forceReload"),
           },
           {
-            label: messages.toggleDeveloperTools,
+            label: m(msg("Toggle Developer Tools")),
             accelerator: environment.platform === "darwin" ? "Alt+Command+I" : "Ctrl+Shift+I",
             click: mainContentsClick("toggleDevTools"),
           },
           { type: "separator" },
-          { label: messages.actualSize, accelerator: "CmdOrCtrl+0", click: zoomClick("reset") },
-          { label: messages.zoomIn, accelerator: "CmdOrCtrl+=", click: zoomClick("in") },
+          { label: m(msg("Actual Size")), accelerator: "CmdOrCtrl+0", click: zoomClick("reset") },
+          { label: m(msg("Zoom In")), accelerator: "CmdOrCtrl+=", click: zoomClick("in") },
           {
-            label: messages.zoomIn,
+            label: m(msg("Zoom In")),
             accelerator: "CmdOrCtrl+Plus",
             visible: false,
             click: zoomClick("in"),
@@ -336,58 +343,61 @@ export const make = Effect.gen(function* () {
           ...(environment.platform === "darwin"
             ? [
                 {
-                  label: messages.zoomIn,
+                  label: m(msg("Zoom In")),
                   accelerator: "CmdOrCtrl+Shift+=",
                   visible: false,
                   click: zoomClick("in"),
                 },
               ]
             : []),
-          { label: messages.zoomOut, accelerator: "CmdOrCtrl+-", click: zoomClick("out") },
+          { label: m(msg("Zoom Out")), accelerator: "CmdOrCtrl+-", click: zoomClick("out") },
           // Keypad codes do not match number-row accelerators.
           {
-            label: messages.actualSize,
+            label: m(msg("Actual Size")),
             accelerator: "CmdOrCtrl+num0",
             visible: false,
             click: zoomClick("reset"),
           },
           {
-            label: messages.zoomIn,
+            label: m(msg("Zoom In")),
             accelerator: "CmdOrCtrl+numadd",
             visible: false,
             click: zoomClick("in"),
           },
           {
-            label: messages.zoomOut,
+            label: m(msg("Zoom Out")),
             accelerator: "CmdOrCtrl+numsub",
             visible: false,
             click: zoomClick("out"),
           },
           { type: "separator" },
-          { role: "togglefullscreen", label: messages.toggleFullScreen },
+          { role: "togglefullscreen", label: m(msg("Toggle Full Screen")) },
         ],
       },
       {
         // Electron's default Window submenu adds a Ctrl+W close role off macOS.
         role: "windowMenu",
-        label: messages.window,
+        label: m(msg("Window", { $context: "menu bar title" })),
         submenu: [
-          { role: "minimize", label: messages.minimize },
-          { role: "zoom", label: messages.zoomWindow },
+          { role: "minimize", label: m(msg("Minimize", { $context: "Window menu item" })) },
+          {
+            role: "zoom",
+            label: m(msg("Zoom", { $context: "Window menu item, resizes the window" })),
+          },
           ...(environment.platform === "darwin"
             ? [
                 { type: "separator" as const },
-                { role: "front" as const, label: messages.bringAllToFront },
+                { role: "front" as const, label: m(msg("Bring All to Front")) },
               ]
             : []),
         ],
       },
       {
         role: "help",
-        label: messages.help,
+        label: m(msg("Help", { $context: "menu bar title" })),
         submenu: [
           {
-            label: messages.checkForUpdates,
+            label: m(msg("Check for Updates...")),
             click: checkForUpdatesClick,
           },
         ],
@@ -397,8 +407,29 @@ export const make = Effect.gen(function* () {
     yield* electronMenu.setApplicationMenu(template);
   }).pipe(Effect.withSpan("desktop.menu.configure"));
 
+  // Load the saved language before the first build so the menu never starts in English.
+  const applySavedLanguage = Effect.gen(function* () {
+    if (Option.isNone(clientSettings)) return;
+    const saved = yield* clientSettings.value.get.pipe(Effect.orElseSucceed(() => Option.none()));
+    if (Option.isSome(saved)) {
+      yield* applyLanguage(saved.value.language).pipe(
+        Effect.provideService(ElectronApp.ElectronApp, electronApp),
+      );
+    }
+  });
+
+  let rebuildsOnLocaleChange = false;
   return DesktopApplicationMenu.of({
-    configure,
+    configure: applySavedLanguage.pipe(
+      Effect.andThen(configure),
+      Effect.tap(() =>
+        Effect.sync(() => {
+          if (rebuildsOnLocaleChange) return;
+          rebuildsOnLocaleChange = true;
+          onLocaleChange(() => runFork(configure));
+        }),
+      ),
+    ),
   });
 });
 

@@ -1,5 +1,4 @@
-import { useI18n } from "~/i18n/WebI18nContext";
-import { translateWebSource } from "~/i18n/messages";
+import { T, useGT } from "gt-react";
 import { useState } from "react";
 import type { ProviderAuthMethod } from "@t3tools/contracts";
 import { RadioGroup, Radio } from "../ui/radio-group";
@@ -33,7 +32,7 @@ export function ChatGptAccountPicker({
   canRemove: boolean;
   error: string | null;
 }) {
-  const { locale: i18nLocale } = useI18n();
+  const gt = useGT();
   const profiles = methods.filter((method) => method.id.startsWith("chatgpt-profile:"));
   const [selection, setSelection] = useState<string | null>(null);
   const selectedMethodId =
@@ -51,14 +50,16 @@ export function ChatGptAccountPicker({
     >
       <DialogPopup>
         <DialogHeader>
-          <DialogTitle>Reconnect ChatGPT</DialogTitle>
+          <DialogTitle>
+            <T>Reconnect ChatGPT</T>
+          </DialogTitle>
           <DialogDescription>
-            On OpenAI, sign in with the account you choose here.
+            <T>On OpenAI, sign in with the account you choose here.</T>
           </DialogDescription>
         </DialogHeader>
         <div className="px-6 pb-6">
           <RadioGroup
-            aria-label={translateWebSource(i18nLocale, "ChatGPT account to connect")}
+            aria-label={gt("ChatGPT account to connect")}
             disabled={disabled}
             value={selectedMethodId}
             onValueChange={(value) => setSelection(value)}
@@ -75,7 +76,7 @@ export function ChatGptAccountPicker({
             <label className="flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-3 text-sm">
               <Radio value="chatgpt-change-account" />
               <span className="font-medium">
-                {translateWebSource(i18nLocale, "Use a different account")}
+                <T>Use a different account</T>
               </span>
             </label>
           </RadioGroup>
@@ -92,7 +93,7 @@ export function ChatGptAccountPicker({
               disabled={disabled || !canRemove}
               onClick={() => onRemove(selectedMethodId)}
             >
-              Remove connection
+              <T>Remove connection</T>
             </Button>
           ) : null}
           <ChatGptConnectionButton disabled={disabled} onClick={() => onSelect(selectedMethodId)} />

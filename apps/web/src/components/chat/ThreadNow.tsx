@@ -1,10 +1,9 @@
 import { RefreshCwIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
-import { useI18n } from "~/i18n/WebI18nContext";
-import { localizeWebChildren, localizeWebString } from "~/i18n/localizeWebChildren";
 import { threadSyncLabel, type ThreadSyncPhase } from "../../threadSync";
 import { cn } from "~/lib/utils";
+import { useMessages } from "gt-react";
 
 /** A line of thread state for the end of the timeline. */
 export interface ThreadNowItem {
@@ -32,9 +31,6 @@ function ThreadNowLine({
   /** Announces the line when it appears; only for something that needs the user. */
   readonly announce?: boolean;
 }) {
-  const { locale } = useI18n();
-  const localizedTitle = localizeWebChildren(locale, item.title);
-  const localizedDescription = localizeWebChildren(locale, item.description);
   return (
     <div
       role={announce ? "alert" : undefined}
@@ -45,12 +41,12 @@ function ThreadNowLine({
         {item.icon}
       </span>
       <span className="min-w-0 truncate">
-        {localizedTitle}
-        {localizedDescription ? (
+        {item.title}
+        {item.description ? (
           <>
             {" "}
             <span className="ms-0.5 text-muted-foreground/60 light:text-muted-foreground/80">
-              {localizedDescription}
+              {item.description}
             </span>
           </>
         ) : null}
@@ -63,11 +59,11 @@ function ThreadNowLine({
 }
 
 function ThreadSyncLine({ phase }: { readonly phase: ThreadSyncPhase }) {
-  const { locale } = useI18n();
+  const m = useMessages();
   return (
     <div className={lineClassName} role="status" data-composer-sync-status={phase}>
       <RefreshCwIcon aria-hidden />
-      <span className="truncate">{localizeWebString(locale, threadSyncLabel(phase))}</span>
+      <span className="truncate">{threadSyncLabel(phase, m)}</span>
     </div>
   );
 }

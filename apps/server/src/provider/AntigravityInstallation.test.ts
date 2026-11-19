@@ -1,10 +1,12 @@
 import * as NodeCrypto from "@effect/platform-node/NodeCrypto";
+import * as NodePath from "@effect/platform-node/NodePath";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import * as Layer from "effect/Layer";
 import { expect, it } from "@effect/vitest";
 import * as HostProcess from "@t3tools/shared/HostProcess";
 import * as Digest from "effect/crypto/Digest";
 import * as Deferred from "effect/Deferred";
+import type * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as Hex from "effect/encoding/Hex";
 import * as Exit from "effect/Exit";
@@ -136,8 +138,8 @@ interface HarnessOptions {
   readonly beforeManifest?: Effect.Effect<void>;
   readonly updateChecksEnabled?: Effect.Effect<boolean>;
   readonly autoUpdate?: boolean;
-  readonly autoUpdateInitialDelay?: AntigravityInstallation.AntigravityInstallationOptions["autoUpdateInitialDelay"];
-  readonly autoUpdateInterval?: AntigravityInstallation.AntigravityInstallationOptions["autoUpdateInterval"];
+  readonly autoUpdateInitialDelay?: Duration.Input;
+  readonly autoUpdateInterval?: Duration.Input;
 }
 
 const makeHarness = Effect.fn("test.makeAntigravityInstallation")(function* (
@@ -605,7 +607,7 @@ it.layer(Layer.mergeAll(NodeServices.layer, NodeCrypto.layer))("Antigravity inst
       expect(yield* fs.readFileString(selected.executablePath)).toBe(serverContents);
       expect(yield* fs.readFileString(selected.harnessPath!)).toBe(harnessContents);
       expect(yield* fs.readDirectory(path.join(installation.managedDirectory, "versions"))).toEqual(
-        expect.arrayContaining([previousReleaseId, (yield* releaseAsset()).sha256]),
+        [(yield* releaseAsset()).sha256],
       );
       expect(requests).toEqual([(yield* releaseAsset()).url]);
     }),
@@ -725,6 +727,63 @@ it.layer(Layer.mergeAll(NodeServices.layer, NodeCrypto.layer))("Antigravity inst
         expect(state.phase).toBe("failed");
         expect(state.message).toMatch(/4 KiB/);
         expect(requests).toEqual([]);
+      }),
+  );
+
+  it.effect.each(["downloaded", "existing", "concurrent"] as const)(
+    "reports a verification timeout for a %s runtime without changing the active release",
+    (source) =>
+      Effect.gen(function* () {
+        const fs = yield* FileSystem.FileSystem;
+        const path = yield* Path.Path;
+        const asset = yield* releaseAsset();
+        const entered = yield* Deferred.make<void>();
+        let verificationCount = 0;
+        const { installation, stagingReleased, requests, validations } = yield* makeHarness({
+          previous: true,
+          asset,
+          fileSystem: FileSystem.FileSystem.of({
+            ...fs,
+            rename: (from, to) =>
+              source === "concurrent" && path.basename(path.dirname(to)) === "versions"
+                ? writeRelease(path.dirname(path.dirname(to)), asset, false).pipe(
+                    Effect.provideService(FileSystem.FileSystem, fs),
+                    Effect.provideService(Path.Path, path),
+                    Effect.andThen(
+                      Effect.fail(
+                        PlatformError.systemError({
+                          _tag: "AlreadyExists",
+                          module: "FileSystem",
+                          method: "rename",
+                          pathOrDescriptor: to,
+                        }),
+                      ),
+                    ),
+                  )
+                : fs.rename(from, to),
+          }),
+          validate: () =>
+            Effect.suspend(() =>
+              source === "concurrent" && verificationCount++ === 0
+                ? Effect.void
+                : Deferred.succeed(entered, undefined).pipe(Effect.andThen(Effect.never)),
+            ),
+        });
+        if (source === "existing") {
+          yield* writeRelease(installation.managedDirectory, asset, false);
+        }
+        yield* installation.start;
+        yield* Deferred.await(entered);
+        yield* TestClock.adjust("90 seconds");
+        expect(yield* terminalState(installation)).toMatchObject({
+          phase: "failed",
+          message:
+            "Antigravity runtime verification timed out after 90 seconds. Check this environment's server logs for startup errors, then retry installation.",
+        });
+        if (source !== "existing") yield* Deferred.await(stagingReleased);
+        yield* expectPreviousRelease(installation);
+        expect(requests).toHaveLength(source === "existing" ? 0 : 1);
+        expect(validations).toHaveLength(source === "concurrent" ? 2 : 1);
       }),
   );
 
@@ -1019,8 +1078,11 @@ it.layer(Layer.mergeAll(NodeServices.layer, NodeCrypto.layer))("Antigravity inst
         const baseDir = yield* fs
           .makeTempDirectoryScoped({ prefix: "t3-agy-cli-test-" })
           .pipe(Effect.flatMap((directory) => fs.realPath(directory)));
-        const cliDirectory = path.join(baseDir, "cli");
+        const cliDirectory = path.join(baseDir, 'cli" ');
         yield* fs.makeDirectory(cliDirectory);
+        const siblingDirectory = path.join(baseDir, 'cli"');
+        yield* fs.makeDirectory(siblingDirectory);
+        yield* fs.writeFileString(path.join(siblingDirectory, "agy"), "other cli", { mode: 0o755 });
         const cli = path.join(cliDirectory, "antigravity");
         const alias = path.join(cliDirectory, "agy");
         const other = path.join(cliDirectory, "custom-acp");
@@ -1043,6 +1105,11 @@ it.layer(Layer.mergeAll(NodeServices.layer, NodeCrypto.layer))("Antigravity inst
           executablePath: alias,
           harnessPath: null,
         });
+        expect(yield* installation.resolve(undefined, { PATH: cliDirectory })).toMatchObject({
+          executablePath: alias,
+          harnessPath: null,
+          source: "path",
+        });
         expect(yield* installation.resolve(other).pipe(Effect.flip)).toMatchObject({
           operation: "resolve",
         });
@@ -1063,7 +1130,7 @@ it.layer(Layer.mergeAll(NodeServices.layer, NodeCrypto.layer))("Antigravity inst
           const windowsDirectory = path.join(baseDir, `windows-${name}`);
           yield* fs.makeDirectory(windowsDirectory);
           yield* fs.writeFileString(path.join(windowsDirectory, name), "cli");
-          const selected = yield* windows.resolve("agy", { PATH: windowsDirectory });
+          const selected = yield* windows.resolve("agy", { PATH: `"${windowsDirectory}"` });
           expect(selected.harnessPath).toBeNull();
           expect((yield* fs.realPath(selected.executablePath)).toLowerCase()).toBe(
             (yield* fs.realPath(path.join(windowsDirectory, name))).toLowerCase(),
@@ -1158,11 +1225,134 @@ it.layer(Layer.mergeAll(NodeServices.layer, NodeCrypto.layer))("Antigravity inst
       }),
   );
 
+  it.effect("pairs a Windows launcher script with the helper beside the executable it runs", () =>
+    Effect.gen(function* () {
+      const fs = yield* FileSystem.FileSystem;
+      const path = yield* Path.Path;
+      const baseDir = yield* fs
+        .makeTempDirectoryScoped({ prefix: "t3-agy-launcher-$$-test-" })
+        .pipe(Effect.flatMap((directory) => fs.realPath(directory)));
+      const runtimeDirectory = path.join(baseDir, "runtime (x64)");
+      const launcherDirectory = path.join(baseDir, "launchers");
+      const runtimeExecutable = path.join(runtimeDirectory, "agy_acp_server.exe");
+      const runtimeHarness = path.join(runtimeDirectory, "localharness_external.exe");
+      yield* fs.makeDirectory(runtimeDirectory);
+      yield* fs.makeDirectory(launcherDirectory);
+      yield* fs.writeFileString(runtimeExecutable, "external server");
+      yield* fs.writeFileString(runtimeHarness, "external harness");
+      const { installation } = yield* makeHarness({ baseDir, platform: "win32", previous: true });
+      const writeLauncher = Effect.fn("test.writeAntigravityLauncher")(function* (
+        name: string,
+        launch: string,
+      ) {
+        const launcher = path.join(launcherDirectory, name);
+        yield* fs.writeFileString(
+          launcher,
+          `@echo off\r\nrem Runtime launcher\r\n:: Keep environment setup\r\nset AGY_EXTRA=1\r\n${launch} %*\r\nexit /b\r\n`,
+        );
+        return launcher;
+      });
+
+      const absolute = yield* writeLauncher("agy.cmd", `"${runtimeExecutable}"`);
+      expect(yield* installation.resolve(absolute)).toMatchObject({
+        executablePath: absolute,
+        harnessPath: runtimeHarness,
+        source: "override",
+        managedVersionDirectory: null,
+      });
+      const quoted = yield* writeLauncher(
+        "quoted.cmd",
+        `set "PATH=C:\\Program Files (x86)\\SDK;%PATH%"\r\n"${runtimeExecutable}"`,
+      );
+      expect(yield* installation.resolve(quoted)).toMatchObject({
+        executablePath: quoted,
+        harnessPath: runtimeHarness,
+      });
+      const relative = yield* writeLauncher(
+        "relative.BAT",
+        `"%~dp0../runtime (x64)/agy_acp_server.exe"`,
+      );
+      expect(yield* installation.resolve(relative)).toMatchObject({
+        executablePath: relative,
+        harnessPath: runtimeHarness,
+      });
+
+      const managed = yield* installation.resolve();
+      const intoManaged = yield* writeLauncher("managed.cmd", `"${managed.executablePath}"`);
+      expect(yield* installation.resolve(intoManaged)).toMatchObject({
+        executablePath: intoManaged,
+        harnessPath: managed.harnessPath,
+        version: previousVersion,
+        managedVersionDirectory: managed.managedVersionDirectory,
+      });
+      expect(yield* installation.remove([intoManaged]).pipe(Effect.flip)).toMatchObject({
+        operation: "remove",
+      });
+
+      const ambiguous = yield* writeLauncher(
+        "ambiguous.cmd",
+        `"${managed.executablePath}" --version\r\n"${runtimeExecutable}"`,
+      );
+      expect(yield* installation.resolve(ambiguous).pipe(Effect.flip)).toMatchObject({
+        operation: "resolve",
+      });
+
+      for (const [name, launch] of [
+        ["comment.cmd", `rem Previous runtime: "${runtimeExecutable}"\r\n"%AGY_TARGET%"`],
+        ["label-comment.cmd", `:: "${runtimeExecutable}"\r\n"%AGY_TARGET%"`],
+        ["echo.cmd", `echo "${runtimeExecutable}"`],
+        [
+          "conditional.cmd",
+          `if defined AGY_TARGET "%AGY_TARGET%" %* & exit /b\r\n"${runtimeExecutable}"`,
+        ],
+        ["early-exit.cmd", `exit /b\r\n"${runtimeExecutable}"`],
+        ["continued-set.cmd", `set IGNORED=1^\r\n"${runtimeExecutable}"`],
+        [
+          "chained-comment.cmd",
+          `rem setup & "${managed.executablePath}"\r\n"${runtimeExecutable}"`,
+        ],
+        ["chained.cmd", `"${runtimeExecutable}" --version && "%AGY_TARGET%"`],
+        ["unquoted-parens.cmd", `set PATH=C:\\Program Files (x86)\\SDK\r\n"${runtimeExecutable}"`],
+        [
+          "quoted-chained.cmd",
+          `set "PATH=C:\\Program Files (x86)" & "${managed.executablePath}"\r\n"${runtimeExecutable}"`,
+        ],
+        ["quoted-redirect.cmd", `set "AGY_MODE=1" > nul\r\n"${runtimeExecutable}"`],
+        ["quoted-block.cmd", `(set "AGY_MODE=1")\r\n"${runtimeExecutable}"`],
+        ["quoted-expansion.cmd", `set Q="\r\nset "X=%Q%&exit /b&rem ()"\r\n"${runtimeExecutable}"`],
+      ] as const) {
+        const uncertain = yield* writeLauncher(name, launch);
+        expect(yield* installation.resolve(uncertain).pipe(Effect.flip)).toMatchObject({
+          operation: "resolve",
+        });
+      }
+
+      const win32 = yield* Path.Path.pipe(Effect.provide(NodePath.layerWin32));
+      const serverOnC: Path.Path = {
+        ...win32,
+        resolve: (...segments) => win32.resolve("C:\\t3", ...segments),
+      };
+      const launcherOnD = "D:\\launchers\\agy.cmd";
+      for (const [written, expected] of [
+        ["\\runtime\\agy_acp_server.exe", null],
+        ["C:runtime\\agy_acp_server.exe", null],
+        ["%~dp0runtime\\agy_acp_server.exe", "D:\\launchers\\runtime\\agy_acp_server.exe"],
+        ["\\\\server\\share\\agy_acp_server.exe", "\\\\server\\share\\agy_acp_server.exe"],
+        ["D:/runtime/agy_acp_server.exe", "D:\\runtime\\agy_acp_server.exe"],
+        ["//server/share/agy_acp_server.exe", "\\\\server\\share\\agy_acp_server.exe"],
+      ] as const) {
+        expect(AntigravityInstallation.launcherTargetPath(serverOnC, launcherOnD, written)).toBe(
+          expected,
+        );
+      }
+    }),
+  );
+
   it.effect("keeps leased releases available while new sessions resolve the new release", () =>
     Effect.gen(function* () {
       const manifestEntered = yield* Deferred.make<void>();
       const releaseManifest = yield* Deferred.make<void>();
-      const { installation, fs, stagingReleased } = yield* makeHarness({
+      const { installation, fs, baseDir, stagingReleased } = yield* makeHarness({
         native: true,
         platform: "win32",
         archive: Buffer.from(serverContents),
@@ -1187,6 +1377,9 @@ it.layer(Layer.mergeAll(NodeServices.layer, NodeCrypto.layer))("Antigravity inst
       expect(yield* fs.readFileString(oldExecutable.executablePath)).toBe(serverContents);
       expect(yield* installation.remove().pipe(Effect.flip)).toMatchObject({ operation: "remove" });
       yield* Scope.close(processScope, Exit.void);
+      yield* makeHarness({ native: true, platform: "win32", baseDir });
+      expect(yield* fs.exists(oldExecutable.managedVersionDirectory!)).toBe(false);
+      expect(yield* fs.readFileString(current.executablePath)).toBe(serverContents);
       yield* installation.remove();
       expect(yield* fs.exists(installation.managedDirectory)).toBe(false);
     }),
@@ -1318,6 +1511,55 @@ it.layer(Layer.mergeAll(NodeServices.layer, NodeCrypto.layer))("Antigravity inst
       }),
   );
 
+  it.effect("publishes a Windows release once a transient EPERM on the release rename clears", () =>
+    Effect.gen(function* () {
+      const fs = yield* FileSystem.FileSystem;
+      const path = yield* Path.Path;
+      const archive = Buffer.from(zipFixtures.windows, "base64");
+      const releaseRenameDenied = yield* Deferred.make<void>();
+      let releaseRenameDenials = 3;
+      const { installation } = yield* makeHarness({
+        platform: "win32",
+        archive,
+        fileSystem: FileSystem.FileSystem.of({
+          ...fs,
+          rename: (source, target) =>
+            Effect.suspend(() => {
+              if (
+                path.basename(path.dirname(target)) !== "versions" ||
+                releaseRenameDenials === 0
+              ) {
+                return fs.rename(source, target);
+              }
+              releaseRenameDenials -= 1;
+              return Deferred.succeed(releaseRenameDenied, undefined).pipe(
+                Effect.andThen(
+                  Effect.fail(
+                    PlatformError.systemError({
+                      _tag: "Unknown",
+                      module: "FileSystem",
+                      method: "rename",
+                      pathOrDescriptor: source,
+                      description: "EPERM: operation not permitted, rename",
+                    }),
+                  ),
+                ),
+              );
+            }),
+        }),
+      });
+      yield* installation.start;
+      const terminal = yield* terminalState(installation).pipe(Effect.forkChild);
+      yield* Deferred.await(releaseRenameDenied);
+      yield* TestClock.adjust("30 seconds");
+      expect(yield* Fiber.join(terminal)).toMatchObject({
+        phase: "succeeded",
+        installedVersion: "fixture-new",
+      });
+      expect((yield* installation.resolve()).version).toBe("fixture-new");
+    }),
+  );
+
   it.effect("reports unsupported hosts without downloading or changing state", () =>
     Effect.gen(function* () {
       const { installation, requests } = yield* makeHarness({ asset: null, platform: "darwin" });
@@ -1327,40 +1569,6 @@ it.layer(Layer.mergeAll(NodeServices.layer, NodeCrypto.layer))("Antigravity inst
       });
       expect(yield* installation.state).toMatchObject({ phase: "idle", operationId: null });
       expect(requests).toEqual([]);
-    }),
-  );
-
-  it.effect("resolves the native agy CLI from PATH when no managed runtime is installed", () =>
-    Effect.gen(function* () {
-      const { installation, fs, path, baseDir } = yield* makeHarness({});
-      const cliDirectory = path.join(baseDir, "agy-cli");
-      yield* fs.makeDirectory(cliDirectory);
-      const cliName = hostPlatform === "win32" ? "agy.exe" : "agy";
-      const cliPath = path.join(cliDirectory, cliName);
-      yield* fs.writeFileString(cliPath, "native cli", { mode: 0o755 });
-      const resolved = yield* installation.resolve(undefined, { PATH: cliDirectory });
-      expect(resolved).toMatchObject({
-        source: "path",
-        harnessPath: null,
-      });
-      expect(
-        hostPlatform === "win32" ? resolved.executablePath.toLowerCase() : resolved.executablePath,
-      ).toBe(hostPlatform === "win32" ? cliPath.toLowerCase() : cliPath);
-    }),
-  );
-
-  it.effect("reports a clear error when runtime validation times out", () =>
-    Effect.gen(function* () {
-      const entered = yield* Deferred.make<void>();
-      const { installation } = yield* makeHarness({
-        validate: () => Deferred.succeed(entered, undefined).pipe(Effect.andThen(Effect.never)),
-      });
-      yield* installation.start;
-      yield* Deferred.await(entered);
-      yield* TestClock.adjust("91 seconds");
-      const state = yield* terminalState(installation);
-      expect(state.phase).toBe("failed");
-      expect(state.message).toMatch(/timed out after 90 seconds/i);
     }),
   );
 

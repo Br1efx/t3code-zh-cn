@@ -1,5 +1,4 @@
-import { useI18n } from "~/i18n/WebI18nContext";
-import { translateWebSource } from "~/i18n/messages";
+import { T } from "gt-react";
 import { useState } from "react";
 
 import {
@@ -63,7 +62,6 @@ function RevokeConnectDeviceDialogPopup({
   readonly onClose: () => void;
   readonly requireApproval: () => Promise<boolean>;
 }) {
-  const { locale: i18nLocale } = useI18n();
   const [turnOnApproval, setTurnOnApproval] = useState(true);
   const [busy, setBusy] = useState(false);
 
@@ -83,8 +81,10 @@ function RevokeConnectDeviceDialogPopup({
       <AlertDialogHeader>
         <AlertDialogTitle>{request.title}</AlertDialogTitle>
         <AlertDialogDescription>
-          Approval for new devices is off, so a revoked device signed in to your T3 Connect account
-          can connect again on its own.
+          <T>
+            Approval for new devices is off, so a revoked device signed in to your T3 Connect
+            account can connect again on its own.
+          </T>
         </AlertDialogDescription>
         <label className="mt-2 flex cursor-pointer items-start gap-3">
           <Checkbox
@@ -95,24 +95,21 @@ function RevokeConnectDeviceDialogPopup({
           />
           <span className="min-w-0">
             <span className="block text-sm font-medium text-foreground">
-              {translateWebSource(i18nLocale, "Require approval for new devices")}
+              <T>Require approval for new devices</T>
             </span>
             <span className="block text-xs text-muted-foreground">
-              {translateWebSource(
-                i18nLocale,
-                "The device has to be approved here before it can connect again.",
-              )}
+              <T>The device has to be approved here before it can connect again.</T>
             </span>
           </span>
         </label>
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogClose disabled={busy} render={<Button variant="outline" disabled={busy} />}>
-          {translateWebSource(i18nLocale, "Cancel")}
+          <T>Cancel</T>
         </AlertDialogClose>
         <Button variant="destructive" disabled={busy} onClick={() => void confirm()}>
           {busy && <Spinner size="sm" />}
-          Revoke
+          <T>Revoke</T>
         </Button>
       </AlertDialogFooter>
     </AlertDialogPopup>

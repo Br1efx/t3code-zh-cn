@@ -2,8 +2,6 @@ import { Field as FieldPrimitive } from "@base-ui/react/field";
 import { mergeProps } from "@base-ui/react/merge-props";
 import type * as React from "react";
 
-import { localizeOptionalWebAttr } from "~/i18n/localizeWebChildren";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 
 type TextareaProps = React.ComponentProps<"textarea"> & {
@@ -18,16 +16,6 @@ function Textarea({
   rows,
   ...props
 }: TextareaProps) {
-  const { locale } = useI18n();
-  const localizedProps =
-    locale === "en"
-      ? props
-      : {
-          ...props,
-          placeholder: localizeOptionalWebAttr(locale, props.placeholder),
-          "aria-label": localizeOptionalWebAttr(locale, props["aria-label"]),
-          title: localizeOptionalWebAttr(locale, props.title),
-        };
   return (
     <span
       className={
@@ -61,7 +49,7 @@ function Textarea({
             }
             data-slot="textarea"
             rows={rows}
-            {...mergeProps(defaultProps, localizedProps)}
+            {...mergeProps(defaultProps, props)}
           />
         )}
       />

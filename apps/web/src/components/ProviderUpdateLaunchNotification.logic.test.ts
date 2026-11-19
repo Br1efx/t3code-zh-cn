@@ -1,4 +1,3 @@
-import type { ProviderUpdateRunTranslate } from "./ProviderUpdateLaunchNotification.logic";
 import { describe, expect, it } from "vite-plus/test";
 import {
   EnvironmentId,
@@ -8,7 +7,6 @@ import {
 } from "@t3tools/contracts";
 import * as Cause from "effect/Cause";
 import { AsyncResult } from "effect/reactivity";
-import { translateWebMessage } from "../i18n/messages";
 
 import {
   canOneClickUpdateProviderCandidate,
@@ -298,8 +296,6 @@ it("does not offer incompatible latest versions and restores suggestions after p
 });
 
 describe("getProviderUpdateRunToastView", () => {
-  const translateChinese: ProviderUpdateRunTranslate = (key, values) =>
-    translateWebMessage("zh-CN", key, values);
   const updateState = (
     status: "succeeded" | "failed",
     message: string,
@@ -320,18 +316,6 @@ describe("getProviderUpdateRunToastView", () => {
     driver: driver(providerDriver),
     instanceId: instanceId(providerDriver),
     result,
-  });
-
-  it("localizes a failed update while preserving the machine, provider and error", () => {
-    const result = getProviderUpdateRunToastView(
-      [run("Laptop", "codex", AsyncResult.failure(Cause.die(new Error("offline"))))],
-      translateChinese,
-    );
-    expect(result).toEqual({
-      type: "error",
-      title: "供应商更新失败",
-      description: "Laptop · Codex: offline",
-    });
   });
 
   it("preserves the local server restart instruction after a successful update", () => {

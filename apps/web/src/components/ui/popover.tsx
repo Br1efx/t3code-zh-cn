@@ -1,7 +1,5 @@
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover";
 
-import { localizeWebChildren } from "~/i18n/localizeWebChildren";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 
 import { renderClosingPositioner } from "./closing-positioner";
@@ -137,16 +135,13 @@ function PopoverClose({ ...props }: PopoverPrimitive.Close.Props) {
   return <PopoverPrimitive.Close data-slot="popover-close" {...props} />;
 }
 
-function PopoverTitle({ className, children, ...props }: PopoverPrimitive.Title.Props) {
-  const { locale } = useI18n();
+function PopoverTitle({ className, ...props }: PopoverPrimitive.Title.Props) {
   return (
     <PopoverPrimitive.Title
       className={cn("font-semibold text-sm leading-none", className)}
       data-slot="popover-title"
       {...props}
-    >
-      {localizeWebChildren(locale, children)}
-    </PopoverPrimitive.Title>
+    />
   );
 }
 

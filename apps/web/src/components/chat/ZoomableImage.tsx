@@ -1,5 +1,4 @@
-import { useI18n } from "~/i18n/WebI18nContext";
-import { translateWebSource } from "~/i18n/messages";
+import { useGT } from "gt-react";
 import { useImperativeHandle, useRef, useState, useSyncExternalStore, type Ref } from "react";
 import { flushSync } from "react-dom";
 
@@ -53,7 +52,7 @@ export function ZoomableImage({
   onError: () => void;
   ref?: Ref<ZoomableImageHandle>;
 }) {
-  const { locale: i18nLocale } = useI18n();
+  const gt = useGT();
   const viewportRef = useRef<HTMLDivElement>(null);
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
   const viewerSize = useSyncExternalStore(subscribeViewerSize, getViewerSize);
@@ -162,9 +161,8 @@ export function ZoomableImage({
       <div
         ref={attachViewport}
         role="region"
-        aria-label={`${name}, zoomable image`}
-        aria-description={translateWebSource(
-          i18nLocale,
+        aria-label={gt("{name}, zoomable image", { name })}
+        aria-description={gt(
           "Click to zoom in or return to fit. Pinch or Ctrl+scroll to zoom, scroll or drag to pan. Use Enter to toggle zoom, plus or minus to zoom, and 0 to fit.",
         )}
         tabIndex={0}
@@ -260,8 +258,7 @@ export function ZoomableImage({
         />
       </div>
       <span className="sr-only" aria-live="polite">
-        {Math.round(zoom * 100)}
-        {translateWebSource(i18nLocale, "% zoom")}
+        {gt("{percent}% zoom", { percent: Math.round(zoom * 100) })}
       </span>
     </div>
   );

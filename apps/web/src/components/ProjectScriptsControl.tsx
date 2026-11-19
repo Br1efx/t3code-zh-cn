@@ -1,4 +1,5 @@
-import { translateWebSource } from "~/i18n/messages";
+import { m } from "../i18n/messages";
+import { thrownErrorMessage } from "@t3tools/client-runtime/errors";
 import { ThreadDetailsControl } from "./chat/ThreadDetailsControl";
 import {
   AuthSettingsWriteScope,
@@ -12,13 +13,13 @@ import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
 } from "@t3tools/client-runtime/state/runtime";
-import { projectScriptMenuLabel } from "@t3tools/shared/projectScripts";
+import { projectScriptMenuLabel } from "@t3tools/shared/projectScriptsCopy";
 import { ChevronDownIcon, DownloadIcon, PlusIcon, SettingsIcon, WrenchIcon } from "lucide-react";
 import React, { useState } from "react";
+import { T, useGT, useMessages, Var } from "gt-react";
 
 import { commandForProjectScript, primaryProjectScript } from "~/projectScripts";
 import { shortcutLabelForCommand } from "~/keybindings";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { serverEnvironment } from "~/state/server";
 import { readEnvironmentScope } from "~/state/session";
 import {
@@ -90,8 +91,8 @@ export default function ProjectScriptsControl({
   onUpdateScript,
   onDeleteScript,
 }: ProjectScriptsControlProps) {
-  const { locale: uiLocale } = useI18n();
-  const { t } = useI18n();
+  const gt = useGT();
+  const messages = useMessages();
   const isPanel = displayMode === "panel";
   const ActionGroup = isPanel ? "div" : Group;
   const panelAnchorRef = React.useRef<HTMLDivElement | null>(null);
@@ -152,7 +153,7 @@ export default function ProjectScriptsControl({
       setEditorRequest({
         scriptId: null,
         initial: payload,
-        error: error instanceof Error ? error.message : t("projectSettings.importFailed"),
+        error: thrownErrorMessage(error, m) ?? gt("Failed to import action."),
       });
     }
   };
@@ -161,7 +162,11 @@ export default function ProjectScriptsControl({
     <>
       {scripts.length > 0 && <MenuSeparator />}
       <MenuGroup>
-        <MenuGroupLabel>{translateWebSource(uiLocale, "From t3.json")}</MenuGroupLabel>
+        <MenuGroupLabel>
+          <T>
+            From <Var>t3.json</Var>
+          </T>
+        </MenuGroupLabel>
         {importableScripts.map((fileScript) => (
           <MenuItem
             density={presentation === "menu" ? "touch" : "default"}
@@ -173,7 +178,7 @@ export default function ProjectScriptsControl({
             <MenuShortcut>
               <DownloadIcon
                 className="size-3.5"
-                aria-label={translateWebSource(uiLocale, "Import")}
+                aria-label={gt("Import", { $context: "verb, import an action from t3.json" })}
               />
             </MenuShortcut>
           </MenuItem>
@@ -198,7 +203,7 @@ export default function ProjectScriptsControl({
             onClick={() => onRunScript?.(script)}
           >
             <ScriptIcon icon={script.icon} className="size-4" />
-            <MenuItemLabel>{projectScriptMenuLabel(script)}</MenuItemLabel>
+            <MenuItemLabel>{projectScriptMenuLabel(script, messages)}</MenuItemLabel>
             <span className="relative ms-auto flex h-6 min-w-6 items-center justify-end">
               {shortcutLabel &&
                 (presentation === "menu" ? (
@@ -216,7 +221,7 @@ export default function ProjectScriptsControl({
                   variant="ghost"
                   size="icon-xs"
                   className="size-6"
-                  aria-label={uiLocale === "zh-CN" ? `编辑 ${script.name}` : `Edit ${script.name}`}
+                  aria-label={gt("Edit {name}", { name: script.name })}
                   onPointerDown={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
@@ -237,11 +242,7 @@ export default function ProjectScriptsControl({
       {importMenuItems}
       <MenuItem density={presentation === "menu" ? "touch" : "default"} onClick={openAddDialog}>
         <PlusIcon className="size-4" />
-        <MenuItemLabel>
-          {isPanel
-            ? translateWebSource(uiLocale, "Add project script")
-            : t("projectSettings.addAction")}
-        </MenuItemLabel>
+        <MenuItemLabel>{isPanel ? gt("Add project script") : gt("Add action")}</MenuItemLabel>
       </MenuItem>
     </>
   );
@@ -258,7 +259,9 @@ export default function ProjectScriptsControl({
             >
               <ScriptIcon icon={primaryScript.icon} className="size-4" />
               <MenuItemLabel>
-                {translateWebSource(uiLocale, "Run")} {primaryScript.name}
+                <T>
+                  Run <Var>{primaryScript.name}</Var>
+                </T>
               </MenuItemLabel>
               <MenuShortcut>
                 {shortcutLabelForCommand(keybindings, commandForProjectScript(primaryScript.id))}
@@ -274,7 +277,9 @@ export default function ProjectScriptsControl({
             >
               <MenuSubTrigger density="touch">
                 <ScriptIcon icon="play" className="size-4" />
-                <MenuItemLabel>{translateWebSource(uiLocale, "Project actions")}</MenuItemLabel>
+                <MenuItemLabel>
+                  <T>Project actions</T>
+                </MenuItemLabel>
               </MenuSubTrigger>
               <MenuSubPopup>{scriptItems}</MenuSubPopup>
             </MenuSub>
@@ -284,14 +289,16 @@ export default function ProjectScriptsControl({
               onClick={openAddDialog}
             >
               <PlusIcon className="size-4" />
-              <MenuItemLabel>{translateWebSource(uiLocale, "Add project action…")}</MenuItemLabel>
+              <MenuItemLabel>
+                <T>Add project action…</T>
+              </MenuItemLabel>
             </MenuItem>
           )}
         </>
       ) : primaryScript ? (
         <ActionGroup
           role="group"
-          aria-label={translateWebSource(uiLocale, "Project scripts")}
+          aria-label={gt("Project scripts")}
           {...(isPanel
             ? { className: THREAD_DETAILS_PANEL_SPLIT_GROUP_CLASS, ref: panelAnchorRef }
             : {})}
@@ -305,7 +312,7 @@ export default function ProjectScriptsControl({
                   part="primary"
                   panel={isPanel}
                   className={isPanel ? undefined : "w-7 sm:w-6 @3xl/header-actions:w-auto!"}
-                  aria-label={`${translateWebSource(uiLocale, "Run")} ${primaryScript.name}`}
+                  aria-label={gt("Run {name}", { name: primaryScript.name })}
                   // Tooltip replaces the button data-slot, so toolbar theming needs a separate hook.
                   data-toolbar-control=""
                   aria-disabled={!onRunScript || undefined}
@@ -328,11 +335,8 @@ export default function ProjectScriptsControl({
             </TooltipTrigger>
             <TooltipPopup side="top">
               {onRunScript
-                ? `${translateWebSource(uiLocale, "Run")} ${primaryScript.name}`
-                : translateWebSource(
-                    uiLocale,
-                    "Pair this client again with permission to run terminal commands.",
-                  )}
+                ? gt("Run {name}", { name: primaryScript.name })
+                : gt("Pair this client again with permission to run terminal commands.")}
             </TooltipPopup>
           </Tooltip>
           {isPanel ? (
@@ -356,7 +360,7 @@ export default function ProjectScriptsControl({
                         variant={isPanel ? "ghost" : "outline"}
                         part="secondary"
                         panel={isPanel}
-                        aria-label={translateWebSource(uiLocale, "Script actions")}
+                        aria-label={gt("Script actions")}
                         data-toolbar-control=""
                       />
                     }
@@ -368,7 +372,7 @@ export default function ProjectScriptsControl({
                 />
               </TooltipTrigger>
               <TooltipPopup side="top">
-                {translateWebSource(uiLocale, "Script actions")}
+                <T>Script actions</T>
               </TooltipPopup>
             </Tooltip>
             <MenuPopup
@@ -384,7 +388,7 @@ export default function ProjectScriptsControl({
         isPanel ? (
           <div
             role="group"
-            aria-label={translateWebSource(uiLocale, "Project actions")}
+            aria-label={gt("Project actions")}
             className={THREAD_DETAILS_PANEL_SPLIT_GROUP_CLASS}
             ref={panelAnchorRef}
           >
@@ -392,12 +396,12 @@ export default function ProjectScriptsControl({
               size="sm"
               variant="ghost"
               part="primary"
-              aria-label={translateWebSource(uiLocale, "Project actions")}
+              aria-label={gt("Project actions")}
               onClick={() => setActionsMenuOpen({ presentation, scripts: false, imports: true })}
             >
               <WrenchIcon className={THREAD_DETAILS_PANEL_ICON_CLASS} />
               <span className={cn("min-w-0 truncate", THREAD_DETAILS_PANEL_LABEL_CLASS)}>
-                {t("projectSettings.actions")}
+                <T context="project actions menu">Actions</T>
               </span>
             </ThreadDetailsControl>
             <span aria-hidden="true" className={THREAD_DETAILS_PANEL_SPLIT_SEPARATOR_CLASS} />
@@ -414,7 +418,7 @@ export default function ProjectScriptsControl({
                     size="sm"
                     variant="ghost"
                     part="secondary"
-                    aria-label={translateWebSource(uiLocale, "Choose project action")}
+                    aria-label={gt("Choose project action")}
                   />
                 }
               >
@@ -434,17 +438,11 @@ export default function ProjectScriptsControl({
             }
           >
             <MenuTrigger
-              render={
-                <Button
-                  size="xs"
-                  variant="outline"
-                  aria-label={translateWebSource(uiLocale, "Project actions")}
-                />
-              }
+              render={<Button size="xs" variant="outline" aria-label={gt("Project actions")} />}
             >
               <WrenchIcon className="size-3.5" />
               <span className="sr-only @3xl/header-actions:not-sr-only @3xl/header-actions:ml-0.5">
-                {t("projectSettings.actions")}
+                <T context="project actions menu">Actions</T>
               </span>
               <ChevronDownIcon className="size-3.5" />
             </MenuTrigger>
@@ -461,11 +459,7 @@ export default function ProjectScriptsControl({
                 part="row"
                 panel={isPanel}
                 className={isPanel ? undefined : "w-7 sm:w-6 @3xl/header-actions:w-auto!"}
-                aria-label={
-                  isPanel
-                    ? translateWebSource(uiLocale, "Add project script")
-                    : t("projectSettings.addAction")
-                }
+                aria-label={isPanel ? gt("Add project script") : gt("Add action")}
                 data-toolbar-control=""
                 onClick={openAddDialog}
               />
@@ -478,15 +472,11 @@ export default function ProjectScriptsControl({
                 isPanel && cn("not-sr-only ml-0.5", THREAD_DETAILS_PANEL_LABEL_CLASS),
               )}
             >
-              {isPanel
-                ? translateWebSource(uiLocale, "Add project script")
-                : t("projectSettings.addAction")}
+              {isPanel ? gt("Add project script") : gt("Add action")}
             </span>
           </TooltipTrigger>
           <TooltipPopup side="top">
-            {isPanel
-              ? translateWebSource(uiLocale, "Add project script")
-              : t("projectSettings.addAction")}
+            {isPanel ? gt("Add project script") : gt("Add action")}
           </TooltipPopup>
         </Tooltip>
       )}

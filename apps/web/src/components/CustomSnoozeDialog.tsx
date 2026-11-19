@@ -1,6 +1,5 @@
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { useEffect, useId, useState } from "react";
+import { T, useGT } from "gt-react";
 import { useNavigate } from "@tanstack/react-router";
 import { create } from "zustand";
 import {
@@ -65,7 +64,7 @@ export function CustomSnoozeDialogHost() {
 }
 
 function CustomSnoozeDialog() {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
   const id = useId();
   const navigate = useNavigate();
   const [initial] = useState(() => new Date(Date.now() + 3_600_000));
@@ -97,8 +96,8 @@ function CustomSnoozeDialog() {
             if (!snoozedUntil) {
               setError(
                 mode === "date"
-                  ? "Choose a valid date and time in the future."
-                  : "Enter a positive duration.",
+                  ? gt("Choose a valid date and time in the future.")
+                  : gt("Enter a positive duration."),
               );
               return;
             }
@@ -106,13 +105,17 @@ function CustomSnoozeDialog() {
           }}
         >
           <DialogHeader>
-            <DialogTitle>Custom snooze</DialogTitle>
-            <DialogDescription>Choose when snoozed threads return to your inbox.</DialogDescription>
+            <DialogTitle>
+              <T>Custom snooze</T>
+            </DialogTitle>
+            <DialogDescription>
+              <T>Choose when snoozed threads return to your inbox.</T>
+            </DialogDescription>
           </DialogHeader>
           <DialogPanel>
             <div className="flex flex-col gap-4">
               <ToggleGroup
-                aria-label={translateWebSource(translationLocale, "Schedule type")}
+                aria-label={gt("Schedule type")}
                 className="w-full *:flex-1"
                 value={[mode]}
                 onValueChange={(next) => {
@@ -122,10 +125,10 @@ function CustomSnoozeDialog() {
                 }}
               >
                 <Toggle value="date">
-                  {translateWebSource(translationLocale, "Date and time")}
+                  <T>Date and time</T>
                 </Toggle>
                 <Toggle value="duration">
-                  {translateWebSource(translationLocale, "Duration")}
+                  <T>Duration</T>
                 </Toggle>
               </ToggleGroup>
               <div className="flex flex-col gap-4">
@@ -133,7 +136,7 @@ function CustomSnoozeDialog() {
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div className="flex min-w-0 flex-col gap-2">
                       <Label htmlFor={`${id}-date`}>
-                        {translateWebSource(translationLocale, "Date")}
+                        <T context="calendar date">Date</T>
                       </Label>
                       <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                         <PopoverTrigger
@@ -145,17 +148,14 @@ function CustomSnoozeDialog() {
                             />
                           }
                         >
-                          {date.toLocaleDateString(translationLocale, {
+                          {date.toLocaleDateString(undefined, {
                             month: "short",
                             day: "numeric",
                             year: "numeric",
                           })}
                           <CalendarIcon className="size-4 text-muted-foreground" />
                         </PopoverTrigger>
-                        <PopoverPopup
-                          align="start"
-                          aria-label={translateWebSource(translationLocale, "Choose snooze date")}
-                        >
+                        <PopoverPopup align="start" aria-label={gt("Choose snooze date")}>
                           <Calendar
                             mode="single"
                             required
@@ -173,7 +173,7 @@ function CustomSnoozeDialog() {
                       </Popover>
                     </div>
                     <Label className="flex min-w-0 flex-col items-stretch" htmlFor={`${id}-time`}>
-                      {translateWebSource(translationLocale, "Time")}{" "}
+                      <T context="time of day">Time</T>
                       <Input
                         nativeInput
                         id={`${id}-time`}
@@ -201,27 +201,19 @@ function CustomSnoozeDialog() {
                       }}
                     >
                       <Label htmlFor={`${id}-amount`}>
-                        {translateWebSource(translationLocale, "Snooze for")}
+                        <T>Snooze for</T>
                       </Label>
                       <NumberFieldGroup>
-                        <NumberFieldDecrement
-                          aria-label={translateWebSource(translationLocale, "Decrease duration")}
-                        />
+                        <NumberFieldDecrement aria-label={gt("Decrease duration")} />
                         <NumberFieldInput required />
-                        <NumberFieldIncrement
-                          aria-label={translateWebSource(translationLocale, "Increase duration")}
-                        />
+                        <NumberFieldIncrement aria-label={gt("Increase duration")} />
                       </NumberFieldGroup>
                     </NumberField>
                     <Label className="flex min-w-0 flex-col items-stretch" htmlFor={`${id}-unit`}>
-                      {translateWebSource(translationLocale, "Unit")}
+                      <T context="unit of time">Unit</T>
                       <Select
                         value={unit}
-                        items={{
-                          minutes: translateWebSource(translationLocale, "Minutes"),
-                          hours: translateWebSource(translationLocale, "Hours"),
-                          days: translateWebSource(translationLocale, "Days"),
-                        }}
+                        items={{ minutes: gt("Minutes"), hours: gt("Hours"), days: gt("Days") }}
                         onValueChange={(value) => {
                           if (value === "minutes" || value === "hours" || value === "days")
                             setUnit(value);
@@ -232,9 +224,15 @@ function CustomSnoozeDialog() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectPopup>
-                          <SelectItem value="minutes">Minutes</SelectItem>
-                          <SelectItem value="hours">Hours</SelectItem>
-                          <SelectItem value="days">Days</SelectItem>
+                          <SelectItem value="minutes">
+                            <T>Minutes</T>
+                          </SelectItem>
+                          <SelectItem value="hours">
+                            <T>Hours</T>
+                          </SelectItem>
+                          <SelectItem value="days">
+                            <T>Days</T>
+                          </SelectItem>
                         </SelectPopup>
                       </Select>
                     </Label>
@@ -244,7 +242,7 @@ function CustomSnoozeDialog() {
             </div>
             {error && (
               <p role="alert" className="text-destructive">
-                {translateWebSource(translationLocale, error)}
+                {error}
               </p>
             )}
           </DialogPanel>
@@ -262,12 +260,14 @@ function CustomSnoozeDialog() {
               }}
             >
               <Settings2Icon />
-              {translateWebSource(translationLocale, "Edit snooze options")}
+              <T>Edit snooze options</T>
             </Button>
             <Button type="button" variant="outline" onClick={() => finish(null)}>
-              {translateWebSource(translationLocale, "Cancel")}
+              <T>Cancel</T>
             </Button>
-            <Button type="submit">{translateWebSource(translationLocale, "Snooze")}</Button>
+            <Button type="submit">
+              <T context="verb">Snooze</T>
+            </Button>
           </DialogFooter>
         </form>
       </DialogPopup>

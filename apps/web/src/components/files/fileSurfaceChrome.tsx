@@ -1,8 +1,6 @@
-import { localizeWebChildren, localizeWebString } from "~/i18n/localizeWebChildren";
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
 import type { ReactNode } from "react";
 
+import { T, useGT } from "gt-react";
 import { Spinner } from "~/components/ui/spinner";
 import { Button } from "~/components/ui/button";
 import { Toggle } from "~/components/ui/toggle";
@@ -106,23 +104,22 @@ export function FileSurfaceAction(props: {
 }
 
 export function FileSurfaceNotice(props: { readonly children: ReactNode }) {
-  const { locale } = useI18n();
   return (
     <div
       role="status"
       className="shrink-0 border-b border-warning/20 bg-warning-surface px-3 py-1.5 text-2xs text-warning-foreground"
     >
-      {localizeWebChildren(locale, props.children)}
+      {props.children}
     </div>
   );
 }
 
 export function FileSurfaceLoading(props: { readonly className?: string }) {
-  const { locale: i18nLocale } = useI18n();
+  const gt = useGT();
   return (
     <div
       role="status"
-      aria-label={translateWebSource(i18nLocale, "Loading file")}
+      aria-label={gt("Loading file")}
       className={cn(
         "flex min-h-0 flex-1 items-center justify-center text-muted-foreground",
         props.className,
@@ -137,20 +134,19 @@ export function FileSurfaceFailure(props: {
   readonly message: string;
   readonly onRetry?: () => void;
 }) {
-  const { locale: translationLocale } = useI18n();
   return (
     <div
       role="alert"
       className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-6 text-center text-xs leading-relaxed"
     >
-      <p className="text-destructive">{localizeWebString(translationLocale, props.message)}</p>
+      <p className="text-destructive">{props.message}</p>
       {props.onRetry ? (
         <button
           type="button"
           onClick={props.onRetry}
           className="rounded-md border border-input px-2.5 py-1 text-xs text-foreground hover:bg-accent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
         >
-          {translateWebSource(translationLocale, "Try again")}
+          <T>Try again</T>
         </button>
       ) : null}
     </div>

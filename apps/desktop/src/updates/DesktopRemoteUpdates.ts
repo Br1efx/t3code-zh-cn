@@ -17,7 +17,6 @@ import * as Stream from "effect/Stream";
 
 import * as DesktopObservability from "../app/DesktopObservability.ts";
 import * as DesktopBackendPool from "../backend/DesktopBackendPool.ts";
-import { isZhCn, resolveCurrentDesktopLocale } from "../i18n/DesktopLocale.ts";
 import * as DesktopTelemetryPublisher from "../telemetry/DesktopTelemetryPublisher.ts";
 import * as DesktopUpdates from "./DesktopUpdates.ts";
 import {
@@ -132,12 +131,7 @@ export const listen: Effect.Effect<
             prepared.value.status === "committing" &&
             state.errorContext === "install"
           ) {
-            const locale = yield* resolveCurrentDesktopLocale;
-            const reason =
-              state.message ??
-              (isZhCn(locale)
-                ? "电脑端安装更新失败。"
-                : "The desktop app failed to install the update.");
+            const reason = state.message ?? "The desktop app failed to install the update.";
             if (yield* recordPreparedFailure(prepared.value.requestId, reason)) {
               yield* publishReport(state, { outcome: "failed", reason }, prepared.value.requestId);
             }
@@ -173,7 +167,6 @@ export const listen: Effect.Effect<
         });
         if (!shouldStart) return;
 
-        const locale = yield* resolveCurrentDesktopLocale;
         const now = yield* Clock.currentTimeMillis;
         const prepared = yield* Ref.modify(preparedUpdateRef, (current) =>
           Option.isSome(current) &&
@@ -201,9 +194,7 @@ export const listen: Effect.Effect<
             state,
             {
               outcome: "failed",
-              reason: isZhCn(locale)
-                ? "电脑端已有正在进行的更新操作。"
-                : "A prepared desktop update is already in progress.",
+              reason: "A prepared desktop update is already in progress.",
             },
             request.requestId,
           );
@@ -229,9 +220,8 @@ export const listen: Effect.Effect<
               current,
               {
                 outcome: "failed",
-                reason: isZhCn(locale)
-                  ? "这台电脑同时开启了 WSL 环境，无法远程切换版本，请直接在该电脑上操作。"
-                  : "This desktop app also runs WSL backends, whose databases a remote switch cannot check. Switch it on that machine.",
+                reason:
+                  "This desktop app also runs WSL backends, whose databases a remote switch cannot check. Switch it on that machine.",
               },
               request.requestId,
             );
@@ -285,8 +275,7 @@ export const listen: Effect.Effect<
         const step = Effect.fn("DesktopRemoteUpdates.step")(function* (
           state: DesktopUpdateState,
         ): Effect.fn.Return<boolean, never, Scope.Scope> {
-          const stepLocale = yield* resolveCurrentDesktopLocale;
-          const next = nextRemoteDesktopUpdateStep(state, attempts, disabledReason, stepLocale);
+          const next = nextRemoteDesktopUpdateStep(state, attempts, disabledReason);
           switch (next.action) {
             case "wait":
               return false;
@@ -325,9 +314,7 @@ export const listen: Effect.Effect<
                   state,
                   {
                     outcome: "failed",
-                    reason: isZhCn(stepLocale)
-                      ? "已下载的更新文件丢失，请重新尝试更新。"
-                      : "The desktop app lost the downloaded update.",
+                    reason: "The desktop app lost the downloaded update.",
                   },
                   request.requestId,
                 );
@@ -359,9 +346,7 @@ export const listen: Effect.Effect<
                   compareSemverVersions(state.currentVersion, request.targetVersion) < 0)
                   ? {
                       outcome: "failed" as const,
-                      reason: isZhCn(stepLocale)
-                        ? `未找到版本 ${request.targetVersion} 的安装包。`
-                        : `The desktop app found no build of ${request.targetVersion}.`,
+                      reason: `The desktop app found no build of ${request.targetVersion}.`,
                     }
                   : next;
               yield* publishReport(
@@ -467,7 +452,6 @@ export const listen: Effect.Effect<
 
   yield* Stream.runForEach(publisher.updateCommits, (commit) =>
     Effect.gen(function* () {
-      const locale = yield* resolveCurrentDesktopLocale;
       const current = yield* updates.getState;
       const now = yield* Clock.currentTimeMillis;
       const claim = yield* Ref.modify(
@@ -497,9 +481,7 @@ export const listen: Effect.Effect<
           yield* updates.getState,
           {
             outcome: "failed",
-            reason: isZhCn(locale)
-              ? "该更新已失效，请重新准备更新。"
-              : "This desktop update is no longer prepared.",
+            reason: "This desktop update is no longer prepared.",
           },
           commit.requestId,
         );
@@ -510,11 +492,7 @@ export const listen: Effect.Effect<
           current,
           {
             outcome: "failed",
-            reason:
-              claim.prepared.failureReason ??
-              (isZhCn(locale)
-                ? "电脑端安装更新失败。"
-                : "The desktop app failed to install the update."),
+            reason: claim.prepared.failureReason ?? "The desktop app failed to install the update.",
           },
           commit.requestId,
         );
@@ -525,9 +503,7 @@ export const listen: Effect.Effect<
       }
       yield* Ref.set(activeRequestIdRef, Option.some(commit.requestId));
       if (current.downloadedVersion !== claim.prepared.downloadedVersion) {
-        const reason = isZhCn(locale)
-          ? "该更新已失效，请重新准备更新。"
-          : "This desktop update is no longer prepared.";
+        const reason = "This desktop update is no longer prepared.";
         if (yield* recordPreparedFailure(commit.requestId, reason)) {
           yield* publishReport(current, { outcome: "failed", reason }, commit.requestId);
         }
@@ -546,11 +522,7 @@ export const listen: Effect.Effect<
         return;
       }
       if (!result.accepted || result.failed) {
-        const reason =
-          result.state.message ??
-          (isZhCn(locale)
-            ? "电脑端无法启动更新安装程序。"
-            : "The desktop app could not start the install.");
+        const reason = result.state.message ?? "The desktop app could not start the install.";
         if (yield* recordPreparedFailure(commit.requestId, reason)) {
           yield* publishReport(result.state, { outcome: "failed", reason }, commit.requestId);
         }

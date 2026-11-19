@@ -1,7 +1,10 @@
 import { settlePromise, squashAtomCommandFailure } from "@t3tools/client-runtime/state/runtime";
+import { errorDisplayMessage } from "@t3tools/client-runtime/errors";
 import * as Dialog from "../components/ui/Dialog";
 import type { MediaActionsSource } from "../lib/mediaActionsSource";
 import { useNavigation } from "@react-navigation/native";
+import { msg, useGT } from "gt-react-native";
+import { m } from "../i18n/messages";
 import {
   formatFilePathForClipboard,
   type MediaActionId,
@@ -17,7 +20,6 @@ import { AsyncResult } from "effect/reactivity";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
 
-import { localizeMobileString } from "../i18n/mobileStrings";
 import { useRefreshAssetUrl } from "./assets";
 import { appAtomRegistry } from "./atom-registry";
 import { useEnvironmentQuery } from "./query";
@@ -43,6 +45,7 @@ function canReadHostMedia(environmentId: EnvironmentId | null): boolean {
 
 export function useMediaActions(source: MediaActionsSource | undefined, onOpenFile?: () => void) {
   const navigation = useNavigation();
+  const gt = useGT();
   const hostEnvironmentId =
     source &&
     "resource" in source &&
@@ -76,8 +79,8 @@ export function useMediaActions(source: MediaActionsSource | undefined, onOpenFi
       .catch((error: unknown) => {
         if (!request.signal.aborted) {
           Dialog.alert(
-            kind === "share" ? "Could not share file" : "Could not save image",
-            error instanceof Error ? error.message : "Try again.",
+            kind === "share" ? m(msg("Could not share file")) : m(msg("Could not save image")),
+            errorDisplayMessage(error, m) ?? m(msg("Try again.")),
           );
         }
       })
@@ -92,7 +95,9 @@ export function useMediaActions(source: MediaActionsSource | undefined, onOpenFi
   const hostUri = async (source: MediaActionsSource, signal: AbortSignal) => {
     const uri = "uri" in source ? normalizeNativeMarkdownUrl(source.uri) : await refresh();
     if (signal.aborted || !canReadHostMedia(hostEnvironmentId)) return null;
-    if (uri === null) throw new Error("The file could not be loaded. Reconnect and try again.");
+    if (uri === null) {
+      throw new Error(m(msg("The file could not be loaded. Reconnect and try again.")));
+    }
     return uri;
   };
 
@@ -152,7 +157,7 @@ export function useMediaActions(source: MediaActionsSource | undefined, onOpenFi
             ? [
                 {
                   id: "copy-full-path" as const,
-                  title: localizeMobileString("Copy full path"),
+                  title: gt("Copy full path"),
                   run: () => copyTextWithHaptic(formatFilePathForClipboard(reference.path)),
                 },
               ]
@@ -161,7 +166,7 @@ export function useMediaActions(source: MediaActionsSource | undefined, onOpenFi
             ? [
                 {
                   id: "copy-relative-path" as const,
-                  title: localizeMobileString("Copy relative path"),
+                  title: gt("Copy relative path"),
                   run: () =>
                     copyTextWithHaptic(formatFilePathForClipboard(relativePath, reference.path)),
                 },
@@ -171,7 +176,7 @@ export function useMediaActions(source: MediaActionsSource | undefined, onOpenFi
             ? [
                 {
                   id: "copy-url" as const,
-                  title: localizeMobileString("Copy URL"),
+                  title: gt("Copy URL"),
                   run: () => copyTextWithHaptic(reference.url),
                 },
               ]
@@ -180,7 +185,7 @@ export function useMediaActions(source: MediaActionsSource | undefined, onOpenFi
             ? [
                 {
                   id: "open-file" as const,
-                  title: localizeMobileString("Open in file viewer"),
+                  title: gt("Open in file viewer"),
                   disabled: !canReadMedia,
                   run: () => {
                     if (!canReadHostMedia(hostEnvironmentId)) return;
@@ -198,7 +203,7 @@ export function useMediaActions(source: MediaActionsSource | undefined, onOpenFi
             ? [
                 {
                   id: "save-image" as const,
-                  title: busy === "save-image" ? "Saving image…" : "Save image",
+                  title: busy === "save-image" ? gt("Saving image…") : gt("Save image"),
                   run: saveImage,
                   disabled: busy !== null || !canReadMedia,
                 },
@@ -208,10 +213,10 @@ export function useMediaActions(source: MediaActionsSource | undefined, onOpenFi
             id: "save" as const,
             title:
               busy === "share"
-                ? "Opening share sheet…"
+                ? gt("Opening share sheet…")
                 : canSaveImageToLibrary(source.mimeType)
-                  ? "Share"
-                  : "Save or share",
+                  ? gt("Share", { $context: "verb, opens the system share sheet" })
+                  : gt("Save or share"),
             run: share,
             disabled: busy !== null || !canReadMedia,
           },

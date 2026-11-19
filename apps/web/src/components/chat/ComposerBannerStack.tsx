@@ -1,6 +1,4 @@
-import { useI18n } from "~/i18n/WebI18nContext";
-import { localizeWebChildren, localizeWebString } from "~/i18n/localizeWebChildren";
-import { translateWebSource } from "~/i18n/messages";
+import { useGT } from "gt-react";
 import { InfoIcon } from "lucide-react";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
@@ -73,9 +71,7 @@ export function NoticeText({
   readonly className: string;
   readonly detailsLabel: string;
 }) {
-  const { locale: releaseLocale } = useI18n();
-  const localizedChildren = localizeWebChildren(releaseLocale, children);
-  const localizedDetailsLabel = localizeWebString(releaseLocale, detailsLabel);
+  const gt = useGT();
   const textRef = useRef<HTMLSpanElement>(null);
   const detailsRef = useRef<HTMLButtonElement>(null);
   const [detailsAtWidth, setDetailsAtWidth] = useState<number | null>(null);
@@ -137,7 +133,7 @@ export function NoticeText({
   return (
     <span className="contents">
       <span ref={textRef} className={className}>
-        {localizedChildren}
+        {children}
       </span>
       {showDetails ? (
         <Popover>
@@ -148,7 +144,7 @@ export function NoticeText({
                 ref={detailsRef}
                 size="icon-xs"
                 variant="ghost-muted"
-                aria-label={localizedDetailsLabel}
+                aria-label={detailsLabel}
                 className="flex-none"
               />
             }
@@ -156,12 +152,12 @@ export function NoticeText({
             <InfoIcon />
           </PopoverTrigger>
           <PopoverPopup
-            aria-label={translateWebSource(releaseLocale, "Notice details")}
+            aria-label={gt("Notice details")}
             tooltipStyle
             side="top"
             className="max-w-[min(30rem,calc(100vw-2rem))] whitespace-normal wrap-anywhere [--inline-button-text-align:start] [--inline-button-white-space:normal] [&_[data-slot=inline-button]]:max-w-full"
           >
-            <ComposerBanner.Scroll>{localizedChildren}</ComposerBanner.Scroll>
+            <ComposerBanner.Scroll>{children}</ComposerBanner.Scroll>
           </PopoverPopup>
         </Popover>
       ) : null}
@@ -176,7 +172,7 @@ function NoticeCard({
   readonly item: ComposerBannerStackItem;
   readonly detached?: boolean;
 }) {
-  const { t } = useI18n();
+  const gt = useGT();
   return (
     <ComposerBanner.Root
       role={item.variant === "error" || item.variant === "warning" ? "alert" : undefined}
@@ -193,8 +189,8 @@ function NoticeCard({
           <NoticeText
             detailsLabel={
               typeof item.title === "string"
-                ? `Show full title: ${item.title}`
-                : "Show title details"
+                ? gt("Show full title: {title}", { title: item.title })
+                : gt("Show title details")
             }
             className="min-w-0 truncate font-medium leading-7 sm:leading-6"
           >
@@ -204,8 +200,8 @@ function NoticeCard({
             <NoticeText
               detailsLabel={
                 typeof item.title === "string"
-                  ? `Show details: ${item.title}`
-                  : "Show notice details"
+                  ? gt("Show details: {title}", { title: item.title })
+                  : gt("Show notice details")
               }
               className="w-0 min-w-0 grow truncate text-muted-foreground @max-[400px]:sr-only"
             >
@@ -218,7 +214,7 @@ function NoticeCard({
             {item.actions}
             {item.onDismiss ? (
               <ComposerBanner.Dismiss
-                aria-label={item.dismissLabel ?? t("composer.banner.dismissWarning")}
+                aria-label={item.dismissLabel ?? gt("Dismiss warning")}
                 onClick={item.onDismiss}
               />
             ) : null}

@@ -48,7 +48,6 @@ it("the new-thread project picker follows the manual sidebar project order", asy
   });
   __setClientSettingsForTests({
     ...DEFAULT_CLIENT_SETTINGS,
-    appLocale: "en",
     onboardingCompletedAt: "2026-01-01T00:00:00.000Z",
     sidebarProjectSortOrder: "manual",
   });

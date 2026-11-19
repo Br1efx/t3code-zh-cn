@@ -1,7 +1,6 @@
 // @effect-diagnostics globalDate:off globalTimers:off - This isolated Electron preload does not run inside an Effect runtime.
 import { ipcRenderer } from "electron";
 import { getElementContext } from "react-grab/primitives";
-import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import { matchesKeybindingShortcut } from "@t3tools/shared/keybindingMatching";
 import type {
   DesktopPreviewAnnotationTheme,
@@ -152,6 +151,8 @@ interface SelectedElement {
   outline: HTMLDivElement;
   label: HTMLDivElement;
   baselineStyles: Map<string, string>;
+  // Last rect measured while connected; a detached node reports 0x0.
+  rect: PreviewAnnotationRect;
 }
 
 interface AnnotationSession {
@@ -418,6 +419,7 @@ function updateSelectedVisual(target: SelectedElement): void {
     target.label.style.display = "none";
     return;
   }
+  target.rect = rectFromDomRect(target.element.getBoundingClientRect());
   const rect = visibleElementRect(target.element);
   positionBox(target.outline, rect);
   if (rect.width === 0 || rect.height === 0) {
@@ -493,113 +495,6 @@ async function captureElement(element: Element): Promise<PickedElementPayload> {
   };
 }
 
-const PICK_PRELOAD_MESSAGES = {
-  en: {
-    styleValue: "Style value",
-    expandEditor: "Expand annotation editor",
-    collapseEditor: "Collapse annotation editor",
-    commentPlaceholder: "Describe the change…",
-    startVoice: "Start voice input",
-    openVoiceSettings: "Open voice settings",
-    cancelVoice: "Cancel voice input",
-    dismissVoiceError: "Dismiss voice input error",
-    finishVoice: "Finish voice input",
-    voiceBusy: "Voice input is busy",
-    skip: "Skip",
-    skipTitle: "Skip transcript cleanup",
-    voiceInput: "Voice input",
-    dragEditor: "Drag annotation editor",
-    attach: "Attach",
-    attachTitle: "Attach annotation and screenshot (Enter)",
-    attachAndSendTitle: "Attach annotation and screenshot (Enter). Send with Cmd/Ctrl+Enter.",
-    capturing: "Capturing…",
-    font: "Font",
-    fontOptions: {
-      inherit: "inherit",
-      "system-ui": "system-ui",
-      "sans-serif": "sans-serif",
-      serif: "serif",
-      monospace: "monospace",
-    } as const,
-    fontSize: "Font size",
-    fontWeight: "Font weight",
-    lineHeight: "Line height",
-    lineHeightPlaceholder: "normal / 1.4",
-    colorValueLabel: (label: string) => `${label} value`,
-    textColor: "Text color",
-    background: "Background",
-    opacity: "Opacity",
-    radius: "Radius",
-    borderColor: "Border color",
-    borderWidth: "Border width",
-    width: "Width",
-    height: "Height",
-    autoPlaceholder: "auto",
-    lockAspectRatio: "Lock aspect ratio",
-    padding: "Padding",
-    margin: "Margin",
-    gap: "Gap",
-    tools: [
-      ["select", "Select", "Select elements (V)"],
-      ["marquee", "Region", "Draw a region or marquee-select elements (R)"],
-      ["draw", "Draw", "Draw freehand (D)"],
-      ["erase", "Erase", "Remove an annotation target (E)"],
-    ] as ReadonlyArray<[AnnotationTool, string, string]>,
-  },
-  "zh-CN": {
-    styleValue: "样式数值",
-    expandEditor: "展开样式调整面板",
-    collapseEditor: "收起样式调整面板",
-    commentPlaceholder: "说说你想怎么改…",
-    startVoice: "开始语音输入",
-    openVoiceSettings: "打开语音设置",
-    cancelVoice: "取消语音输入",
-    dismissVoiceError: "关闭语音提示",
-    finishVoice: "完成语音输入",
-    voiceBusy: "正在处理语音…",
-    skip: "跳过润色",
-    skipTitle: "跳过文字整理，直接填入",
-    voiceInput: "语音输入",
-    dragEditor: "按住拖动标注面板",
-    attach: "添加标注",
-    attachTitle: "将标注和截图添加到输入框（回车）",
-    attachAndSendTitle: "添加到输入框（回车）；直接发送给智能体（Cmd/Ctrl+回车）",
-    capturing: "正在截图…",
-    font: "字体",
-    fontOptions: {
-      inherit: "默认字体",
-      "system-ui": "系统界面字体",
-      "sans-serif": "无衬线体",
-      serif: "衬线体",
-      monospace: "等宽字体",
-    } as const,
-    fontSize: "字号",
-    fontWeight: "字重（粗细）",
-    lineHeight: "行高",
-    lineHeightPlaceholder: "默认 / 1.4",
-    colorValueLabel: (label: string) => `${label}色值`,
-    textColor: "文字颜色",
-    background: "背景颜色",
-    opacity: "不透明度",
-    radius: "圆角",
-    borderColor: "边框颜色",
-    borderWidth: "边框粗细",
-    width: "宽度",
-    height: "高度",
-    autoPlaceholder: "自动",
-    lockAspectRatio: "锁定宽高比例",
-    padding: "内边距",
-    margin: "外边距",
-    gap: "元素间距",
-    tools: [
-      ["select", "点选", "点击选择网页元素 (V)"],
-      ["marquee", "框选", "框选区域或批量选择元素 (R)"],
-      ["draw", "涂鸦", "自由画笔圈注 (D)"],
-      ["erase", "橡皮擦", "点击移除已添加的标记 (E)"],
-    ] as ReadonlyArray<[AnnotationTool, string, string]>,
-  },
-} as const;
-
 function createButton(label: string, title: string): HTMLButtonElement {
   const button = document.createElement("button");
   button.type = "button";
@@ -610,8 +505,8 @@ function createButton(label: string, title: string): HTMLButtonElement {
   return button;
 }
 
-function styleControl(input: HTMLInputElement | HTMLSelectElement, defaultAriaLabel: string): void {
-  input.setAttribute("aria-label", input.getAttribute("aria-label") ?? defaultAriaLabel);
+function styleControl(input: HTMLInputElement | HTMLSelectElement): void {
+  input.setAttribute("aria-label", input.getAttribute("aria-label") ?? "Style value");
   input.className =
     "h-7 min-w-0 w-full appearance-none rounded-md border border-input bg-background px-2 font-mono text-xs text-foreground shadow-xs outline-none";
 }
@@ -630,14 +525,13 @@ function createUnitControl(input: HTMLInputElement): HTMLElement {
 function createField(
   labelText: string,
   input: HTMLInputElement | HTMLSelectElement,
-  defaultAriaLabel: string,
 ): HTMLLabelElement {
   const label = document.createElement("label");
   label.className =
     "grid min-h-7 grid-cols-[82px_minmax(0,1fr)] items-center gap-2 font-sans text-xs font-medium text-muted-foreground";
   const text = document.createElement("span");
   text.textContent = labelText;
-  styleControl(input, defaultAriaLabel);
+  styleControl(input);
   label.append(
     text,
     input instanceof HTMLInputElement && input.dataset.unit ? createUnitControl(input) : input,
@@ -663,15 +557,15 @@ function createUnitInput(unit: string, placeholder = "0"): HTMLInputElement {
 function startAnnotation(
   sendEnabled: boolean,
   voice: DesktopPreviewAnnotationVoiceConfig | undefined,
-  locale: ResolvedAppLocale = "en",
 ): void {
-  const copy = PICK_PRELOAD_MESSAGES[locale];
   activeSession?.teardown(false);
   let finished = false;
   const host = document.createElement("div");
   host.setAttribute(OVERLAY_ATTRIBUTE, "");
   host.setAttribute("dir", "ltr");
-  host.style.cssText = `position:fixed;inset:0;z-index:${Z_INDEX_OVERLAY};pointer-events:none`;
+  host.popover = "manual";
+  // Resets the UA popover box (fit-content size, auto margin, border, padding, Canvas background).
+  host.style.cssText = `position:fixed;inset:0;width:auto;height:auto;margin:0;border:0;padding:0;overflow:visible;background:transparent;color:inherit;z-index:${Z_INDEX_OVERLAY};pointer-events:none`;
   applyAnnotationTheme(host, annotationTheme);
   const shadowRoot = host.attachShadow({ mode: "closed" });
   const themeStyle = document.createElement("style");
@@ -685,7 +579,7 @@ function startAnnotation(
   root.style.cssText = "pointer-events:none";
   const cursorStyle = document.createElement("style");
   cursorStyle.setAttribute(OVERLAY_ATTRIBUTE, "");
-  cursorStyle.textContent = `html[data-t3code-annotation-tool] body, html[data-t3code-annotation-tool] body * { cursor: crosshair !important; } [${OVERLAY_ATTRIBUTE}], [${OVERLAY_ATTRIBUTE}] * { cursor: default !important; } [${OVERLAY_ATTRIBUTE}] input[type=number]::-webkit-inner-spin-button, [${OVERLAY_ATTRIBUTE}] input[type=number]::-webkit-outer-spin-button { appearance:none; margin:0; }`;
+  cursorStyle.textContent = `[${OVERLAY_ATTRIBUTE}]::backdrop { display:none !important; } html[data-t3code-annotation-tool] body, html[data-t3code-annotation-tool] body * { cursor: crosshair !important; } [${OVERLAY_ATTRIBUTE}], [${OVERLAY_ATTRIBUTE}] * { cursor: default !important; } [${OVERLAY_ATTRIBUTE}] input[type=number]::-webkit-inner-spin-button, [${OVERLAY_ATTRIBUTE}] input[type=number]::-webkit-outer-spin-button { appearance:none; margin:0; }`;
   document.documentElement.appendChild(cursorStyle);
   shadowRoot.appendChild(root);
 
@@ -719,8 +613,8 @@ function startAnnotation(
   const composerRow = document.createElement("div");
   composerRow.className = "flex items-start gap-2 p-2";
 
-  const adjust = createButton("", copy.expandEditor);
-  adjust.setAttribute("aria-label", copy.expandEditor);
+  const adjust = createButton("", "Expand annotation editor");
+  adjust.setAttribute("aria-label", "Expand annotation editor");
   adjust.setAttribute("aria-expanded", "false");
   adjust.className +=
     " h-8 w-8 shrink-0 bg-muted p-0 text-muted-foreground hover:bg-accent hover:text-accent-foreground";
@@ -729,7 +623,7 @@ function startAnnotation(
   composerRow.appendChild(adjust);
 
   const comment = document.createElement("textarea");
-  comment.placeholder = copy.commentPlaceholder;
+  comment.placeholder = "Describe the change…";
   comment.setAttribute("dir", "auto");
   comment.rows = 1;
   comment.className =
@@ -745,25 +639,25 @@ function startAnnotation(
   let voiceKeyCode: string | null = null;
   let pendingVoiceSubmission: PreviewAnnotationSubmission | null = null;
   let voiceSubmissionReady = false;
-  const voiceButton = createButton("", copy.startVoice);
+  const voiceButton = createButton("", "Start voice input");
   voiceButton.innerHTML =
     '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19v3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><rect x="9" y="2" width="6" height="13" rx="3"/></svg>';
   voiceButton.className += " h-8 w-8 shrink-0 p-0 text-muted-foreground";
   voiceButton.hidden = true;
-  voiceButton.setAttribute("aria-label", copy.startVoice);
+  voiceButton.setAttribute("aria-label", "Start voice input");
   composerRow.appendChild(voiceButton);
   const voiceRow = document.createElement("div");
   voiceRow.className = "flex min-w-0 items-center justify-end gap-1 px-2 pb-2";
   voiceRow.hidden = true;
   const voicePill = document.createElement("div");
-  const voiceCancel = createButton("", copy.cancelVoice);
+  const voiceCancel = createButton("", "Cancel voice input");
   voiceCancel.innerHTML =
     '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   voiceCancel.className += " h-7 w-7 shrink-0 rounded-full p-0";
-  const voiceFinish = createButton("", copy.finishVoice);
+  const voiceFinish = createButton("", "Finish voice input");
   voiceFinish.className +=
     " h-7 w-7 shrink-0 rounded-full border-primary bg-primary p-0 text-primary-foreground hover:bg-primary/90";
-  const voiceSkip = createButton(copy.skip, copy.skipTitle);
+  const voiceSkip = createButton("Skip", "Skip transcript cleanup");
   voiceSkip.className += " h-7 shrink-0 rounded-full px-2.5";
   // createButton's rounded-md sorts after rounded-full in the generated CSS, so it would win.
   for (const button of [voiceCancel, voiceFinish, voiceSkip]) button.classList.remove("rounded-md");
@@ -881,7 +775,7 @@ function startAnnotation(
     const wasActive = voicePill.parentElement === composerRow;
     voiceButton.hidden = !state.available || active;
     voiceButton.disabled = voiceBusy;
-    const label = voiceSettings ? copy.openVoiceSettings : copy.startVoice;
+    const label = voiceSettings ? "Open voice settings" : "Start voice input";
     voiceButton.title =
       !voiceSettings && state.shortcutLabel ? `${label} (${state.shortcutLabel})` : label;
     voiceButton.setAttribute("aria-label", label);
@@ -899,9 +793,10 @@ function startAnnotation(
     // A draft that arrived while the textarea was sr-only was measured at 1px wide.
     if (wasActive && !active) resizeComment();
     else if (phaseChanged) queueEditorLayout();
-    voiceCancel.title = state.phase === "error" ? copy.dismissVoiceError : copy.cancelVoice;
+    voiceCancel.title =
+      state.phase === "error" ? "Dismiss voice input error" : "Cancel voice input";
     voiceCancel.setAttribute("aria-label", voiceCancel.title);
-    voiceStatus.setAttribute("aria-label", state.status ?? copy.voiceInput);
+    voiceStatus.setAttribute("aria-label", state.status ?? "Voice input");
     voiceStatus.setAttribute("aria-live", recording ? "off" : "polite");
     voiceStatusText.textContent = state.status;
     voiceStatusText.style.color = state.phase === "error" ? "var(--t3-destructive)" : "";
@@ -930,7 +825,7 @@ function startAnnotation(
     voiceSkip.hidden = state.phase !== "post-processing";
     voiceFinish.hidden = !active || state.phase === "post-processing";
     voiceFinish.disabled = !recording;
-    voiceFinish.title = recording ? copy.finishVoice : (state.status ?? copy.voiceBusy);
+    voiceFinish.title = recording ? "Finish voice input" : (state.status ?? "Voice input is busy");
     if (recording && state.shortcutLabel) voiceFinish.title += ` (${state.shortcutLabel})`;
     voiceFinish.setAttribute("aria-label", voiceFinish.title);
     if (phaseChanged)
@@ -957,14 +852,16 @@ function startAnnotation(
   const dragHandle = document.createElement("button");
   dragHandle.type = "button";
   dragHandle.textContent = "⠿";
-  dragHandle.title = copy.dragEditor;
+  dragHandle.title = "Drag annotation editor";
   dragHandle.className =
     "hidden h-8 w-6 shrink-0 cursor-grab select-none border-0 bg-transparent p-0 font-sans text-lg font-bold leading-5 text-muted-foreground";
   composerRow.appendChild(dragHandle);
 
-  const submit = createButton(copy.attach, copy.attachTitle);
+  const submit = createButton("Attach", "Attach annotation and screenshot (Enter)");
   const updateSendHint = () => {
-    submit.title = sendEnabled ? copy.attachAndSendTitle : copy.attachTitle;
+    submit.title = sendEnabled
+      ? "Attach annotation and screenshot (Enter). Send with Cmd/Ctrl+Enter."
+      : "Attach annotation and screenshot (Enter)";
   };
   updateSendHint();
   submit.className +=
@@ -1074,6 +971,7 @@ function startAnnotation(
       outline: createBox(PRIMARY, PRIMARY_FILL),
       label: createLabel(),
       baselineStyles: new Map(),
+      rect: rectFromDomRect(element.getBoundingClientRect()),
     };
     selected.set(element, target);
     root.append(target.outline, target.label);
@@ -1127,14 +1025,14 @@ function startAnnotation(
   stylePanel.append(textSection, colorsSection, bordersSection, sizingSection);
 
   const fontFamily = document.createElement("select");
-  for (const value of ["inherit", "system-ui", "sans-serif", "serif", "monospace"] as const) {
+  for (const value of ["inherit", "system-ui", "sans-serif", "serif", "monospace"]) {
     const option = document.createElement("option");
     option.value = value;
-    option.textContent = copy.fontOptions[value];
+    option.textContent = value;
     fontFamily.appendChild(option);
   }
   fontFamily.addEventListener("change", () => setStyleForSelected("font-family", fontFamily.value));
-  textSection.appendChild(createField(copy.font, fontFamily, copy.styleValue));
+  textSection.appendChild(createField("Font", fontFamily));
 
   const fontSize = createUnitInput("px", "16");
   fontSize.min = "1";
@@ -1142,7 +1040,7 @@ function startAnnotation(
   fontSize.addEventListener("input", () => {
     if (fontSize.value) setStyleForSelected("font-size", `${fontSize.value}px`);
   });
-  textSection.appendChild(createField(copy.fontSize, fontSize, copy.styleValue));
+  textSection.appendChild(createField("Font size", fontSize));
 
   const fontWeight = document.createElement("select");
   for (const value of ["300", "400", "500", "600", "700", "800", "900"]) {
@@ -1152,15 +1050,15 @@ function startAnnotation(
     fontWeight.appendChild(option);
   }
   fontWeight.addEventListener("change", () => setStyleForSelected("font-weight", fontWeight.value));
-  textSection.appendChild(createField(copy.fontWeight, fontWeight, copy.styleValue));
+  textSection.appendChild(createField("Font weight", fontWeight));
 
   const lineHeight = document.createElement("input");
   lineHeight.type = "text";
-  lineHeight.placeholder = copy.lineHeightPlaceholder;
+  lineHeight.placeholder = "normal / 1.4";
   lineHeight.addEventListener("change", () => {
     if (lineHeight.value.trim()) setStyleForSelected("line-height", lineHeight.value.trim());
   });
-  textSection.appendChild(createField(copy.lineHeight, lineHeight, copy.styleValue));
+  textSection.appendChild(createField("Line height", lineHeight));
 
   const createColorRow = (
     labelText: string,
@@ -1182,7 +1080,7 @@ function startAnnotation(
       "width:20px;height:20px;padding:0;border:0;border-radius:5px;overflow:hidden;background:transparent;cursor:pointer";
     const text = document.createElement("input");
     text.type = "text";
-    text.setAttribute("aria-label", copy.colorValueLabel(labelText));
+    text.setAttribute("aria-label", `${labelText} value`);
     text.className =
       "min-w-0 w-full border-0 bg-transparent font-mono text-xs text-foreground outline-none";
     color.addEventListener("input", () => {
@@ -1201,8 +1099,8 @@ function startAnnotation(
     return { row, color, text };
   };
 
-  const textColor = createColorRow(copy.textColor, "color", colorsSection);
-  const backgroundColor = createColorRow(copy.background, "background-color", colorsSection);
+  const textColor = createColorRow("Text color", "color", colorsSection);
+  const backgroundColor = createColorRow("Background", "background-color", colorsSection);
 
   const opacity = document.createElement("input");
   opacity.type = "range";
@@ -1212,7 +1110,7 @@ function startAnnotation(
   opacity.value = "1";
   opacity.style.accentColor = PRIMARY;
   opacity.addEventListener("input", () => setStyleForSelected("opacity", opacity.value));
-  colorsSection.appendChild(createField(copy.opacity, opacity, copy.styleValue));
+  colorsSection.appendChild(createField("Opacity", opacity));
 
   const radius = createUnitInput("px", "0");
   radius.min = "0";
@@ -1220,9 +1118,9 @@ function startAnnotation(
   radius.addEventListener("input", () => {
     if (radius.value) setStyleForSelected("border-radius", `${radius.value}px`);
   });
-  bordersSection.appendChild(createField(copy.radius, radius, copy.styleValue));
+  bordersSection.appendChild(createField("Radius", radius));
 
-  const borderColor = createColorRow(copy.borderColor, "border-color", bordersSection);
+  const borderColor = createColorRow("Border color", "border-color", bordersSection);
 
   const borderWidth = createUnitInput("px", "0");
   borderWidth.min = "0";
@@ -1233,21 +1131,21 @@ function startAnnotation(
       setStyleForSelected("border-width", `${borderWidth.value}px`);
     }
   });
-  bordersSection.appendChild(createField(copy.borderWidth, borderWidth, copy.styleValue));
+  bordersSection.appendChild(createField("Border width", borderWidth));
 
   const dimensions = document.createElement("div");
   dimensions.style.cssText =
     "display:grid;grid-template-columns:82px minmax(0,1fr);gap:8px;align-items:center";
   const dimensionLabel = document.createElement("div");
   dimensionLabel.className = "grid gap-2 font-sans text-xs font-medium text-muted-foreground";
-  dimensionLabel.innerHTML = `<span>${copy.width}</span><span>${copy.height}</span>`;
+  dimensionLabel.innerHTML = "<span>Width</span><span>Height</span>";
   const dimensionControls = document.createElement("div");
   dimensionControls.style.cssText = "position:relative;display:grid;gap:3px;padding-left:22px";
-  const widthInput = createUnitInput("px", copy.autoPlaceholder);
-  const heightInput = createUnitInput("px", copy.autoPlaceholder);
-  styleControl(widthInput, copy.styleValue);
-  styleControl(heightInput, copy.styleValue);
-  const aspectLock = createButton("", copy.lockAspectRatio);
+  const widthInput = createUnitInput("px", "auto");
+  const heightInput = createUnitInput("px", "auto");
+  styleControl(widthInput);
+  styleControl(heightInput);
+  const aspectLock = createButton("", "Lock aspect ratio");
   aspectLock.setAttribute("aria-pressed", "true");
   aspectLock.style.cssText +=
     ";position:absolute;left:0;top:50%;transform:translateY(-50%);width:18px;height:38px;padding:0";
@@ -1309,12 +1207,12 @@ function startAnnotation(
     input.addEventListener("change", () => {
       if (input.value.trim()) setStyleForSelected(property, input.value.trim());
     });
-    sizingSection.appendChild(createField(label, input, copy.styleValue));
+    sizingSection.appendChild(createField(label, input));
     return input;
   };
-  const padding = addSpacingField(copy.padding, "padding", "0 0 0 0");
-  const margin = addSpacingField(copy.margin, "margin", "0 0 0 0");
-  const gap = addSpacingField(copy.gap, "gap", "0px");
+  const padding = addSpacingField("Padding", "padding", "0 0 0 0");
+  const margin = addSpacingField("Margin", "margin", "0 0 0 0");
+  const gap = addSpacingField("Gap", "gap", "0px");
 
   const syncStyleControls = (): void => {
     const first = selected.values().next().value as SelectedElement | undefined;
@@ -1343,7 +1241,13 @@ function startAnnotation(
     gap.value = computed.gap === "normal" ? "0px" : computed.gap;
   };
 
-  for (const [candidate, label, title] of copy.tools) {
+  const tools: ReadonlyArray<[AnnotationTool, string, string]> = [
+    ["select", "Select", "Select elements (V)"],
+    ["marquee", "Region", "Draw a region or marquee-select elements (R)"],
+    ["draw", "Draw", "Draw freehand (D)"],
+    ["erase", "Erase", "Remove an annotation target (E)"],
+  ];
+  for (const [candidate, label, title] of tools) {
     const button = createButton(label, title);
     button.className += " h-8 px-2.5 text-sm";
     button.addEventListener("click", () => {
@@ -1437,8 +1341,8 @@ function startAnnotation(
       stylePanel.style.display = selected.size > 0 ? "grid" : "none";
       dragHandle.style.display = "block";
       adjust.setAttribute("aria-expanded", "true");
-      adjust.title = copy.collapseEditor;
-      adjust.setAttribute("aria-label", copy.collapseEditor);
+      adjust.title = "Collapse annotation editor";
+      adjust.setAttribute("aria-label", "Collapse annotation editor");
       if (selected.size > 0) syncStyleControls();
     } else {
       editorExpanded = false;
@@ -1446,8 +1350,8 @@ function startAnnotation(
       stylePanel.style.display = "none";
       dragHandle.style.display = "none";
       adjust.setAttribute("aria-expanded", "false");
-      adjust.title = copy.expandEditor;
-      adjust.setAttribute("aria-label", copy.expandEditor);
+      adjust.title = "Expand annotation editor";
+      adjust.setAttribute("aria-label", "Expand annotation editor");
     }
     queueEditorLayout();
   });
@@ -1493,6 +1397,13 @@ function startAnnotation(
   const repaint = (): void => {
     for (const target of selected.values()) updateSelectedVisual(target);
     queueEditorLayout();
+  };
+  const onScroll = (): void => {
+    // A detached element's last rect no longer matches what is on screen once the page scrolls.
+    for (const target of selected.values()) {
+      if (!target.element.isConnected) target.rect = { x: 0, y: 0, width: 0, height: 0 };
+    }
+    repaint();
   };
   // A scrollbar appearing narrows the viewport without a window resize.
   const rootResizeObserver = new ResizeObserver(repaint);
@@ -1691,6 +1602,38 @@ function startAnnotation(
       event.stopPropagation();
   };
 
+  // Page popovers and modal dialogs sit in the top layer above any z-index, and a modal makes
+  // everything outside it inert, so the overlay is shown last and lives inside the topmost modal.
+  // Modals in the order they opened, since DOM order does not say which one blocks the rest.
+  const openedModals: Element[] = [];
+  const raiseOverlay = (): void => {
+    const focused = shadowRoot.activeElement;
+    const parent =
+      document.activeElement?.closest("dialog:modal") ??
+      openedModals.findLast((dialog) => dialog.matches(":modal")) ??
+      Array.from(document.querySelectorAll("dialog:modal")).at(-1) ??
+      document.documentElement;
+    if (host.parentElement !== parent) parent.appendChild(host);
+    if (host.matches(":popover-open")) host.hidePopover();
+    host.showPopover();
+    if (focused instanceof HTMLElement && !focused.matches(":focus"))
+      focused.focus({ preventScroll: true });
+  };
+  const onPageToggle = (event: Event): void => {
+    const target = event.target;
+    if (target === host) return;
+    if (target instanceof HTMLDialogElement) {
+      const index = openedModals.indexOf(target);
+      if (index !== -1) openedModals.splice(index, 1);
+      if (target.matches(":modal")) openedModals.push(target);
+    }
+    raiseOverlay();
+  };
+  // Removing an open dialog hides the overlay inside it without a toggle event.
+  const detachObserver = new MutationObserver(() => {
+    if (!host.isConnected || !host.matches(":popover-open")) raiseOverlay();
+  });
+
   const onPointerOut = (event: PointerEvent): void => {
     if (event.relatedTarget === null) clearHoverOutline();
   };
@@ -1728,13 +1671,15 @@ function startAnnotation(
     window.removeEventListener("focus", onWindowFocus);
     window.removeEventListener("keydown", onKeyDown, true);
     window.removeEventListener("keyup", onVoiceKeyUp, true);
-    window.removeEventListener("scroll", repaint, true);
+    window.removeEventListener("scroll", onScroll, true);
     window.removeEventListener("resize", repaint);
     dragHandle.removeEventListener("pointerdown", onEditorPointerDown);
     dragHandle.removeEventListener("pointermove", onEditorPointerMove);
     dragHandle.removeEventListener("pointerup", onEditorPointerUp);
     dragHandle.removeEventListener("pointercancel", onEditorPointerUp);
     for (const type of PAGE_ISOLATED_EVENTS) host.removeEventListener(type, stopAtOverlay);
+    window.removeEventListener("toggle", onPageToggle, true);
+    detachObserver.disconnect();
     document.documentElement.removeEventListener("focusout", onFocusOutToOverlay);
     if (editorLayoutFrame !== null) window.cancelAnimationFrame(editorLayoutFrame);
     ipcRenderer.off(CANCEL_PICK_CHANNEL, onCancel);
@@ -1808,7 +1753,7 @@ function startAnnotation(
       return;
     pendingCapture = true;
     submit.disabled = true;
-    submit.textContent = copy.capturing;
+    submit.textContent = "Capturing…";
     // Snapshot the submitted comment before context lookup lets the user edit it.
     const submittedComment = comment.value.trim();
     const submittedRegions = [...regions];
@@ -1825,7 +1770,9 @@ function startAnnotation(
         return {
           id: target.id,
           element,
-          rect: rectFromDomRect(target.element.getBoundingClientRect()),
+          rect: target.element.isConnected
+            ? rectFromDomRect(target.element.getBoundingClientRect())
+            : target.rect,
         };
       }),
     )
@@ -1865,7 +1812,9 @@ function startAnnotation(
         teardown(true);
       });
   };
-  submit.addEventListener("click", () => submitAnnotation("attach"));
+  submit.addEventListener("click", (event) => {
+    if (event.isTrusted) submitAnnotation("attach");
+  });
   const handleOverlayKey = (event: KeyboardEvent): void => {
     if (event.type === "keyup") onVoiceKeyUp(event);
     if (event.type !== "keydown") return;
@@ -1887,7 +1836,7 @@ function startAnnotation(
   window.addEventListener("focus", onWindowFocus);
   window.addEventListener("keydown", onKeyDown, { capture: true });
   window.addEventListener("keyup", onVoiceKeyUp, { capture: true });
-  window.addEventListener("scroll", repaint, { capture: true, passive: true });
+  window.addEventListener("scroll", onScroll, { capture: true, passive: true });
   window.addEventListener("resize", repaint, { passive: true });
   // Bubble phase, so the overlay's own handlers still see these events.
   for (const type of PAGE_ISOLATED_EVENTS)
@@ -1900,7 +1849,9 @@ function startAnnotation(
     document.documentElement.appendChild(inputLayer);
     inputLayer.focus({ preventScroll: true });
   }
-  document.documentElement.appendChild(host);
+  raiseOverlay();
+  window.addEventListener("toggle", onPageToggle, true);
+  detachObserver.observe(document.documentElement, { childList: true, subtree: true });
   rootResizeObserver.observe(document.documentElement);
   refreshToolButtons();
   updateStatus();
@@ -1923,10 +1874,9 @@ ipcRenderer.on(
     theme: DesktopPreviewAnnotationTheme | undefined,
     sendEnabled?: boolean,
     voice?: DesktopPreviewAnnotationVoiceConfig,
-    locale?: unknown,
   ) => {
     if (theme) annotationTheme = theme;
-    startAnnotation(sendEnabled === true, voice, locale === "zh-CN" ? "zh-CN" : "en");
+    startAnnotation(sendEnabled === true, voice);
   },
 );
 ipcRenderer.on(ANNOTATION_SEND_ENABLED_CHANNEL, (_event, enabled: boolean) => {

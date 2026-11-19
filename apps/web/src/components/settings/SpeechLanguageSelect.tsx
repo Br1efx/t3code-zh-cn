@@ -1,23 +1,18 @@
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
 import type { EnvironmentSpeechStatus } from "@t3tools/contracts";
 import { effectiveSpeechLanguage } from "@t3tools/shared/speech";
+import { useGT, useLocale } from "gt-react";
 import { updateClientSettings, useClientSettings } from "../../hooks/useSettings";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
 
 const languageNamesByLocale = new Map<string, Intl.DisplayNames>();
-
-function getLanguageDisplayNames(locale: string): Intl.DisplayNames {
-  let names = languageNamesByLocale.get(locale);
-  if (!names) {
-    names = new Intl.DisplayNames([locale], { type: "language" });
-    languageNamesByLocale.set(locale, names);
+export function languageLabel(code: string, locale = "en"): string {
+  let languageNames = languageNamesByLocale.get(locale);
+  if (!languageNames) {
+    languageNames = new Intl.DisplayNames([locale], { type: "language" });
+    languageNamesByLocale.set(locale, languageNames);
   }
-  return names;
+  return languageNames.of(code) ?? code;
 }
-
-export const languageLabel = (code: string, locale = "en") =>
-  getLanguageDisplayNames(locale).of(code) ?? code;
 
 type ModelLanguages = Pick<
   Extract<EnvironmentSpeechStatus, { supported: true }>,
@@ -25,7 +20,8 @@ type ModelLanguages = Pick<
 >;
 
 export function SpeechLanguageSelect({ model }: { readonly model: ModelLanguages | null }) {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
+  const locale = useLocale();
   const preference = useClientSettings((settings) => settings.speechLanguage);
   const languages = model?.languages ?? [];
   const resolved = model
@@ -34,25 +30,15 @@ export function SpeechLanguageSelect({ model }: { readonly model: ModelLanguages
         preference,
       )
     : preference;
-  const localizedLanguage = (code: string) => languageLabel(code, translationLocale);
-  const effectiveLabel =
-    resolved === "auto"
-      ? translateWebSource(translationLocale, "Auto-detect")
-      : localizedLanguage(resolved);
+  const effectiveLabel = resolved === "auto" ? gt("Auto-detect") : languageLabel(resolved, locale);
   const unavailable =
     preference !== "auto" && preference !== resolved
-      ? translationLocale === "zh-CN"
-        ? `${localizedLanguage(preference)}不可用`
-        : `${localizedLanguage(preference)} unavailable`
+      ? gt("{language} unavailable", { language: languageLabel(preference, locale) })
       : null;
   const label = unavailable
-    ? translationLocale === "zh-CN"
-      ? `${effectiveLabel}（${unavailable}）`
-      : `${effectiveLabel} (${unavailable})`
+    ? gt("{language} ({unavailable})", { language: effectiveLabel, unavailable })
     : preference === "auto" && resolved !== "auto"
-      ? translationLocale === "zh-CN"
-        ? `${translateWebSource(translationLocale, "Auto")}（${effectiveLabel}）`
-        : `Auto (${effectiveLabel})`
+      ? gt("Auto ({language})", { language: effectiveLabel })
       : effectiveLabel;
   return (
     <Select
@@ -62,15 +48,13 @@ export function SpeechLanguageSelect({ model }: { readonly model: ModelLanguages
         if (value) void updateClientSettings({ speechLanguage: value });
       }}
     >
-      <SelectTrigger
-        size="sm"
-        aria-label={translateWebSource(translationLocale, "Transcription language")}
-        className="max-w-64"
-      >
+      <SelectTrigger size="sm" aria-label={gt("Transcription language")} className="max-w-64">
         <SelectValue>{label}</SelectValue>
       </SelectTrigger>
       <SelectPopup align="end" alignItemWithTrigger={false}>
-        <SelectItem value="auto">{translateWebSource(translationLocale, "Auto")}</SelectItem>
+        <SelectItem value="auto">
+          {gt("Auto", { $context: "automatic language detection" })}
+        </SelectItem>
         {unavailable ? (
           <SelectItem value={preference} disabled>
             {unavailable}
@@ -78,11 +62,11 @@ export function SpeechLanguageSelect({ model }: { readonly model: ModelLanguages
         ) : null}
         {languages
           .toSorted((left, right) =>
-            localizedLanguage(left).localeCompare(localizedLanguage(right), translationLocale),
+            languageLabel(left, locale).localeCompare(languageLabel(right, locale)),
           )
           .map((code) => (
             <SelectItem key={code} value={code}>
-              {localizedLanguage(code)}
+              {languageLabel(code, locale)}
             </SelectItem>
           ))}
       </SelectPopup>

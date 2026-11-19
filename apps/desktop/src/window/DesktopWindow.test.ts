@@ -49,7 +49,6 @@ import * as ElectronWindow from "../electron/ElectronWindow.ts";
 import { SNAP_SHOT_EVENT_CHANNEL } from "../ipc/channels.ts";
 import * as DesktopServerExposure from "../backend/DesktopServerExposure.ts";
 import * as DesktopWindow from "./DesktopWindow.ts";
-import * as DesktopTray from "./DesktopTray.ts";
 import {
   PASSKEY_BRIDGE_ARGUMENT,
   PRIMARY_PASTE_DISABLED_ARGUMENT,
@@ -108,7 +107,6 @@ function makeFakeBrowserWindow() {
   const window = {
     close: vi.fn(),
     focus: vi.fn(),
-    hide: vi.fn(),
     getBounds: vi.fn(() => ({ x: 0, y: 0, width: 1100, height: 780 })),
     getNormalBounds: vi.fn(() => ({ x: 0, y: 0, width: 1100, height: 780 })),
     isDestroyed: vi.fn(() => false),
@@ -144,7 +142,6 @@ function makeFakeBrowserWindow() {
     isFullScreen: window.isFullScreen,
     isMaximized: window.isMaximized,
     isMinimized: window.isMinimized,
-    hide: window.hide,
     loadURL: window.loadURL,
     maximize: window.maximize,
     openDevTools: webContents.openDevTools,
@@ -210,13 +207,6 @@ const layerElectronTheme = Layer.succeed(ElectronTheme.ElectronTheme, {
   onUpdated: () => Effect.void,
 } satisfies ElectronTheme.ElectronTheme["Service"]);
 
-const layerDesktopTray = Layer.succeed(DesktopTray.DesktopTray, {
-  ensure: () => Effect.succeed(false),
-  refreshMenu: Effect.void,
-  markQuitRequested: () => undefined,
-  shouldHideOnClose: () => false,
-});
-
 const layerDesktopEnvironmentFor = (platform: NodeJS.Platform) =>
   DesktopEnvironment.layer({ ...environmentInput, platform }).pipe(
     Layer.provide(
@@ -254,7 +244,6 @@ function layerTest(input: {
   readonly onCopyText?: (text: string) => Effect.Effect<void>;
   readonly onPopupTemplate?: (input: ElectronMenu.ElectronMenuTemplateInput) => Effect.Effect<void>;
   readonly previewZoomReapplies?: number[];
-  readonly desktopTray?: DesktopTray.DesktopTray["Service"];
   readonly onReveal?: (window: Electron.BrowserWindow) => void;
   readonly focusedWindow?: Electron.BrowserWindow;
   readonly fallbackWindow?: Electron.BrowserWindow;
@@ -366,15 +355,6 @@ function layerTest(input: {
           copyText: input.onCopyText ?? (() => Effect.void),
         } satisfies ElectronShell.ElectronShell["Service"]),
         layerElectronTheme,
-        Layer.succeed(
-          DesktopTray.DesktopTray,
-          input.desktopTray ?? {
-            ensure: () => Effect.succeed(false),
-            refreshMenu: Effect.void,
-            markQuitRequested: () => undefined,
-            shouldHideOnClose: () => false,
-          },
-        ),
         layerElectronWindow,
         Layer.succeed(DesktopPrimaryPaste.DesktopPrimaryPaste, {
           enabled: input.primaryPasteEnabled ?? true,
@@ -489,7 +469,6 @@ const makeSplashScenario = (createOutcomes: readonly (Electron.BrowserWindow | n
             copyText: () => Effect.void,
           } satisfies ElectronShell.ElectronShell["Service"]),
           layerElectronTheme,
-          layerDesktopTray,
           Layer.succeed(ElectronWindow.ElectronWindow, electronWindowShape),
           Layer.succeed(DesktopPrimaryPaste.DesktopPrimaryPaste, { enabled: true }),
           Layer.mock(PreviewPasskeys.PreviewPasskeys)({
@@ -1587,12 +1566,10 @@ describe("DesktopWindow", () => {
         );
 
         const { template } = yield* Deferred.await(popup);
-        const copyEmail = template.find(
-          (item) => item.label === "复制邮箱地址" || item.label === "Copy Email Address",
-        );
+        const copyEmail = template.find((item) => item.label === "Copy Email Address");
         assert.isDefined(
           copyEmail,
-          `no "Copy Email Address" / "复制邮箱地址" item in ${JSON.stringify(template.map((item) => item.label ?? item.role ?? item.type))}`,
+          `no "Copy Email Address" item in ${JSON.stringify(template.map((item) => item.label ?? item.role ?? item.type))}`,
         );
         copyEmail?.click?.(
           {} as Electron.MenuItem,

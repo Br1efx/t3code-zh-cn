@@ -1,5 +1,8 @@
 // @effect-diagnostics globalTimers:off -- Poll TCC only while the native permission helper is open.
 import * as Electron from "electron";
+import { msg } from "gt-i18n";
+
+import { m } from "../i18n/messages.ts";
 import { MAC_PERMISSION_HELPER_CHANNEL } from "../ipc/channels.ts";
 
 import {
@@ -8,11 +11,7 @@ import {
   type SettingsWindow,
 } from "./MacSettingsWindow.ts";
 
-import {
-  MAC_PERMISSION_TITLES,
-  MAC_PERMISSION_TITLES_ZH_CN,
-  type MacPermission,
-} from "./MacPermission.ts";
+import { MAC_PERMISSION_SETUP_TITLES, type MacPermission } from "./MacPermission.ts";
 
 const permissionGranted = (permission: MacPermission) => {
   if (permission === "screen-recording")
@@ -42,25 +41,16 @@ const escapeHtml = (value: string) =>
     }
   });
 
-function helperHtml(permission: MacPermission, icon: string, locale: "en" | "zh-CN" = "en") {
-  const isZh = locale === "zh-CN";
-  const title = isZh ? MAC_PERMISSION_TITLES_ZH_CN[permission] : MAC_PERMISSION_TITLES[permission];
-  const windowTitle = isZh ? `开启“${title}”权限` : `Set up ${title}`;
-  const closeAria = isZh ? "关闭权限指引" : "Close permission helper";
-  const headerText = isZh
-    ? "↑ 请将下方的 T3 Code 图标拖入上方列表中"
-    : "↑ Drag T3 Code into the list above";
-  const dragAria = isZh
-    ? "将 T3 Code 拖入系统设置，或点击在访达中显示"
-    : "Drag T3 Code to System Settings, or click to reveal in Finder";
-  return `<!doctype html><html lang="${isZh ? "zh-CN" : "en"}"><head><meta charset="utf-8">
+function helperHtml(permission: MacPermission, icon: string) {
+  const title = escapeHtml(m(MAC_PERMISSION_SETUP_TITLES[permission]));
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'">
-<title>${escapeHtml(windowTitle)}</title><style>
+<title>${title}</title><style>
 :root { color-scheme: light dark; --base: #fff; --row: #e7e7e7; --text: #292929; --line: #e3e3e3; }
 @media (prefers-color-scheme: dark) { :root { --base: #242424; --row: #383838; --text: #f5f5f5; --line: #484848; } }
 * { box-sizing: border-box; }
 html { background: transparent; }
-body { margin: 0; background: transparent; color: var(--text); font: 15px/22px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; user-select: none; }
+body { margin: 0; background: transparent; color: var(--text); font: 15px/22px -apple-system, BlinkMacSystemFont, sans-serif; user-select: none; }
 #panel { position: relative; margin: 2px; padding: 20px; height: 136px; border: 1px solid var(--line); border-radius: 24px; background: var(--base); }
 header { font-weight: 600; white-space: nowrap; }
 button { font: inherit; color: inherit; }
@@ -71,9 +61,9 @@ button:focus-visible { outline: 2px solid #007aff; outline-offset: -2px; }
 #app:active { cursor: grabbing; }
 img { width: 32px; height: 32px; pointer-events: none; }
 </style></head><body><main id="panel">
-<button id="close" aria-label="${closeAria}">×</button>
-<header>${headerText}</header>
-<button id="app" draggable="true" aria-label="${dragAria}"><img src="${escapeHtml(icon)}" alt="" draggable="false">T3 Code</button>
+<button id="close" aria-label="${escapeHtml(m(msg("Close permission helper")))}">×</button>
+<header>${escapeHtml(m(msg("↑ Drag T3 Code into the list above")))}</header>
+<button id="app" draggable="true" aria-label="${escapeHtml(m(msg("Drag T3 Code to System Settings, or click to reveal in Finder")))}"><img src="${escapeHtml(icon)}" alt="" draggable="false">T3 Code</button>
 </main></body></html>`;
 }
 
@@ -93,7 +83,6 @@ export class MacPermissionHelper {
     owner: Electron.BrowserWindow | null,
     iconPaths: readonly string[],
     isGranted: () => boolean | Promise<boolean> = () => permissionGranted(permission),
-    locale: "en" | "zh-CN" = "en",
   ) {
     this.close();
     const generation = this.generation;
@@ -108,10 +97,6 @@ export class MacPermissionHelper {
       .find((image) => !image.isEmpty());
     if (!appIcon) throw new Error("The packaged T3 Code icon is missing.");
     const icon = appIcon.resize({ width: 64, height: 64 });
-    const isZh = locale === "zh-CN";
-    const windowTitle = isZh
-      ? `开启“${MAC_PERMISSION_TITLES_ZH_CN[permission]}”权限`
-      : `Set up ${MAC_PERMISSION_TITLES[permission]}`;
     const window = new Electron.BrowserWindow({
       width: 560,
       height: 140,
@@ -127,7 +112,7 @@ export class MacPermissionHelper {
       fullscreenable: false,
       alwaysOnTop: true,
       skipTaskbar: true,
-      title: windowTitle,
+      title: m(MAC_PERMISSION_SETUP_TITLES[permission]),
       webPreferences: { preload, sandbox: true, contextIsolation: true, nodeIntegration: false },
     });
     this.window = window;
@@ -210,7 +195,7 @@ export class MacPermissionHelper {
     window.webContents.on("will-navigate", (event) => event.preventDefault());
     try {
       await window.loadURL(
-        `data:text/html;charset=utf-8,${encodeURIComponent(helperHtml(permission, icon.toDataURL(), locale))}`,
+        `data:text/html;charset=utf-8,${encodeURIComponent(helperHtml(permission, icon.toDataURL()))}`,
       );
       if (!window.isDestroyed()) {
         stopTracking = watchMacSettingsWindow(

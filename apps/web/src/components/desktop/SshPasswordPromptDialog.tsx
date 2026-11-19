@@ -1,8 +1,12 @@
+import { thrownErrorMessage } from "@t3tools/client-runtime/errors";
 import { settlePromise } from "@t3tools/client-runtime/state/runtime";
 import type { DesktopSshPasswordPromptRequest } from "@t3tools/contracts";
 import * as AsyncResult from "effect/reactivity/AsyncResult";
 import * as Cause from "effect/Cause";
+import { msg, T, useGT, Var } from "gt-react";
 import { useId, useRef, useState, useSyncExternalStore } from "react";
+
+import { m } from "../../i18n/messages";
 
 import { useDeadlinePassed } from "../../hooks/useDeadline";
 import { useNowSecond } from "../../hooks/useNowSecond";
@@ -18,7 +22,6 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { Input } from "../ui/input";
-import { splitWebTranslation, useI18n, type WebTranslate } from "~/i18n/WebI18nContext";
 
 function describeSshTarget(request: DesktopSshPasswordPromptRequest): string {
   return request.username ? `${request.username}@${request.destination}` : request.destination;
@@ -28,10 +31,10 @@ function formatRemainingSeconds(seconds: number): string {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
-function getPromptErrorMessage(error: unknown, t: WebTranslate): string {
-  const message = error instanceof Error ? error.message : t("sshPassword.promptFailed");
+function getPromptErrorMessage(error: unknown): string {
+  const message = thrownErrorMessage(error, m) ?? m(msg("SSH verification prompt failed."));
   return message.includes("expired") || message.includes("no longer pending")
-    ? t("sshPassword.expiredDescription")
+    ? m(msg("This SSH verification prompt expired. Try connecting again."))
     : message;
 }
 
@@ -91,7 +94,7 @@ function ActiveSshPasswordPrompt({
 }: {
   readonly request: DesktopSshPasswordPromptRequest;
 }) {
-  const { t } = useI18n();
+  const gt = useGT();
   const [password, setPassword] = useState("");
   const [isResponding, setIsResponding] = useState(false);
   const [responseError, setResponseError] = useState<string | null>(null);
@@ -110,7 +113,9 @@ function ActiveSshPasswordPrompt({
   const remainingSeconds = remainingMs === null ? null : Math.ceil(remainingMs / 1_000);
   const remainingLabel =
     remainingSeconds === null ? null : formatRemainingSeconds(remainingSeconds);
-  const visibleResponseError = isExpired ? t("sshPassword.expiredDescription") : responseError;
+  const visibleResponseError = isExpired
+    ? gt("This SSH verification prompt expired. Try connecting again.")
+    : responseError;
 
   const respond = async (nextPassword: string | null) => {
     if (isRespondingRef.current) {
@@ -119,7 +124,7 @@ function ActiveSshPasswordPrompt({
 
     const requestId = request.requestId;
     if (nextPassword !== null && isExpired) {
-      setResponseError(t("sshPassword.expiredDescription"));
+      setResponseError(gt("This SSH verification prompt expired. Try connecting again."));
       return;
     }
 
@@ -132,7 +137,7 @@ function ActiveSshPasswordPrompt({
     if (AsyncResult.isSuccess(result) || nextPassword === null) {
       removeSshPasswordPrompt(requestId);
     } else {
-      setResponseError(getPromptErrorMessage(Cause.squash(result.cause), t));
+      setResponseError(getPromptErrorMessage(Cause.squash(result.cause)));
     }
     isRespondingRef.current = false;
     setIsResponding(false);
@@ -151,10 +156,6 @@ function ActiveSshPasswordPrompt({
   };
 
   const target = describeSshTarget(request);
-  const [beforeTarget, afterTarget] = splitWebTranslation(t, "sshPassword.description", "target");
-  const prompt = /^password:?$/iu.test(request.prompt.trim())
-    ? t("sshPassword.password")
-    : request.prompt;
 
   return (
     <Dialog
@@ -167,11 +168,18 @@ function ActiveSshPasswordPrompt({
     >
       <DialogPopup className="max-w-md" initialFocus={inputRef} showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle>{t("sshPassword.title")}</DialogTitle>
+          <DialogTitle>
+            <T>SSH verification required</T>
+          </DialogTitle>
           <DialogDescription>
-            {beforeTarget}
-            <code>{target}</code>
-            {afterTarget}
+            <T>
+              Enter the password or verification code required by{" "}
+              <code>
+                <Var>{target}</Var>
+              </code>
+              . T3 Code passes your response to the local SSH process and keeps it in memory to
+              reuse for this host. T3 Code does not write it to disk.
+            </T>
           </DialogDescription>
         </DialogHeader>
         <DialogPanel scrollFade={false}>
@@ -185,7 +193,7 @@ function ActiveSshPasswordPrompt({
           >
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-medium text-foreground">{prompt}</p>
+                <p className="text-sm font-medium text-foreground">{request.prompt}</p>
                 {remainingLabel ? (
                   <span
                     className={
@@ -194,7 +202,7 @@ function ActiveSshPasswordPrompt({
                         : "shrink-0 text-xs text-muted-foreground"
                     }
                   >
-                    {isExpired ? t("sshPassword.expired") : remainingLabel}
+                    {isExpired ? gt("Expired") : remainingLabel}
                   </span>
                 ) : null}
               </div>
@@ -211,16 +219,21 @@ function ActiveSshPasswordPrompt({
             {visibleResponseError ? (
               <p className="text-sm text-destructive">{visibleResponseError}</p>
             ) : (
-              <p className="text-sm text-muted-foreground">{t("sshPassword.keyHint")}</p>
+              <p className="text-sm text-muted-foreground">
+                <T>
+                  SSH keys may replace a password, but your server can still require a verification
+                  code.
+                </T>
+              </p>
             )}
           </form>
         </DialogPanel>
         <DialogFooter>
           <Button disabled={isResponding} type="button" variant="outline" onClick={cancelPrompt}>
-            {isExpired ? t("common.dismiss") : t("common.cancel")}
+            {isExpired ? gt("Dismiss") : gt("Cancel")}
           </Button>
           <Button disabled={isResponding || isExpired} form={formId} type="submit">
-            {t("common.continue")}
+            <T>Continue</T>
           </Button>
         </DialogFooter>
       </DialogPopup>

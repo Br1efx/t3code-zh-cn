@@ -1,7 +1,5 @@
-import { localizeWebChildren } from "~/i18n/localizeWebChildren";
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog";
+import { useGT } from "gt-react";
 import { XIcon } from "lucide-react";
 import type { CSSProperties } from "react";
 import { cn } from "~/lib/utils";
@@ -74,7 +72,7 @@ function SheetPopup({
   side?: "right" | "left" | "top" | "bottom";
   variant?: "default" | "inset";
 }) {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
   const transitionStyle =
     transitionDurationMs === undefined
       ? undefined
@@ -117,7 +115,7 @@ function SheetPopup({
           {children}
           {showCloseButton && (
             <SheetPrimitive.Close
-              aria-label={translateWebSource(translationLocale, "Close")}
+              aria-label={gt("Close", { $context: "button, closes the panel" })}
               className="absolute end-2 top-2"
               render={<Button size="icon" variant="ghost" />}
             >
@@ -143,29 +141,23 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function SheetTitle({ className, children, ...props }: SheetPrimitive.Title.Props) {
-  const { locale } = useI18n();
+function SheetTitle({ className, ...props }: SheetPrimitive.Title.Props) {
   return (
     <SheetPrimitive.Title
       className={cn("font-semibold text-xl leading-snug", className)}
       data-slot="sheet-title"
       {...props}
-    >
-      {localizeWebChildren(locale, children)}
-    </SheetPrimitive.Title>
+    />
   );
 }
 
-function SheetDescription({ className, children, ...props }: SheetPrimitive.Description.Props) {
-  const { locale } = useI18n();
+function SheetDescription({ className, ...props }: SheetPrimitive.Description.Props) {
   return (
     <SheetPrimitive.Description
       className={cn("text-muted-foreground text-sm", className)}
       data-slot="sheet-description"
       {...props}
-    >
-      {localizeWebChildren(locale, children)}
-    </SheetPrimitive.Description>
+    />
   );
 }
 

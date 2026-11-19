@@ -1,43 +1,11 @@
-import { translateWebMessage } from "../../i18n/messages";
-import type { WebTranslate } from "../../i18n/WebI18nContext";
 import type {
   ServerProvider,
   ServerProviderVersionAdvisory,
   ServerProviderCompatibilityAdvisory,
 } from "@t3tools/contracts";
+import { msg } from "gt-react";
 
-const translateProviderEnglish: WebTranslate = (key, values) =>
-  translateWebMessage("en", key, values);
-
-function translateProviderMessage(message: string, t: WebTranslate): string {
-  const disabledMatch = /^(.+?) is disabled in T3 Code settings\.$/.exec(message);
-  if (disabledMatch) {
-    return t("providers.status.disabledMessage", { provider: disabledMatch[1]! });
-  }
-
-  const missingCliMatch = /^(.+?) CLI \((.+)\) is not installed or not on PATH\.$/.exec(message);
-  if (missingCliMatch) {
-    return t("providers.status.cliMissing", {
-      provider: missingCliMatch[1]!,
-      command: missingCliMatch[2]!,
-    });
-  }
-
-  const oldVersionMatch =
-    /^(.+?) (v?[\d.]+) is too old for (.+?)\. Upgrade to (v?[\d.]+) or newer to access it\.$/.exec(
-      message,
-    );
-  if (oldVersionMatch) {
-    return t("providers.status.versionTooOld", {
-      provider: oldVersionMatch[1]!,
-      current: oldVersionMatch[2]!,
-      model: oldVersionMatch[3]!,
-      required: oldVersionMatch[4]!,
-    });
-  }
-
-  return message;
-}
+import { m, type MessageResolver } from "../../i18n/messages";
 
 export const PROVIDER_STATUS_STYLES = {
   disabled: {
@@ -58,6 +26,15 @@ export const PROVIDER_STATUS_STYLES = {
 } as const;
 
 export type ProviderStatusKey = keyof typeof PROVIDER_STATUS_STYLES;
+
+/** The server names a custom endpoint in English; other auth labels are product or plan names. */
+export function providerAuthLabel(
+  auth: Pick<ServerProvider["auth"], "label" | "type">,
+  resolve: MessageResolver = m,
+): string | undefined {
+  if (auth.type === "customEndpoint") return resolve(msg("Custom API endpoint"));
+  return auth.label ?? auth.type;
+}
 
 // Antigravity's local health check verifies installation, not Google sign-in.
 // API-key and Agent Platform warnings still need attention.
@@ -81,72 +58,70 @@ export function getProviderStatusKey(provider: ServerProvider | undefined): Prov
 
 export function getProviderSummary(
   provider: ServerProvider | undefined,
-  t: WebTranslate = translateProviderEnglish,
+  resolve: MessageResolver = m,
 ) {
   if (!provider) {
     return {
-      headline: t("providers.status.checking"),
-      detail: t("providers.status.waiting"),
+      headline: resolve(msg("Checking provider status")),
+      detail: resolve(
+        msg("Waiting for the server to report installation and authentication details."),
+      ),
     };
   }
   if (!provider.enabled || provider.status === "disabled") {
     return {
-      headline: t("providers.status.disabled"),
-      detail: provider.message
-        ? translateProviderMessage(provider.message, t)
-        : t("providers.status.disabledDetail"),
+      headline: resolve(msg("Disabled", { $context: "provider status" })),
+      detail:
+        provider.message ??
+        resolve(msg("This provider is installed but disabled for new sessions in T3 Code.")),
     };
   }
   if (!provider.installed) {
     return {
-      headline: t("providers.status.notFound"),
-      detail: provider.message
-        ? translateProviderMessage(provider.message, t)
-        : t("providers.status.cliNotDetected"),
+      headline: resolve(msg("Not found", { $context: "provider status, CLI is missing" })),
+      detail: provider.message ?? resolve(msg("CLI not detected on PATH.")),
     };
   }
   if (provider.auth.status === "unauthenticated") {
-    const authLabel = provider.auth.label ?? provider.auth.type;
+    const authLabel = providerAuthLabel(provider.auth, resolve);
     return {
       headline: authLabel
-        ? `${t("providers.status.notAuthenticated")} · ${authLabel}`
-        : t("providers.status.notAuthenticated"),
-      detail: provider.message ? translateProviderMessage(provider.message, t) : null,
+        ? resolve(msg("Not authenticated · {method}", { method: authLabel }))
+        : resolve(msg("Not authenticated")),
+      detail: provider.message ?? null,
     };
   }
   if (isAntigravitySignInUnchecked(provider)) {
     return {
-      headline: t("providers.status.signInUnchecked"),
+      headline: resolve(msg("Installed · Sign-in not checked")),
       detail: provider.message ?? null,
     };
   }
   if (provider.status === "warning") {
     return {
-      headline: t("providers.status.needsAttention"),
-      detail: provider.message
-        ? translateProviderMessage(provider.message, t)
-        : t("providers.status.needsAttentionDetail"),
+      headline: resolve(msg("Needs attention")),
+      detail:
+        provider.message ??
+        resolve(msg("The provider is installed, but the server could not fully verify it.")),
     };
   }
   if (provider.status === "error") {
     return {
-      headline: t("providers.status.unavailable"),
-      detail: provider.message
-        ? translateProviderMessage(provider.message, t)
-        : t("providers.status.unavailableDetail"),
+      headline: resolve(msg("Unavailable", { $context: "provider status" })),
+      detail: provider.message ?? resolve(msg("The provider failed its startup checks.")),
     };
   }
   if (provider.auth.status === "authenticated") {
-    const authLabel = provider.auth.label ?? provider.auth.type;
+    const authLabel = providerAuthLabel(provider.auth, resolve);
     return {
       headline: authLabel
-        ? t("providers.status.authenticatedWith", { method: authLabel })
-        : t("providers.status.authenticated"),
+        ? resolve(msg("Authenticated · {method}", { method: authLabel }))
+        : resolve(msg("Authenticated")),
       detail: provider.message ?? null,
     };
   }
   return {
-    headline: t("providers.status.available"),
+    headline: resolve(msg("Available", { $context: "provider status" })),
     detail: provider.message ?? null,
   };
 }
@@ -162,16 +137,16 @@ export function getProviderVersionLabel(version: string | null | undefined) {
 }
 
 const COMPATIBILITY_TITLES = {
-  graceful: "Limited support",
-  unsupported: "Unsupported version",
-  broken: "Known broken version",
+  graceful: msg("Limited support"),
+  unsupported: msg("Unsupported version"),
+  broken: msg("Known broken version"),
 } as const;
 
 export function getProviderVersionAdvisoryPresentation(
   advisory: ServerProviderVersionAdvisory | undefined,
   compatibility?: ServerProviderCompatibilityAdvisory | undefined,
   showCompatibility = true,
-  t: WebTranslate = translateProviderEnglish,
+  resolve: MessageResolver = m,
 ): {
   readonly title: string;
   readonly detail: string;
@@ -194,10 +169,12 @@ export function getProviderVersionAdvisoryPresentation(
     // Latest package versions cannot be updated into recommendations requiring another package.
     const isAlreadyLatest = advisory?.status === "current";
     return {
-      title: COMPATIBILITY_TITLES[compatibility.status],
+      title: resolve(COMPATIBILITY_TITLES[compatibility.status]),
       detail:
         compatibility.message ??
-        (recommendation ? `Use ${recommendation} for full support.` : "Update for full support."),
+        (recommendation
+          ? resolve(msg("Use {version} for full support.", { version: recommendation }))
+          : resolve(msg("Update for full support."))),
       updateCommand:
         targetVersion || latestIsIncompatible || isAlreadyLatest
           ? null
@@ -215,17 +192,16 @@ export function getProviderVersionAdvisoryPresentation(
     return null;
   }
 
-  const label = t("providers.update.available");
   const version = advisory.latestVersion;
   const versionLabel = getProviderVersionLabel(version);
 
   return {
-    title: label,
+    title: resolve(msg("Update available")),
     detail:
-      (advisory.message ? translateProviderMessage(advisory.message, t) : null) ??
+      advisory.message ??
       (versionLabel
-        ? t("providers.update.installVersion", { version: versionLabel })
-        : t("providers.update.installLatest")),
+        ? resolve(msg("Update available: install {version}.", { version: versionLabel }))
+        : resolve(msg("Update available: install the latest provider version."))),
     updateCommand: advisory.updateCommand,
     emphasis: "normal" as const,
     targetVersion: null,

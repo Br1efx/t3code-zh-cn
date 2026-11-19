@@ -1,8 +1,7 @@
 import type { CommandOutputView } from "@t3tools/client-runtime/state/command-output";
-import { useI18n } from "~/i18n/WebI18nContext";
-import { translateWebSource } from "~/i18n/messages";
 import type { EnvironmentId, ThreadId, TurnItemId } from "@t3tools/contracts";
 import { TERMINAL_PALETTES, terminalOutputSpans } from "@t3tools/shared/terminalOutput";
+import { T, Var } from "gt-react";
 import { useLayoutEffect, useRef } from "react";
 
 import { useTheme } from "../../hooks/useTheme";
@@ -32,8 +31,6 @@ export function CommandOutputPanel(props: {
   readonly itemId: TurnItemId;
   readonly source?: TurnItemSource["commandOutput"] | undefined;
 }) {
-  const { locale: newCopyLocale } = useI18n();
-  const { locale: translationLocale } = useI18n();
   const input = { threadId: props.threadId, itemId: props.itemId };
   const { data, error } = useEnvironmentQuery<CommandOutputView, unknown>(
     props.source
@@ -53,21 +50,25 @@ export function CommandOutputPanel(props: {
   });
 
   if (text.length === 0) {
-    if (error)
+    if (error) {
       return (
         <div className="text-destructive">
-          {translateWebSource(newCopyLocale, "Could not load output:")} {error}
+          <T>
+            Couldn&apos;t load output: <Var>{error}</Var>
+          </T>
         </div>
       );
-    if (data === null)
+    }
+    if (data === null) {
       return (
         <div className="text-muted-foreground italic">
-          {translateWebSource(newCopyLocale, "Loading output…")}
+          <T>Loading output…</T>
         </div>
       );
+    }
     return data.running ? null : (
       <div className="text-muted-foreground italic">
-        {translateWebSource(newCopyLocale, "No output.")}
+        <T>No output.</T>
       </div>
     );
   }
@@ -85,7 +86,7 @@ export function CommandOutputPanel(props: {
     >
       {data?.output.truncated ? (
         <div className="italic">
-          {translateWebSource(translationLocale, "Earlier output not shown")}
+          <T>Earlier output not shown</T>
         </div>
       ) : null}
       {spans.map((span, index) =>

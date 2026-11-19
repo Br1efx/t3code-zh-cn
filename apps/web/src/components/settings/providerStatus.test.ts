@@ -1,6 +1,5 @@
 import { ProviderDriverKind, ProviderInstanceId, type ServerProvider } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
-import { translateWebMessage } from "../../i18n/messages";
 
 import {
   getProviderSummary,
@@ -49,20 +48,6 @@ describe("getProviderSummary", () => {
       detail: "Run codex login.",
     });
   });
-});
-
-it("localizes the neutral Antigravity sign-in status", () => {
-  const candidate: ServerProvider = {
-    ...provider,
-    driver: ProviderDriverKind.make("antigravity"),
-    status: "warning",
-    auth: { status: "unknown", type: "oauth-personal" },
-  };
-  expect(getProviderStatusKey(candidate)).toBe("neutral");
-  expect(
-    getProviderSummary(candidate, (key, values) => translateWebMessage("zh-CN", key, values))
-      .headline,
-  ).toBe("已安装 · 尚未检查登录状态");
 });
 
 describe("Antigravity with unchecked sign-in", () => {

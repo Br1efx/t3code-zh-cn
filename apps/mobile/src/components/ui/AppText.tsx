@@ -8,32 +8,17 @@ import {
 } from "react-native";
 
 import { MOBILE_TEXT_CLASSES } from "../../lib/typography";
+
 import { cn } from "../../lib/cn";
-import { localizeTextChildren } from "../../i18n/localizeTextChildren";
-import { localizeMobileString } from "../../i18n/mobileStrings";
 
 export type AppTextProps = RNTextProps & {
   readonly className?: string;
-  /** UI copy is localized by default; disable this for user-, server-, or repository-owned text. */
-  readonly localize?: boolean;
   readonly textRole?: keyof typeof MOBILE_TEXT_CLASSES;
 };
 
-export function AppText({
-  accessibilityLabel,
-  children,
-  className,
-  textRole,
-  localize = true,
-  ...props
-}: AppTextProps) {
+export function AppText({ className, textRole, ...props }: AppTextProps) {
   return (
     <RNText
-      accessibilityLabel={
-        accessibilityLabel === undefined || !localize
-          ? accessibilityLabel
-          : localizeMobileString(accessibilityLabel)
-      }
       className={cn(
         "font-sans text-foreground",
         textRole && MOBILE_TEXT_CLASSES[textRole],
@@ -41,9 +26,7 @@ export function AppText({
       )}
       selectionColorClassName={Platform.OS === "android" ? "accent-focus/32" : undefined}
       {...props}
-    >
-      {localize ? localizeTextChildren(children, localizeMobileString) : children}
-    </RNText>
+    />
   );
 }
 
@@ -52,28 +35,14 @@ export type AppTextInputProps = Omit<RNTextInputProps, "placeholderTextColor"> &
   readonly ref?: React.Ref<TextInputInstance>;
 };
 
-/**
- * Thin wrapper around RN TextInput with default input styling.
- * Uses Uniwind className — no manual style parsing.
- */
-export function AppTextInput({
-  accessibilityLabel,
-  className,
-  placeholder,
-  ref,
-  ...props
-}: AppTextInputProps) {
+export function AppTextInput({ className, ref, ...props }: AppTextInputProps) {
   return (
     <RNTextInput
       ref={ref}
-      accessibilityLabel={
-        accessibilityLabel === undefined ? undefined : localizeMobileString(accessibilityLabel)
-      }
       className={cn(
         "min-h-13.5 rounded-2xl border border-input-border bg-input px-3.5 py-3 font-sans text-base text-foreground",
         className,
       )}
-      placeholder={placeholder === undefined ? undefined : localizeMobileString(placeholder)}
       placeholderTextColorClassName="accent-placeholder"
       selectionColorClassName={"accent-focus/32"}
       cursorColorClassName={"accent-focus"}

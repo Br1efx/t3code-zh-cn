@@ -1,4 +1,3 @@
-import { localizeMobileString } from "../../i18n/mobileStrings";
 import { ProgressView } from "@expo/ui/swift-ui";
 import { progressViewStyle, tint } from "@expo/ui/swift-ui/modifiers";
 import { View } from "react-native";
@@ -16,7 +15,7 @@ export function Progress(props: ProgressProps) {
       className={props.className}
       accessible
       accessibilityRole="progressbar"
-      accessibilityLabel={props.label === undefined ? undefined : localizeMobileString(props.label)}
+      accessibilityLabel={props.label}
       accessibilityValue={
         value === undefined ? undefined : { min: 0, max: 100, now: Math.round(value * 100) }
       }

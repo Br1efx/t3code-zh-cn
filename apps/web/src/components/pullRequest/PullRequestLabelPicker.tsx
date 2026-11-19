@@ -1,10 +1,12 @@
 import { useAtomCommand } from "~/state/use-atom-command";
 import type { EnvironmentId, PullRequestLabelCandidate, PullRequestRef } from "@t3tools/contracts";
 import { CheckIcon, TagIcon } from "lucide-react";
+import { msg, useGT, useMessages } from "gt-react";
 import { useState } from "react";
 
+import { m } from "~/i18n/messages";
+
 import { pullRequestEnvironment } from "~/state/pullRequests";
-import { useI18n } from "../../i18n/WebI18nContext";
 import { useEnvironmentQuery } from "~/state/query";
 import { squashAtomCommandFailure } from "@t3tools/client-runtime/state/runtime";
 import {
@@ -38,13 +40,14 @@ export function PullRequestLabelPicker({
   reference: PullRequestRef;
   allowed: boolean;
 }) {
-  const { t } = useI18n();
+  const gt = useGT();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState(emptySelection<PullRequestLabelCandidate>);
 
   const candidatesQuery = useEnvironmentQuery(
     open ? pullRequestEnvironment.labelCandidates({ environmentId, input: reference }) : null,
+    useMessages(),
   );
   const setLabels = useAtomCommand(pullRequestEnvironment.setLabels, {
     reportFailure: false,
@@ -67,11 +70,11 @@ export function PullRequestLabelPicker({
     toastManager.add({
       type: "error",
       title: applied
-        ? t("pullRequests.labels.addFailed", { label: names.join(", ") })
-        : t("pullRequests.labels.removeFailed", { label: names.join(", ") }),
+        ? m(msg("Could not put {names} on", { names: names.join(", ") }))
+        : m(msg("Could not take {names} off", { names: names.join(", ") })),
       description: readableFailure(
         squashAtomCommandFailure(result),
-        t("pullRequests.labels.permissionFailure"),
+        m(msg("The host refused it. Check that you have triage access on this repository.")),
       ),
     });
   };
@@ -92,22 +95,24 @@ export function PullRequestLabelPicker({
   return (
     <PullRequestCandidatePicker
       icon={<TagIcon className="size-3.5" />}
-      label={t("pullRequests.labels.change")}
+      label={gt("Change labels")}
       allowed={allowed}
-      disabledReason={t("pullRequests.labels.needsTriage")}
+      disabledReason={gt("Changing labels needs triage access on this repository")}
       open={open}
       onOpenChange={onOpenChange}
       query={query}
       onQueryChange={setQuery}
-      searchLabel={t("pullRequests.labels.search")}
+      searchLabel={gt("Search labels")}
       isPending={candidatesQuery.isPending && candidatesQuery.data === null}
       error={candidatesQuery.data === null ? candidatesQuery.error : null}
       candidates={candidates}
-      emptyLabel={t("pullRequests.labels.empty")}
-      noMatchLabel={t("pullRequests.labels.noMatch")}
-      errorLabel={t("pullRequests.labels.readFailed")}
+      emptyLabel={gt("This repository has no labels.")}
+      noMatchLabel={gt("No label matches that.")}
+      errorLabel={gt("The labels could not be read.")}
       truncated={candidatesQuery.data?.truncated === true}
-      truncatedLabel={t("pullRequests.labels.truncated")}
+      truncatedLabel={gt(
+        "This repository has more labels than are listed here. Apply the rest on the host.",
+      )}
       candidateKey={(candidate) => candidate.name}
       onSelect={(candidate) =>
         setDraft((current) =>
@@ -132,7 +137,7 @@ export function PullRequestLabelPicker({
             </span>
             {isSelected(draft, candidate.name, candidate.isApplied) ? (
               <CheckIcon
-                aria-label={t("pullRequests.labels.applied")}
+                aria-label={gt("Applied", { $context: "label is applied" })}
                 className="size-3.5 shrink-0"
               />
             ) : null}

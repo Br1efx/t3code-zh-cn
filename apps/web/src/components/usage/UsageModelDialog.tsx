@@ -1,5 +1,4 @@
-import { translateWebSource } from "../../i18n/messages";
-import { useI18n } from "../../i18n/WebI18nContext";
+import { T, useGT, useLocale, Var } from "gt-react";
 import { formatPercent, formatTokens, formatUsd } from "@t3tools/shared/usageFormat";
 import { isModelCostUnknown, type ModelTotals } from "@t3tools/shared/usageMerge";
 
@@ -50,8 +49,8 @@ export function UsageModelDialog({
   readonly onSetPrice: () => void;
   readonly onClose: () => void;
 }) {
-  const { locale: translationLocale } = useI18n();
-  const { locale: sourceLocale } = useI18n();
+  const gt = useGT();
+  const locale = useLocale();
   const usage = mergeAnsweredUsage(
     environments,
     (bucket) => bucket.provider === model.provider && bucket.model === model.model,
@@ -62,28 +61,12 @@ export function UsageModelDialog({
   const hitRate = cacheHitRate(model);
   const perMillion = costPerMillionTokens(model);
   const stats = [
-    {
-      label: translateWebSource(translationLocale, "Cost"),
-      value: costUnknown
-        ? translateWebSource(translationLocale, "Unpriced")
-        : formatUsd(model.costUsd),
-    },
-    {
-      label: translateWebSource(translationLocale, "Tokens"),
-      value: formatTokens(model.totalTokens),
-    },
+    { label: gt("Cost"), value: costUnknown ? gt("Unpriced") : formatUsd(model.costUsd, locale) },
+    { label: gt("Tokens"), value: formatTokens(model.totalTokens) },
     perMillion === null
       ? null
-      : {
-          label: translateWebSource(translationLocale, "Per 1M tokens"),
-          value: formatUsd(perMillion),
-        },
-    hitRate === null
-      ? null
-      : {
-          label: translateWebSource(translationLocale, "Cache hit"),
-          value: formatPercent(hitRate),
-        },
+      : { label: gt("Per 1M tokens"), value: formatUsd(perMillion, locale) },
+    hitRate === null ? null : { label: gt("Cache hit"), value: formatPercent(hitRate) },
   ].filter((stat) => stat !== null);
 
   return (
@@ -107,9 +90,7 @@ export function UsageModelDialog({
             {presentation.label}
             {costUnknown
               ? ""
-              : translationLocale === "zh-CN"
-                ? ` · 占总费用 ${formatPercent(model.costShare)}`
-                : ` · ${formatPercent(model.costShare)} of cost`}
+              : ` · ${gt("{share} of cost", { share: formatPercent(model.costShare) })}`}
           </DialogDescription>
         </DialogHeader>
         <DialogPanel>
@@ -140,21 +121,21 @@ export function UsageModelDialog({
             <div className="grid gap-x-10 gap-y-8 sm:grid-cols-2">
               {costUnknown ? null : (
                 <UsageShareBar
-                  label={translateWebSource(sourceLocale, "Cost by type")}
+                  label={gt("Cost by type")}
                   segments={costTypeSegments(usage.categoryCost)}
-                  format={formatUsd}
+                  format={(value: number) => formatUsd(value, locale)}
                 />
               )}
               <UsageShareBar
-                label={translateWebSource(sourceLocale, "Tokens by type")}
+                label={gt("Tokens by type")}
                 segments={tokenTypeSegments(model.tokens)}
                 format={formatTokens}
               />
               {usage.speedCost.fast + usage.speedCost.ultrafast > 0 ? (
                 <UsageShareBar
-                  label={translateWebSource(sourceLocale, "Cost by speed")}
+                  label={gt("Cost by speed")}
                   segments={speedCostSegments(usage.speedCost)}
-                  format={formatUsd}
+                  format={(value: number) => formatUsd(value, locale)}
                   aside={<SpeedPremium premiumUsd={usage.speedCost.premium} />}
                 />
               ) : null}
@@ -164,10 +145,13 @@ export function UsageModelDialog({
         {model.unpricedTokens > 0 ? (
           <DialogFooter variant="bare" className="items-center sm:justify-between">
             <span className="text-xs text-muted-foreground">
-              {formatTokens(model.unpricedTokens)}{" "}
-              {translateWebSource(sourceLocale, "tokens have no known price")}
+              {gt("{tokens} tokens have no known price", {
+                tokens: formatTokens(model.unpricedTokens),
+              })}
             </span>
-            <Button onClick={onSetPrice}>{translateWebSource(sourceLocale, "Set price")}</Button>
+            <Button onClick={onSetPrice}>
+              <T>Set price</T>
+            </Button>
           </DialogFooter>
         ) : null}
       </DialogPopup>
@@ -176,11 +160,15 @@ export function UsageModelDialog({
 }
 
 export function SpeedPremium({ premiumUsd }: { readonly premiumUsd: number }) {
-  const { locale: sourceLocale } = useI18n();
+  const locale = useLocale();
   return (
     <span className="text-xs text-muted-foreground">
-      {translateWebSource(sourceLocale, "Premium")}{" "}
-      <span className="text-foreground tabular-nums">{formatUsd(premiumUsd)}</span>
+      <T>
+        Premium{" "}
+        <span className="text-foreground tabular-nums">
+          <Var>{formatUsd(premiumUsd, locale)}</Var>
+        </span>
+      </T>
     </span>
   );
 }

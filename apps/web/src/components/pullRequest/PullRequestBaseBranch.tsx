@@ -1,6 +1,5 @@
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
 import type { PullRequestUpdateMethod } from "@t3tools/contracts";
+import { T, useGT } from "gt-react";
 import { TriangleAlertIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -33,14 +32,18 @@ function PullRequestBaseFreshnessWarning({
   readonly className?: string;
   readonly children?: ReactNode;
 }) {
-  const { locale: translationLocale } = useI18n();
-  const behind =
+  const gt = useGT();
+  const summary =
     freshness.behindBy === null
-      ? ""
-      : ` by ${freshness.behindBy.toLocaleString()} ${
-          freshness.behindBy === 1 ? "commit" : "commits"
-        }`;
-  const summary = `This branch is out-of-date with ${baseBranch}${behind}.`;
+      ? gt("This branch is out-of-date with {baseBranch}.", { baseBranch })
+      : gt(
+          "{count, plural, one {This branch is out-of-date with {baseBranch} by {formatted} commit.} other {This branch is out-of-date with {baseBranch} by {formatted} commits.}}",
+          {
+            count: freshness.behindBy,
+            formatted: freshness.behindBy.toLocaleString(),
+            baseBranch,
+          },
+        );
   return (
     <Popover>
       <PopoverTrigger
@@ -64,7 +67,7 @@ function PullRequestBaseFreshnessWarning({
       <PopoverPopup align="start" side="bottom" className="max-w-80" padding="compact">
         <p className="text-xs text-foreground">{summary}</p>
         <p className="mt-0.5 text-xs text-muted-foreground">
-          {translateWebSource(translationLocale, "Changes can be cleanly merged.")}
+          <T>Changes can be cleanly merged.</T>
         </p>
         {freshness.methods.length > 0 ? (
           <span className="mt-2 flex flex-wrap items-center gap-1.5">
@@ -77,7 +80,7 @@ function PullRequestBaseFreshnessWarning({
                 onClick={() => onUpdate(method)}
               >
                 <PullRequestGlyph.merged aria-hidden className="size-3" />
-                {method === "rebase" ? "Update with rebase" : "Update branch"}
+                {method === "rebase" ? gt("Update with rebase") : gt("Update branch")}
               </Button>
             ))}
           </span>
@@ -103,12 +106,12 @@ export function PullRequestBaseBranch({
   readonly onUpdate: (method: PullRequestUpdateMethod) => void;
   readonly iconClassName?: string;
 }) {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
   const label = (
     <>
       {stacked ? (
         <PullRequestGlyph.stack
-          aria-label={translateWebSource(translationLocale, "Stacked pull request")}
+          aria-label={gt("Stacked pull request")}
           className="size-3 shrink-0"
         />
       ) : null}
@@ -140,7 +143,9 @@ export function PullRequestBaseBranch({
           </span>
         }
       />
-      <TooltipPopup side="top">{stacked ? `Stacked on ${baseBranch}` : baseBranch}</TooltipPopup>
+      <TooltipPopup side="top">
+        {stacked ? gt("Stacked on {baseBranch}", { baseBranch }) : baseBranch}
+      </TooltipPopup>
     </Tooltip>
   );
 }

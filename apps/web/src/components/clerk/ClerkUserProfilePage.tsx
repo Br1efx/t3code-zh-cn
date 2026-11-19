@@ -1,5 +1,4 @@
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
+import { T } from "gt-react";
 import { RefreshIcon } from "~/components/ui/refresh-icon";
 
 import type { ReactNode } from "react";
@@ -20,21 +19,14 @@ export function ClerkUserProfilePage({
   readonly description?: ReactNode;
   readonly title: ReactNode;
 }) {
-  const { locale: translationLocale } = useI18n();
-  const renderedTitle =
-    typeof title === "string" ? translateWebSource(translationLocale, title) : title;
-  const renderedDescription =
-    typeof description === "string"
-      ? translateWebSource(translationLocale, description)
-      : description;
   return (
     <div className={cn("w-full min-w-0 text-foreground", className)}>
       <header className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:pr-8">
         <div className="min-w-0">
-          <h2 className="text-base leading-6 font-semibold">{renderedTitle}</h2>
-          {renderedDescription ? (
+          <h2 className="text-base leading-6 font-semibold">{title}</h2>
+          {description ? (
             <p className="mt-1 max-w-[34rem] text-xs leading-4.5 text-muted-foreground sm:min-h-9">
-              {renderedDescription}
+              {description}
             </p>
           ) : null}
         </div>
@@ -57,7 +49,6 @@ export function ClerkUserProfileRefreshButton({
   readonly isPending: boolean;
   readonly onClick: () => void;
 }) {
-  const { locale: translationLocale } = useI18n();
   return (
     <Button
       size="sm"
@@ -67,7 +58,7 @@ export function ClerkUserProfileRefreshButton({
       onClick={onClick}
     >
       <RefreshIcon aria-hidden="true" size="sm" refreshing={isPending} />
-      {translateWebSource(translationLocale, "Refresh")}
+      <T>Refresh</T>
     </Button>
   );
 }

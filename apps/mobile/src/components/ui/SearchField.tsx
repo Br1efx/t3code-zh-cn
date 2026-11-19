@@ -1,4 +1,3 @@
-import { localizeMobileString } from "../../i18n/mobileStrings";
 import type { RefObject } from "react";
 import { Pressable, TextInput, type TextInputInstance, View } from "react-native";
 
@@ -41,12 +40,12 @@ export function SearchField({
       />
       <TextInput
         ref={inputRef}
-        accessibilityLabel={localizeMobileString(accessibilityLabel)}
+        accessibilityLabel={accessibilityLabel}
         autoFocus={autoFocus}
         autoCapitalize="none"
         autoCorrect={false}
         returnKeyType="search"
-        placeholder={localizeMobileString(placeholder)}
+        placeholder={placeholder}
         placeholderTextColorClassName="accent-placeholder"
         selectionColorClassName="accent-focus/32"
         cursorColorClassName="accent-focus"
@@ -58,7 +57,7 @@ export function SearchField({
       />
       {value.length > 0 ? (
         <Pressable
-          accessibilityLabel={localizeMobileString(clearAccessibilityLabel)}
+          accessibilityLabel={clearAccessibilityLabel}
           accessibilityRole="button"
           hitSlop={10}
           onPress={() => {

@@ -1,7 +1,6 @@
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
 import type { GitStatusEntry } from "@pierre/trees";
 import { FileTree, useFileTree } from "@pierre/trees/react";
+import { T, useGT } from "gt-react";
 import { ChevronsDownUpIcon, ChevronsUpDownIcon } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 
@@ -49,7 +48,7 @@ export function DiffFileTree({
   footer,
   className,
 }: DiffFileTreeProps) {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
   const { resolvedTheme } = useTheme();
   const paths = entries.map((entry) => entry.path);
   const presented = diffFileTreeModel(paths);
@@ -194,7 +193,7 @@ export function DiffFileTree({
         data-surface-subheader
       >
         <span className="px-1 font-medium text-foreground">
-          {translateWebSource(translationLocale, "Files")}
+          <T>Files</T>
         </span>
         <span className="ml-auto tabular-nums">{entries.length}</span>
         {headerAccessory}
@@ -207,7 +206,7 @@ export function DiffFileTree({
                   size="icon-xs"
                   variant="ghost"
                   aria-label={
-                    allDirectoriesExpanded ? "Collapse all folders" : "Expand all folders"
+                    allDirectoriesExpanded ? gt("Collapse all folders") : gt("Expand all folders")
                   }
                   onClick={() =>
                     setAllDirectoriesExpanded(model, directoryPaths, !allDirectoriesExpanded)
@@ -222,7 +221,7 @@ export function DiffFileTree({
               )}
             </TooltipTrigger>
             <TooltipPopup>
-              {allDirectoriesExpanded ? "Collapse all folders" : "Expand all folders"}
+              {allDirectoriesExpanded ? gt("Collapse all folders") : gt("Expand all folders")}
             </TooltipPopup>
           </Tooltip>
         ) : null}

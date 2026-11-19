@@ -1,5 +1,4 @@
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
+import { msg, useGT } from "gt-react";
 import { CheckIcon, CopyIcon } from "lucide-react";
 
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
@@ -16,10 +15,14 @@ export function CommandBlock({
   readonly className?: string;
   readonly prominent?: boolean;
 }) {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
   const { copyToClipboard, isCopied } = useCopyToClipboard({
     timeout: 1500,
-    target: "command",
+    target: {
+      target: "command",
+      unavailableMessage: msg("Clipboard API is unavailable while copying command."),
+      failureMessage: msg("Failed to copy command to the clipboard."),
+    },
   });
   return (
     <div
@@ -36,7 +39,7 @@ export function CommandBlock({
       <Button
         size="icon-xs"
         variant="ghost"
-        aria-label={translateWebSource(translationLocale, "Copy command")}
+        aria-label={gt("Copy command")}
         onClick={() => copyToClipboard(command, undefined)}
       >
         {isCopied ? <CheckIcon className="size-3.5" /> : <CopyIcon className="size-3.5" />}

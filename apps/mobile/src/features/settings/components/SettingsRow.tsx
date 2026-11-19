@@ -6,7 +6,6 @@ import { ListRow } from "../../../components/ui/ListRow";
 import { ListRowLayout } from "../../../components/ui/ListRowLayout";
 import { RowPressable } from "../../../components/ui/RowPressable";
 import { cn } from "../../../lib/cn";
-import { localizeMobileString } from "../../../i18n/mobileStrings";
 import type { SettingsLegalDocumentTarget, SettingsPageTarget } from "./settings-page-targets";
 import { SettingsSidebarContext } from "./SettingsSection";
 import { openSettings } from "../settings-navigation";
@@ -50,12 +49,7 @@ export function SettingsRow(props: {
     return (
       <RowPressable
         accessibilityRole="button"
-        accessibilityLabel={[
-          localizeMobileString(props.label),
-          props.value ? localizeMobileString(props.value) : undefined,
-        ]
-          .filter(Boolean)
-          .join(", ")}
+        accessibilityLabel={[props.label, props.value].filter(Boolean).join(", ")}
         accessibilityState={{ disabled: Boolean(props.disabled), selected }}
         disabled={props.disabled}
         onPress={onPress}

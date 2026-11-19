@@ -23,13 +23,6 @@ import * as HostProcess from "@t3tools/shared/HostProcess";
 import type { ManagedPolicyFileError } from "@t3tools/shared/managedPolicyFile";
 
 import * as DesktopManagedPolicy from "../../app/DesktopManagedPolicy.ts";
-import {
-  isZhCn,
-  makeDesktopLocaleResolver,
-  OptionalDesktopLocaleField,
-  withDesktopLocale,
-  type ResolvedAppLocale,
-} from "../../i18n/DesktopLocale.ts";
 import * as BrowserSession from "../BrowserSession.ts";
 import { ChromiumCookieReadError, readChromiumCookies } from "./ChromiumCookies.ts";
 import type { CookieReadResult } from "./CookieDatabase.ts";
@@ -67,16 +60,10 @@ export class BrowserImportPolicyError extends Schema.TaggedError<BrowserImportPo
     policyPath: Schema.String,
     /** Absent when the policy could not be read or decoded. */
     organization: Schema.optional(Schema.String),
-    locale: OptionalDesktopLocaleField,
     cause: Schema.optional(Schema.Defect()),
   },
 ) {
   override get message(): string {
-    if (isZhCn(this.locale)) {
-      return this.organization === undefined
-        ? `无法读取管理员策略文件（${this.policyPath}），已禁止导入浏览器登录状态（Cookie）。`
-        : `${this.organization} 的管理策略不允许导入浏览器登录状态（Cookie）。`;
-    }
     return this.organization === undefined
       ? `The managed policy at ${this.policyPath} could not be read, so importing browser cookies is not allowed.`
       : managedPolicyDeniedMessage(this.organization, "importing browser cookies");
@@ -93,23 +80,14 @@ export const checkBrowserImportPolicy = Effect.fn("BrowserImport.checkPolicy")(f
     ManagedPolicyFileError,
     R
   >,
-  locale: ResolvedAppLocale = "en",
 ) {
   const policy = yield* readPolicy.pipe(
-    Effect.mapError(
-      (cause) =>
-        new BrowserImportPolicyError({
-          policyPath: cause.path,
-          ...withDesktopLocale(locale),
-          cause,
-        }),
-    ),
+    Effect.mapError((cause) => new BrowserImportPolicyError({ policyPath: cause.path, cause })),
   );
   if (policy?.document.limits?.browserCookieImport === false) {
     return yield* new BrowserImportPolicyError({
       policyPath: policy.source,
       organization: policy.document.organization,
-      ...withDesktopLocale(locale),
     });
   }
 });
@@ -231,7 +209,6 @@ export const writeCookies = Effect.fn("BrowserImport.writeCookies")(function* (
 export const make = Effect.gen(function* BrowserImportMake() {
   const browserSession = yield* BrowserSession.BrowserSession;
   const managedPolicy = yield* DesktopManagedPolicy.DesktopManagedPolicy;
-  const resolveLocale = yield* makeDesktopLocaleResolver;
   const platform = yield* HostProcess.Platform;
   const executablePath = yield* HostProcess.ExecutablePath;
   const platformServices = yield* Effect.context<
@@ -239,24 +216,19 @@ export const make = Effect.gen(function* BrowserImportMake() {
   >();
   const pathContext = yield* sourcePathContext;
 
-  const listSources: Effect.Effect<ReadonlyArray<BrowserImportSource>> = Effect.gen(function* () {
-    const locale = yield* resolveLocale;
-    return yield* Effect.forEach(
-      BROWSER_IMPORT_SOURCES,
-      Effect.fnUntraced(function* (definition) {
-        const unavailable = yield* unavailableReason(definition, pathContext);
-        return {
-          id: definition.id,
-          name: definition.name,
-          profiles:
-            unavailable === undefined
-              ? yield* listSourceProfiles(definition, pathContext, locale)
-              : [],
-          ...(unavailable === undefined ? {} : { unavailable }),
-        } satisfies BrowserImportSource;
-      }),
-    );
-  }).pipe(Effect.provide(platformServices));
+  const listSources: Effect.Effect<ReadonlyArray<BrowserImportSource>> = Effect.forEach(
+    BROWSER_IMPORT_SOURCES,
+    Effect.fnUntraced(function* (definition) {
+      const unavailable = yield* unavailableReason(definition, pathContext);
+      return {
+        id: definition.id,
+        name: definition.name,
+        profiles:
+          unavailable === undefined ? yield* listSourceProfiles(definition, pathContext) : [],
+        ...(unavailable === undefined ? {} : { unavailable }),
+      } satisfies BrowserImportSource;
+    }),
+  ).pipe(Effect.provide(platformServices));
 
   const importCookies = Effect.fn("BrowserImport.importCookies")(function* (input: {
     readonly input: BrowserImportInput;
@@ -264,8 +236,7 @@ export const make = Effect.gen(function* BrowserImportMake() {
     readonly persistent: boolean;
     readonly namespace?: BrowserSession.BrowserSessionPartitionNamespace;
   }) {
-    const locale = yield* resolveLocale;
-    yield* checkBrowserImportPolicy(managedPolicy.read, locale);
+    yield* checkBrowserImportPolicy(managedPolicy.read);
     const definition = BROWSER_IMPORT_SOURCES.find(
       (candidate) => candidate.id === input.input.sourceId,
     );
@@ -292,7 +263,7 @@ export const make = Effect.gen(function* BrowserImportMake() {
     }
 
     // IPC profile paths must match the source's listing to prevent traversal outside browser user-data.
-    const sourceProfiles = yield* listSourceProfiles(definition, pathContext, locale).pipe(
+    const sourceProfiles = yield* listSourceProfiles(definition, pathContext).pipe(
       Effect.provide(platformServices),
     );
     const requestedProfile = sourceProfiles.find(

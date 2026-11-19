@@ -1,4 +1,4 @@
-import { useI18n } from "~/i18n/WebI18nContext";
+import { T, useGT } from "gt-react";
 
 import type { PullRequestReplyAvailability } from "./pullRequestDetail.logic";
 
@@ -7,19 +7,17 @@ export function PullRequestMoreReplies({
   hasMoreReplies,
   url,
 }: PullRequestReplyAvailability) {
-  const { t } = useI18n();
+  const gt = useGT();
   if (!hasMoreReplies) return null;
   return (
     <div className="flex flex-wrap items-baseline gap-2 py-1 text-xs text-muted-foreground">
       <span>
         {moreReplies > 0
-          ? t(
-              moreReplies === 1
-                ? "pullRequests.comments.moreReplyOne"
-                : "pullRequests.comments.moreReplyMany",
-              { count: moreReplies.toLocaleString() },
-            )
-          : t("pullRequests.comments.moreReplies")}
+          ? gt("{count, plural, one {{formatted} more reply} other {{formatted} more replies}}", {
+              count: moreReplies,
+              formatted: moreReplies.toLocaleString(),
+            })
+          : gt("More replies")}
       </span>
       {url ? (
         <a
@@ -28,7 +26,7 @@ export function PullRequestMoreReplies({
           rel="noopener noreferrer"
           className="hover:text-foreground hover:underline"
         >
-          {t("pullRequests.comments.viewOnHost")}
+          <T>View on host</T>
         </a>
       ) : null}
     </div>

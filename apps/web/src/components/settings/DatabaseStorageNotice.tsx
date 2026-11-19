@@ -1,5 +1,5 @@
-import { translateWebSource } from "../../i18n/messages";
-import { useI18n } from "../../i18n/WebI18nContext";
+import { thrownErrorMessage } from "@t3tools/client-runtime/errors";
+import { m } from "~/i18n/messages";
 import { useAtomValue } from "@effect/atom-react";
 import {
   isAtomCommandInterrupted,
@@ -11,6 +11,7 @@ import {
   type EnvironmentId,
 } from "@t3tools/contracts";
 import * as Schema from "effect/Schema";
+import { msg, T, useGT, Var } from "gt-react";
 import { type ReactNode, useState } from "react";
 
 import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
@@ -45,8 +46,7 @@ export function DatabaseStorageNotice({
 }: {
   environments: ReadonlyArray<{ readonly environmentId: EnvironmentId; readonly label: string }>;
 }) {
-  const { locale: translationLocale } = useI18n();
-  const isZh = translationLocale === "zh-CN";
+  const gt = useGT();
   const environmentIds = environments.map((environment) => environment.environmentId);
   const recommendations = useAtomValue(
     serverEnvironment.databaseCompactionRecommendations(JSON.stringify(environmentIds)),
@@ -57,7 +57,13 @@ export function DatabaseStorageNotice({
     [],
     DismissedEnvironmentIds,
   );
-  const { copyToClipboard } = useCopyToClipboard({ target: "command" });
+  const { copyToClipboard } = useCopyToClipboard({
+    target: {
+      target: "command",
+      unavailableMessage: msg("Clipboard API is unavailable while copying command."),
+      failureMessage: msg("Failed to copy command to the clipboard."),
+    },
+  });
   const visible = recommendations
     .filter((recommendation) => !dismissed.includes(recommendation.environmentId))
     .map((recommendation) => ({
@@ -71,24 +77,16 @@ export function DatabaseStorageNotice({
         permissions[environmentIds.indexOf(recommendation.environmentId)] === true,
     }));
   if (visible.length === 0) return null;
-  const allReclaimable = visible.every((recommendation) => recommendation.reclaimable);
   return (
-    <SettingsSection
-      id="storage-database"
-      title={translateWebSource(translationLocale, "Database")}
-    >
+    <SettingsSection id="storage-database" title={gt("Database")}>
       <SettingsRow
-        title={translateWebSource(translationLocale, "Reclaim freed database space")}
+        title={gt("Reclaim freed database space")}
         description={
-          isZh
-            ? allReclaimable
-              ? "这些数据库仍占用着历史清理释放的空间。"
-              : "这些数据库仍占用着历史清理释放的空间。请在每台设备上运行以下命令来回收空间。该命令会重启后台服务；如果桌面应用托管了该环境，请先退出桌面应用。"
-            : `These databases still hold space freed by history cleanup.${
-                allReclaimable
-                  ? ""
-                  : " Run the command on each machine to reclaim it. It restarts the background service. Quit the desktop app first if it hosts the environment."
-              }`
+          visible.every((recommendation) => recommendation.reclaimable)
+            ? gt("These databases still hold space freed by history cleanup.")
+            : gt(
+                "These databases still hold space freed by history cleanup. Run the command on each machine to reclaim it. It restarts the background service. Quit the desktop app first if it hosts the environment.",
+              )
         }
       />
       {visible.map(({ environmentId, status, label, reclaimable }) => {
@@ -98,7 +96,7 @@ export function DatabaseStorageNotice({
             size="xs"
             onClick={() => setDismissed((current) => [...current, environmentId])}
           >
-            {translateWebSource(translationLocale, "Dismiss")}
+            <T>Dismiss</T>
           </Button>
         );
         return reclaimable ? (
@@ -112,11 +110,10 @@ export function DatabaseStorageNotice({
         ) : (
           <SettingsRow
             key={environmentId}
-            title={
-              isZh
-                ? `${label} 上有 ${formatGiB(status.reclaimableBytes)}`
-                : `${formatGiB(status.reclaimableBytes)} on ${label}`
-            }
+            title={gt("{amount} on {environment}", {
+              amount: formatGiB(status.reclaimableBytes),
+              environment: label,
+            })}
             description={<code className="select-text break-all">{status.compactCommand}</code>}
             control={
               <div className="flex flex-wrap items-center gap-1.5">
@@ -125,7 +122,7 @@ export function DatabaseStorageNotice({
                   size="xs"
                   onClick={() => copyToClipboard(status.compactCommand, undefined)}
                 >
-                  {translateWebSource(translationLocale, "Copy command")}
+                  <T>Copy command</T>
                 </Button>
                 {dismiss}
               </div>
@@ -148,8 +145,7 @@ function ReclaimRow({
   readonly status: DatabaseStorageStatus;
   readonly dismiss: ReactNode;
 }) {
-  const { locale: translationLocale } = useI18n();
-  const isZh = translationLocale === "zh-CN";
+  const gt = useGT();
   const reclaim = useAtomCommand(serverEnvironment.reclaimDatabaseSpace);
   const [confirming, setConfirming] = useState(false);
   const [requested, setRequested] = useState(false);
@@ -164,10 +160,10 @@ function ReclaimRow({
     if (result._tag === "Success") {
       toastManager.add({
         type: "success",
-        title: isZh ? `正在回收 ${label} 上的 ${amount}` : `Reclaiming ${amount} on ${label}`,
-        description: isZh
-          ? `该设备上的 T3 Code 将重启，预计约 ${minutes} 分钟后恢复。`
-          : `T3 Code there restarts and is back in about ${minutes} min.`,
+        title: gt("Reclaiming {amount} on {environment}", { amount, environment: label }),
+        description: gt("T3 Code there restarts and is back in about {minutes} min.", {
+          minutes,
+        }),
       });
       return;
     }
@@ -176,24 +172,20 @@ function ReclaimRow({
     const error = squashAtomCommandFailure(result);
     toastManager.add({
       type: "error",
-      title: isZh ? `无法回收 ${label} 上的空间` : `Could not reclaim space on ${label}`,
+      title: gt("Could not reclaim space on {environment}", { environment: label }),
       description:
         error instanceof Error
-          ? error.message
-          : translateWebSource(translationLocale, "An error occurred."),
+          ? (thrownErrorMessage(error, m) ?? error.message)
+          : gt("An error occurred."),
     });
   };
   return (
     <SettingsRow
-      title={isZh ? `${label} 上有 ${amount}` : `${amount} on ${label}`}
+      title={gt("{amount} on {environment}", { amount, environment: label })}
       description={
         status.reclaimFailure === undefined
-          ? isZh
-            ? `会重启该设备上的 T3 Code，预计离线约 ${minutes} 分钟。`
-            : `Restarts T3 Code there. It will be offline for about ${minutes} min.`
-          : isZh
-            ? `上次尝试失败：${status.reclaimFailure}`
-            : `The last attempt failed: ${status.reclaimFailure}`
+          ? gt("Restarts T3 Code there. It will be offline for about {minutes} min.", { minutes })
+          : gt("The last attempt failed: {reason}", { reason: status.reclaimFailure })
       }
       control={
         <div className="flex flex-wrap items-center gap-1.5">
@@ -203,29 +195,31 @@ function ReclaimRow({
             disabled={restarting}
             onClick={() => setConfirming(true)}
           >
-            {restarting
-              ? translateWebSource(translationLocale, "Restarting…")
-              : translateWebSource(translationLocale, "Reclaim")}
+            {restarting ? gt("Restarting…") : gt("Reclaim")}
           </Button>
           {dismiss}
           <AlertDialog open={confirming} onOpenChange={setConfirming}>
             <AlertDialogPopup>
               <AlertDialogHeader>
                 <AlertDialogTitle>
-                  {isZh ? `要回收 ${label} 上的 ${amount} 吗？` : `Reclaim ${amount} on ${label}?`}
+                  <T>
+                    Reclaim <Var>{amount}</Var> on <Var>{label}</Var>?
+                  </T>
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  {isZh
-                    ? `${label} 上的 T3 Code 将停止运行、重建数据库并重新启动，预计离线约 ${minutes} 分钟。重启时正在运行的智能体将会停止。`
-                    : `T3 Code on ${label} stops, rebuilds its database, and starts again. It will be offline for about ${minutes} min. Running agents stop when it restarts.`}
+                  <T>
+                    T3 Code on <Var>{label}</Var> stops, rebuilds its database, and starts again. It
+                    will be offline for about <Var>{minutes}</Var> min. Running agents stop when it
+                    restarts.
+                  </T>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogClose render={<Button variant="outline" />}>
-                  {translateWebSource(translationLocale, "Cancel")}
+                  <T>Cancel</T>
                 </AlertDialogClose>
                 <Button onClick={() => void start()}>
-                  {translateWebSource(translationLocale, "Restart and reclaim")}
+                  <T>Restart and reclaim</T>
                 </Button>
               </AlertDialogFooter>
             </AlertDialogPopup>

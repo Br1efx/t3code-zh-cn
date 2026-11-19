@@ -1,12 +1,13 @@
 # T3 Code
 
-## Stable Chinese fork
+## Community fork notes (`Br1efx/t3code-zh-cn`)
 
-This repository is `Br1efx/t3code-zh-cn`, based on `pingdotgg/t3code` and the Simplified Chinese implementation from `ZhiweiXiao98/t3code` and `Michaelihc/t3code-zh-cn`.
+This repository is an unofficial community preview fork (`v0.1.11-preview`) tracking upstream `pingdotgg/t3code` (`main` / nightly). Keep upstream compatibility intact and confine fork-specific changes to their narrow boundaries:
 
-- Track official **stable release tags**, not upstream `main`, nightly, or preview builds. The pinned base and Chinese client version are in `.github/workflows/client-release.yml`.
-- Preserve Chinese localization across web, desktop, and mobile when integrating a stable release, and retain upstream attribution and commit history.
-- Source updates and client shipments are separate passes. Keep inherited upstream nightly and deployment workflows disabled; use this fork's client validation and publication workflows.
+- **Simplified Chinese UX (`zh-CN`)**: Beginner-friendly terminology polish across Web, Desktop, and Mobile (`apps/{web,desktop,mobile}/src/i18n/translations`), eliminating stiff jargon (e.g. `独立目录`, `供应商`, `已完成 / 标记完成`, `议题`), preserving `T3 Code` / `T3 Connect` brand names, and keeping friendly second-person `你` phrasing consistent across surfaces.
+- **T3 Connect public build config**: Client release workflows inject the official public T3 Connect relay configuration so community builds pair with the official mobile apps out of the box.
+- **Antigravity CLI auto-update**: Background scheduled check and atomic hot-swap to the latest Google Antigravity CLI, complementing upstream's on-demand update flow.
+- **Packaging**: Publishes unsigned Windows x64 community preview installers (`T3 Code (Beta)`) with manual upgrades and preserved `~/.t3` user data.
 
 T3 Code is a minimal GUI for coding agents. A Node WebSocket server wraps provider CLIs and agents (Codex, Claude Code, Cursor, Grok, OpenCode, Antigravity, Kiro, Pi, Muse Code, fx) and serves web, desktop, and mobile clients.
 
@@ -81,6 +82,7 @@ The most common defect in this repo is a change that works on the path you teste
 - **Contracts.** Anything crossing the wire is typed in `packages/contracts`. Change the schema and the server, web, mobile, and desktop all follow.
 - **Reverse states.** If you added a way in, add the way out and the way to see it. Snooze needs unsnooze. Close needs reopen. A one-way door is a bug.
 - **Connection modes.** Local, remote/relay, and tunnel behave differently. Multi-device and multi-environment cases are real.
+- **Languages.** User-facing text ships in every locale: translate new keys in `apps/{web,mobile}/src/i18n/translations` after `vp run i18n:generate` (`vp run i18n:check` gates it) and in `apps/marketing/src/i18n`.
 - **Docs.** Check whether the change makes existing guidance inaccurate. Apply the [documentation rules](#documentation) before adding anything.
 
 ## Dev servers
@@ -220,3 +222,4 @@ Architecture and its constraints: `docs/internals/overview.md`. Glossary: `docs/
 ## Additional tips
 
 - Security is important, but should not be over-indexed on, especially for dev mode/maintainer-only features.
+- Before a security audit or triaging a vulnerability report, read [SECURITY.md](SECURITY.md) for the trust model and what is intended.

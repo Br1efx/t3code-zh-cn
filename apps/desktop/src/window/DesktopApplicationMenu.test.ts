@@ -1,6 +1,5 @@
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { assert, describe, it } from "@effect/vitest";
-import { DEFAULT_CLIENT_SETTINGS, type AppLocalePreference } from "@t3tools/contracts";
 import * as Deferred from "effect/Deferred";
 import * as Effect from "effect/Effect";
 import * as Layer from "effect/Layer";
@@ -17,12 +16,9 @@ vi.mock("electron", () => ({
 import * as ElectronApp from "../electron/ElectronApp.ts";
 import * as ElectronDialog from "../electron/ElectronDialog.ts";
 import * as ElectronMenu from "../electron/ElectronMenu.ts";
-
 import * as DesktopApplicationMenu from "./DesktopApplicationMenu.ts";
 import * as DesktopConfig from "../app/DesktopConfig.ts";
 import * as DesktopEnvironment from "../app/DesktopEnvironment.ts";
-import * as DesktopClientSettings from "../settings/DesktopClientSettings.ts";
-
 import * as DesktopUpdates from "../updates/DesktopUpdates.ts";
 import { createInitialDesktopUpdateState } from "../updates/updateMachine.ts";
 import * as DesktopWindow from "./DesktopWindow.ts";
@@ -39,30 +35,29 @@ const environmentInput = {
   runningUnderArm64Translation: false,
 } satisfies DesktopEnvironment.MakeDesktopEnvironmentInput;
 
-const layerElectronApp = (systemLocale = "en-US") =>
-  Layer.succeed(ElectronApp.ElectronApp, {
-    metadata: Effect.die("unexpected metadata read"),
-    name: Effect.succeed("T3 Code"),
-    systemLocale: Effect.succeed(systemLocale),
-    preferredSystemLanguages: Effect.succeed([systemLocale]),
-    whenReady: Effect.void,
-    requestSingleInstanceLock: Effect.succeed(true),
-    quit: Effect.void,
-    exit: () => Effect.void,
-    relaunch: () => Effect.void,
-    setPath: () => Effect.void,
-    setName: () => Effect.void,
-    setAboutPanelOptions: () => Effect.void,
-    setAppUserModelId: () => Effect.void,
-    getAppMetrics: Effect.succeed([]),
-    setAsDefaultProtocolClient: () => Effect.succeed(true),
-    setDesktopName: () => Effect.void,
-    setDockIcon: () => Effect.void,
-    appendCommandLineSwitch: () => Effect.void,
-    onBeforeQuitForUpdate: () => Effect.void,
-    removeCommandLineSwitch: () => Effect.void,
-    on: () => Effect.void,
-  } satisfies ElectronApp.ElectronApp["Service"]);
+const layerElectronApp = Layer.succeed(ElectronApp.ElectronApp, {
+  metadata: Effect.die("unexpected metadata read"),
+  name: Effect.succeed("T3 Code"),
+  systemLocale: Effect.succeed("en-US"),
+  preferredSystemLanguages: Effect.succeed(["en-US"]),
+  whenReady: Effect.void,
+  requestSingleInstanceLock: Effect.succeed(true),
+  quit: Effect.void,
+  exit: () => Effect.void,
+  relaunch: () => Effect.void,
+  setPath: () => Effect.void,
+  setName: () => Effect.void,
+  setAboutPanelOptions: () => Effect.void,
+  setAppUserModelId: () => Effect.void,
+  getAppMetrics: Effect.succeed([]),
+  setAsDefaultProtocolClient: () => Effect.succeed(true),
+  setDesktopName: () => Effect.void,
+  setDockIcon: () => Effect.void,
+  appendCommandLineSwitch: () => Effect.void,
+  onBeforeQuitForUpdate: () => Effect.void,
+  removeCommandLineSwitch: () => Effect.void,
+  on: () => Effect.void,
+} satisfies ElectronApp.ElectronApp["Service"]);
 
 interface MenuServices {
   readonly checkResult?: DesktopUpdateCheckResult;
@@ -130,12 +125,7 @@ const layerElectronMenu = (
 const configureMenu = (
   selectedAction: Deferred.Deferred<string>,
   applicationMenuTemplate: Deferred.Deferred<readonly Electron.MenuItemConstructorOptions[]>,
-  options: Partial<DesktopEnvironment.MakeDesktopEnvironmentInput> & {
-    readonly appLocale?: AppLocalePreference;
-    readonly systemLocale?: string;
-    readonly electronDialog?: ElectronDialog.ElectronDialog["Service"];
-    readonly desktopUpdates?: DesktopUpdates.DesktopUpdates["Service"];
-  } = {},
+  environment: Partial<DesktopEnvironment.MakeDesktopEnvironmentInput> = {},
   services: MenuServices = {},
 ) =>
   Effect.gen(function* () {
@@ -146,30 +136,13 @@ const configureMenu = (
       DesktopApplicationMenu.layer.pipe(
         Layer.provideMerge(layerElectronMenu(applicationMenuTemplate)),
         Layer.provideMerge(layerDesktopWindow(selectedAction)),
+        Layer.provideMerge(layerDesktopUpdates(services)),
+        Layer.provideMerge(layerElectronDialog(services)),
+        Layer.provideMerge(layerElectronApp),
         Layer.provideMerge(
-          options.desktopUpdates
-            ? Layer.succeed(DesktopUpdates.DesktopUpdates, options.desktopUpdates)
-            : layerDesktopUpdates(services),
-        ),
-        Layer.provideMerge(
-          options.electronDialog
-            ? Layer.succeed(ElectronDialog.ElectronDialog, options.electronDialog)
-            : layerElectronDialog(services),
-        ),
-        Layer.provideMerge(layerElectronApp(options.systemLocale)),
-        Layer.provideMerge(
-          DesktopClientSettings.layerTest(
-            Option.some({
-              ...DEFAULT_CLIENT_SETTINGS,
-              appLocale: options.appLocale ?? "en",
-            }),
+          DesktopEnvironment.layer({ ...environmentInput, ...environment }).pipe(
+            Layer.provide(Layer.mergeAll(NodeServices.layer, DesktopConfig.layerTest({}))),
           ),
-        ),
-        Layer.provideMerge(
-          DesktopEnvironment.layer({
-            ...environmentInput,
-            ...options,
-          }).pipe(Layer.provide(Layer.mergeAll(NodeServices.layer, DesktopConfig.layerTest({})))),
         ),
       ),
     ),
@@ -374,41 +347,6 @@ describe("DesktopApplicationMenu", () => {
       assert.equal(yield* Deferred.await(selectedAction), "main-reload");
     }),
   );
-  it.effect.each([
-    { label: "刷新页面", accelerator: "CmdOrCtrl+R", command: "reload" },
-    { label: "强制刷新", accelerator: "Shift+CmdOrCtrl+R", command: "forceReload" },
-    { label: "显示/隐藏开发者工具", accelerator: "Ctrl+Shift+I", command: "toggleDevTools" },
-  ] as const)("routes localized $command to the main renderer", ({ label, accelerator, command }) =>
-    Effect.gen(function* () {
-      const selectedAction = yield* Deferred.make<string>();
-      const applicationMenuTemplate =
-        yield* Deferred.make<readonly Electron.MenuItemConstructorOptions[]>();
-
-      yield* configureMenu(selectedAction, applicationMenuTemplate, { appLocale: "zh-CN" });
-
-      const template = yield* Deferred.await(applicationMenuTemplate);
-      const fileMenu = template.find((item) => item.label === "文件");
-      if (!Array.isArray(fileMenu?.submenu)) {
-        throw new Error("Expected localized File menu submenu to be an array.");
-      }
-      assert.isDefined(fileMenu.submenu.find((item) => item.label === "关闭开发者工具"));
-
-      const viewMenu = template.find((item) => item.label === "查看");
-      if (!Array.isArray(viewMenu?.submenu)) {
-        throw new Error("Expected localized View menu submenu to be an array.");
-      }
-      const item = viewMenu.submenu.find((item) => item.label === label);
-      assert.equal(item?.accelerator, accelerator);
-      assert.isUndefined(item?.role);
-      if (typeof item?.click !== "function") {
-        throw new Error("Expected localized main-renderer command to have a click handler.");
-      }
-
-      item.click({} as Electron.MenuItem, {} as Electron.BrowserWindow, {} as KeyboardEvent);
-      assert.equal(yield* Deferred.await(selectedAction), `main-${command}`);
-    }),
-  );
-
   it.effect("tells the user which update the menu check found", () =>
     Effect.gen(function* () {
       const dialog = yield* checkForUpdatesFromMacMenu({
@@ -428,6 +366,31 @@ describe("DesktopApplicationMenu", () => {
         downloadPercent: 100,
       });
       assert.include(`${dialog.title ?? ""} ${dialog.message} ${dialog.detail ?? ""}`, "0.1.7");
+    }),
+  );
+
+  it.effect("labels every role item so the menu follows the UI language", () =>
+    Effect.gen(function* () {
+      // Electron's role defaults are English on every platform, so each role item needs a label.
+      for (const platform of ["darwin", "linux", "win32"] as const) {
+        const applicationMenuTemplate =
+          yield* Deferred.make<readonly Electron.MenuItemConstructorOptions[]>();
+        yield* configureMenu(yield* Deferred.make<string>(), applicationMenuTemplate, {
+          platform,
+        });
+
+        const unlabeled: string[] = [];
+        const collect = (template: readonly Electron.MenuItemConstructorOptions[]) => {
+          for (const item of template) {
+            if (item.role !== undefined && typeof item.label !== "string") {
+              unlabeled.push(item.role);
+            }
+            if (Array.isArray(item.submenu)) collect(item.submenu);
+          }
+        };
+        collect(yield* Deferred.await(applicationMenuTemplate));
+        assert.deepStrictEqual(unlabeled, [], platform);
+      }
     }),
   );
 });

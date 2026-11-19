@@ -1,5 +1,4 @@
-import { useI18n } from "~/i18n/WebI18nContext";
-import { translateWebSource } from "~/i18n/messages";
+import { T, useGT } from "gt-react";
 import type { PullRequestReviewGuideNote } from "@t3tools/contracts";
 
 import { cn } from "~/lib/utils";
@@ -24,14 +23,14 @@ export function GuideNotes({
   notes: ReadonlyArray<{ readonly marker: string; readonly note: PullRequestReviewGuideNote }>;
   className?: string;
 }) {
-  const { t, locale } = useI18n();
+  const gt = useGT();
   if (notes.length === 0) return null;
   return (
     <section className={cn("flex min-w-0 flex-col gap-2", className)}>
       <h4 className="flex items-baseline justify-between gap-2 text-xs font-medium text-foreground">
-        {translateWebSource(locale, "Notes on this stop")}
+        <T>Notes on this stop</T>
         <span className="font-normal text-muted-foreground tabular-nums">
-          {t(notes.length === 1 ? "pullRequests.guide.noteOne" : "pullRequests.guide.noteMany", {
+          {gt("{count, plural, one {{count} note} other {{count} notes}}", {
             count: notes.length,
           })}
         </span>

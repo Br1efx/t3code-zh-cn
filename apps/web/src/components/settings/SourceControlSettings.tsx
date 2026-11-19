@@ -1,6 +1,3 @@
-import { splitWebTranslation } from "~/i18n/WebI18nContext";
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { RefreshIcon } from "~/components/ui/refresh-icon";
 import { ChevronDownIcon } from "lucide-react";
 import { useAtomValue } from "@effect/atom-react";
@@ -35,8 +32,11 @@ import {
 import { Skeleton } from "../ui/skeleton";
 import { Switch } from "../ui/switch";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
+import { msg, T, useGT, useMessages, Var } from "gt-react";
+import { m, type MessageResolver } from "../../i18n/messages";
 
 import { GitIcon, JujutsuIcon, type Icon } from "../Icons";
+import { IssueTrackerSettings } from "./IssueTrackerSettings";
 import { SourceControlHostSettings } from "./SourceControlHostSettings";
 import { SourceControlAccountSettings } from "./SourceControlAccountSettings";
 import { SourceControlAppSignInSettings } from "./SourceControlAppSignInSettings";
@@ -49,8 +49,9 @@ import {
   SettingsSection,
   useSettingsSearchTargetId,
 } from "./settingsLayout";
-import { searchableSetting, sourceControlHostSettingsSearchId } from "./settingsSearch";
+import { useSearchableSetting, sourceControlHostSettingsSearchId } from "./settingsSearch";
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
+import { sourceControlInstallHintText } from "@t3tools/client-runtime/contract-labels";
 import { isSourceControlProviderOffered } from "@t3tools/client-runtime/operations/projects";
 import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
 import { sourceControlIcon } from "~/sourceControlPresentation";
@@ -80,53 +81,30 @@ function isVcsNotReady(item: VcsDiscoveryItem | SourceControlProviderDiscoveryIt
   return !isProviderDiscoveryItem(item) && !item.implemented;
 }
 
-function localizeInstallHint(hint: string, t: ReturnType<typeof useI18n>["t"]): string {
-  if (hint.startsWith("Install Git from")) {
-    return t("sourceControl.hint.git");
-  }
-  if (hint.startsWith("Install Jujutsu with")) {
-    return t("sourceControl.hint.jujutsu");
-  }
-  if (hint.startsWith("Install the GitHub command-line tool")) {
-    return t("sourceControl.hint.github");
-  }
-  if (hint.startsWith("Install the GitLab command-line tool")) {
-    return t("sourceControl.hint.gitlab");
-  }
-  if (hint.startsWith("Install the Azure command-line tools")) {
-    return t("sourceControl.hint.azure");
-  }
-  if (hint.startsWith("Set T3CODE_BITBUCKET_EMAIL")) {
-    return t("sourceControl.hint.bitbucket");
-  }
-  return hint;
-}
-
 function authPresentation(
   auth: SourceControlProviderAuth,
-  t: ReturnType<typeof useI18n>["t"],
-  locale: ReturnType<typeof useI18n>["locale"],
+  resolve: MessageResolver = m,
 ): {
   readonly label: string;
   readonly badge: "secondary" | null;
 } {
   if (auth.status === "authenticated") {
-    return { label: t("sourceControl.status.authenticated"), badge: null };
+    return { label: resolve(msg("Authenticated")), badge: null };
   }
   if (auth.status === "unauthenticated") {
-    return { label: translateWebSource(locale, "Not authenticated"), badge: "secondary" };
+    return { label: resolve(msg("Not authenticated")), badge: "secondary" };
   }
-  return { label: t("sourceControl.status.unknown"), badge: null };
+  return { label: resolve(msg("Status unknown")), badge: null };
 }
 
 function RedactedAccount(props: { readonly account: string | null }) {
-  const { t } = useI18n();
+  const gt = useGT();
   return (
     <RedactedSensitiveText
       value={props.account}
-      ariaLabel={t("sourceControl.action.accountVisibility")}
-      revealTooltip={t("sourceControl.action.revealAccount")}
-      hideTooltip={t("sourceControl.action.hideAccount")}
+      ariaLabel={gt("Toggle source control account visibility")}
+      revealTooltip={gt("Click to reveal account")}
+      hideTooltip={gt("Click to hide account")}
     />
   );
 }
@@ -182,26 +160,30 @@ function itemSummary({
   item,
   auth,
   authAccount,
-  t,
-  locale,
+  resolve,
 }: {
   readonly item: VcsDiscoveryItem | SourceControlProviderDiscoveryItem;
   readonly auth: SourceControlProviderAuth | null;
   readonly authAccount: string | null;
-  readonly t: ReturnType<typeof useI18n>["t"];
-  readonly locale: ReturnType<typeof useI18n>["locale"];
+  readonly resolve: MessageResolver;
 }) {
-  const isZh = locale === "zh-CN";
+  const installHint = sourceControlInstallHintText(item.installHint, resolve);
   if (isVcsNotReady(item)) {
-    return <span>{t("sourceControl.summary.comingSoon", { provider: item.label })}</span>;
+    return (
+      <span>
+        <T>
+          Support for <Var>{item.label}</Var> is coming soon.
+        </T>
+      </span>
+    );
   }
 
   if (item.status !== "available") {
     return (
       <span>
-        {t("sourceControl.summary.unavailable", {
-          hint: localizeInstallHint(item.installHint, t),
-        })}
+        <T>
+          Not available on this server: <Var>{installHint}</Var>
+        </T>
       </span>
     );
   }
@@ -212,59 +194,75 @@ function itemSummary({
       return (
         <>
           {authAccount ? (
-            <>
-              <span>{t("sourceControl.status.authenticatedAs")}</span>
-              <RedactedAccount account={authAccount} />
-            </>
-          ) : null}
+            <span>
+              <T>
+                Authenticated as{" "}
+                <Var>
+                  <RedactedAccount account={authAccount} />
+                </Var>
+              </T>
+            </span>
+          ) : (
+            <span>
+              <T>Authenticated</T>
+            </span>
+          )}
           {authDetail ? <span>· {authDetail}</span> : null}
         </>
       );
     }
 
     if (!item.executable && auth.status === "unauthenticated") {
-      const localizedHint = localizeInstallHint(item.installHint, t);
-      return <span>{isZh ? `可用。${localizedHint}` : `Available. ${localizedHint}`}</span>;
+      return (
+        <span>
+          <T>
+            Available. <Var>{installHint}</Var>
+          </T>
+        </span>
+      );
     }
 
     if (auth.status === "unauthenticated" && auth.accounts?.some((entry) => entry.authenticated)) {
       return (
         <span>
-          {optionLabel(auth.detail) ??
-            (isZh
-              ? `所有 ${item.label} 托管站点均已关闭。`
-              : `Every ${item.label} host is turned off.`)}
+          {optionLabel(auth.detail) ?? (
+            <T>
+              Every <Var>{item.label}</Var> host is turned off.
+            </T>
+          )}
         </span>
       );
     }
 
     if (auth.status === "unauthenticated") {
-      const [beforeCommand, afterCommand] = splitWebTranslation(
-        t,
-        "sourceControl.summary.notAuthenticated",
-        "command",
-        { provider: item.label },
-      );
       return (
         <span>
-          {beforeCommand}
-          <code className="rounded bg-muted px-1 py-px text-2xs">{item.executable}</code>
-          {afterCommand}
+          <T>
+            <Var>{item.label}</Var> is not authenticated on this server. Sign in or configure
+            credentials using the{" "}
+            <code className="rounded bg-muted px-1 py-px text-2xs">
+              <Var>{item.executable}</Var>
+            </code>{" "}
+            tool on the server host to enable change request features.
+          </T>
         </span>
       );
     }
     const authDetail = optionLabel(auth.detail);
     return (
       <span>
-        {t("sourceControl.summary.verifyFailed", {
-          provider: item.label,
-          hint: authDetail ?? localizeInstallHint(item.installHint, t),
-        })}
+        <T>
+          Could not verify <Var>{item.label}</Var>. <Var>{authDetail ?? installHint}</Var>
+        </T>
       </span>
     );
   }
 
-  return <span>{t("sourceControl.status.available")}</span>;
+  return (
+    <span>
+      <T>Available</T>
+    </span>
+  );
 }
 
 function DiscoveryItemRow({
@@ -281,11 +279,11 @@ function DiscoveryItemRow({
   };
   readonly children?: ReactNode;
 }) {
-  const { locale, t } = useI18n();
-  const isZh = locale === "zh-CN";
+  const messages = useMessages();
+  const gt = useGT();
   const version = optionLabel(item.version);
   const auth = isProviderDiscoveryItem(item) ? item.auth : null;
-  const authStatus = auth ? authPresentation(auth, t, locale) : null;
+  const authStatus = auth ? authPresentation(auth, messages) : null;
   const authAccount = auth ? optionLabel(auth.account) : null;
   const [isExpanded, setIsExpanded] = useState(false);
   const hasDetails = children !== undefined;
@@ -313,7 +311,7 @@ function DiscoveryItemRow({
               {version ? <code className="text-xs text-muted-foreground">{version}</code> : null}
               {isVcsNotReady(item) ? (
                 <Badge variant="warning" size="sm">
-                  {t("sourceControl.status.comingSoon")}
+                  <T>Coming Soon</T>
                 </Badge>
               ) : null}
               {authStatus?.badge ? (
@@ -323,7 +321,7 @@ function DiscoveryItemRow({
               ) : null}
             </div>
             <p className="flex min-w-0 flex-wrap items-center gap-x-1 text-xs leading-normal text-muted-foreground/80">
-              {itemSummary({ item, auth, authAccount, t, locale })}
+              {itemSummary({ item, auth, authAccount, resolve: messages })}
             </p>
           </div>
           <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto sm:justify-end">
@@ -333,7 +331,7 @@ function DiscoveryItemRow({
                 variant="ghost-muted"
                 onClick={() => setIsExpanded((open) => !open)}
                 aria-expanded={isExpanded}
-                aria-label={t("sourceControl.action.toggleDetails", { provider: item.label })}
+                aria-label={gt("Toggle {label} details", { label: item.label })}
               >
                 <ChevronDownIcon
                   className={cn("size-3.5 transition-transform", isExpanded && "rotate-180")}
@@ -348,23 +346,21 @@ function DiscoveryItemRow({
                       checked={offered.checked}
                       disabled={offered.disabled}
                       onCheckedChange={offered.onChange}
-                      aria-label={
-                        isZh
-                          ? `添加或发布项目时提供 ${item.label}`
-                          : `Offer ${item.label} when adding or publishing a project`
-                      }
+                      aria-label={gt("Offer {label} when adding or publishing a project", {
+                        label: item.label,
+                      })}
                     />
                   }
                 />
                 <TooltipPopup side="top">
-                  {translateWebSource(locale, "Offer when adding or publishing a project")}
+                  <T>Offer when adding or publishing a project</T>
                 </TooltipPopup>
               </Tooltip>
             ) : !isVcsNotReady(item) ? (
               <Switch
                 checked={item.status === "available"}
                 disabled
-                aria-label={t("sourceControl.action.availability", { provider: item.label })}
+                aria-label={`${item.label} availability`}
               />
             ) : null}
           </div>
@@ -429,30 +425,32 @@ function EmptySourceControlDiscovery({
   readonly isPending: boolean;
   readonly onScan: () => void;
 }) {
-  const { locale: translationLocale, t } = useI18n();
+  const searchableSetting = useSearchableSetting();
+  const gt = useGT();
   const hasError = error !== null;
 
   return (
-    <SettingsSection
-      id={searchableSetting("source-control").id}
-      title={t("sourceControl.empty.section")}
-    >
+    <SettingsSection id={searchableSetting("source-control").id} title={gt("Server environment")}>
       <Empty>
         <EmptyMedia variant="icon">
           <PullRequestGlyph.pullRequest />
         </EmptyMedia>
         <EmptyHeader>
           <EmptyTitle>
-            {hasError ? t("sourceControl.empty.scanFailed") : t("sourceControl.empty.title")}
+            {hasError ? gt("Could not scan the server environment") : gt("Nothing detected yet")}
           </EmptyTitle>
           <EmptyDescription>
-            {hasError ? error : t("sourceControl.empty.description")}
+            {hasError
+              ? error
+              : gt(
+                  "Install Git on the server, add optional hosting integrations or credentials your workspace needs, then rescan.",
+                )}
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <Button size="sm" variant="outline" onClick={onScan} disabled={isPending}>
             <RefreshIcon size="sm" refreshing={isPending} />
-            {translateWebSource(translationLocale, "Scan")}
+            <T>Scan</T>
           </Button>
         </EmptyContent>
       </Empty>
@@ -461,7 +459,8 @@ function EmptySourceControlDiscovery({
 }
 
 export function SourceControlSettingsPanel() {
-  const { locale: translationLocale, t } = useI18n();
+  const searchableSetting = useSearchableSetting();
+  const gt = useGT();
   const { scope, environment, connectedEnvironments } = useSettingsScope();
 
   const environmentId =
@@ -475,6 +474,7 @@ export function SourceControlSettingsPanel() {
           environmentId,
           input: {},
         }),
+    useMessages(),
   );
   const result = discovery.data ?? EMPTY_DISCOVERY_RESULT;
   const hasVersionControlSystems = result.versionControlSystems.length > 0;
@@ -523,7 +523,7 @@ export function SourceControlSettingsPanel() {
             {credentials.appSignIn && item.appSignIn === true ? (
               <div className="flex items-center gap-3 text-2xs text-muted-foreground">
                 <span aria-hidden className="h-px flex-1 bg-border" />
-                {translateWebSource(translationLocale, "Or use your own credentials")}
+                <T>Or use your own credentials</T>
                 <span aria-hidden className="h-px flex-1 bg-border" />
               </div>
             ) : null}
@@ -568,13 +568,15 @@ export function SourceControlSettingsPanel() {
             variant="ghost-muted"
             onClick={handleScan}
             disabled={discovery.isPending}
-            aria-label={t("sourceControl.action.rescan")}
+            aria-label={gt("Rescan server environment")}
           >
             <RefreshIcon refreshing={discovery.isPending} />
           </Button>
         }
       />
-      <TooltipPopup side="top">{t("sourceControl.action.rescanTooltip")}</TooltipPopup>
+      <TooltipPopup side="top">
+        <T>Rescan Git and hosting integrations</T>
+      </TooltipPopup>
     </Tooltip>
   );
 
@@ -584,31 +586,28 @@ export function SourceControlSettingsPanel() {
       {environmentId === null ? (
         <SettingsSection
           id={searchableSetting("source-control").id}
-          title={translateWebSource(translationLocale, "Server environment")}
+          title={gt("Server environment")}
         >
           <p className="px-4 py-3 text-sm text-muted-foreground">
-            {translateWebSource(
-              translationLocale,
-              "Connect an environment to inspect its version control tools and hosting integrations.",
-            )}
+            <T>
+              Connect an environment to inspect its version control tools and hosting integrations.
+            </T>
           </p>
         </SettingsSection>
       ) : isInitialScanPending ? (
         <>
           <SourceControlSectionSkeleton
-            title={`${translateWebSource(translationLocale, "Version Control")}${environmentSuffix}`}
+            title={`${gt("Version Control")}${environmentSuffix}`}
             headerAction={scanButton}
           />
-          <SourceControlSectionSkeleton
-            title={translateWebSource(translationLocale, "Source control providers")}
-          />
+          <SourceControlSectionSkeleton title={gt("Source control providers")} />
         </>
       ) : hasDiscoveryItems ? (
         <>
           {hasVersionControlSystems ? (
             <SettingsSection
               id={searchableSetting("source-control").id}
-              title={`${translateWebSource(translationLocale, "Version Control")}${environmentSuffix}`}
+              title={`${gt("Version Control")}${environmentSuffix}`}
               headerAction={scanButton}
             >
               {result.versionControlSystems.map((item) => (
@@ -622,8 +621,8 @@ export function SourceControlSettingsPanel() {
               id={hasVersionControlSystems ? undefined : searchableSetting("source-control").id}
               title={
                 hasVersionControlSystems
-                  ? translateWebSource(translationLocale, "Source control providers")
-                  : `${translateWebSource(translationLocale, "Source control providers")}${environmentSuffix}`
+                  ? gt("Source control providers")
+                  : `${gt("Source control providers")}${environmentSuffix}`
               }
               headerAction={hasVersionControlSystems ? null : scanButton}
             >
@@ -655,6 +654,9 @@ export function SourceControlSettingsPanel() {
           isPending={discovery.isPending}
           onScan={handleScan}
         />
+      )}
+      {environmentId === null ? null : (
+        <IssueTrackerSettings key={environmentId} environmentId={environmentId} />
       )}
 
       <SourceControlWritingSettingsSection />

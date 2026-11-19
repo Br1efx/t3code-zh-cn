@@ -1,8 +1,7 @@
 import { workspaceAreaProps } from "../lib/workspaceFocus";
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "../i18n/WebI18nContext";
 import { Outlet, createFileRoute, redirect, useLocation } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
+import { T, useGT, useMessages, Var } from "gt-react";
 import { RotateCcwIcon } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useSettingsRestore } from "../components/settings/SettingsPanels";
@@ -30,8 +29,6 @@ import {
 } from "../components/settings/settingsSearch";
 
 function RestoreDeviceDefaultsButton({ onRestored }: { onRestored: () => void }) {
-  const { locale: translationLocale } = useI18n();
-
   const { changedSettingLabels, restoreDefaults } = useSettingsRestore(onRestored);
   return (
     <Button
@@ -42,16 +39,17 @@ function RestoreDeviceDefaultsButton({ onRestored }: { onRestored: () => void })
     >
       <RotateCcwIcon className="mx-1 size-3.5" />
       <span className="max-sm:sr-only">
-        {translateWebSource(translationLocale, "Restore device defaults")}
+        <T>Restore device defaults</T>
       </span>
     </Button>
   );
 }
 
 function SettingsScopeBoundary({ pathname, children }: { pathname: string; children: ReactNode }) {
-  const { locale: uiLocale } = useI18n();
   const { scope, connectedEnvironments } = useSettingsScope();
   const { environments } = useEnvironments();
+  const gt = useGT();
+  const m = useMessages();
   const hash = useLocation({ select: (location) => location.hash });
   const searchTarget = getSettingsSearchTargetScope(hash);
   const autoSettlementAvailability = searchTarget?.requiresThreadAutoSettlement
@@ -63,7 +61,6 @@ function SettingsScopeBoundary({ pathname, children }: { pathname: string; child
     autoSettlementAvailability &&
     !autoSettlementAvailability.isTargetAvailable
   ) {
-    const targetTitle = translateWebSource(uiLocale, searchTarget.title);
     return (
       <SettingsScopeNotice
         target="environment"
@@ -71,12 +68,13 @@ function SettingsScopeBoundary({ pathname, children }: { pathname: string; child
         eligibleEnvironmentIds={autoSettlementAvailability.eligibleEnvironmentIds}
       >
         {autoSettlementAvailability.eligibleEnvironmentIds.length > 0
-          ? uiLocale === "zh-CN"
-            ? `「${targetTitle}」需要兼容的运行设备支持，请在下方选择一台设备继续。`
-            : `${searchTarget.title} requires a supporting environment. Choose one to continue.`
-          : uiLocale === "zh-CN"
-            ? `「${targetTitle}」需要兼容的运行设备支持，请连接或更新运行设备后继续。`
-            : `${searchTarget.title} requires a supporting environment. Connect or update an environment to continue.`}
+          ? gt("{title} requires a supporting environment. Choose one to continue.", {
+              title: m(searchTarget.title),
+            })
+          : gt(
+              "{title} requires a supporting environment. Connect or update an environment to continue.",
+              { title: m(searchTarget.title) },
+            )}
       </SettingsScopeNotice>
     );
   }
@@ -91,12 +89,12 @@ function SettingsScopeBoundary({ pathname, children }: { pathname: string; child
       searchTarget.scope === "checkout"
         ? searchTarget.scope
         : "all";
-    const targetTitle = translateWebSource(uiLocale, searchTarget.title);
     return (
       <SettingsScopeNotice target={target} targetId={hash}>
-        {uiLocale === "zh-CN"
-          ? `当前所选范围不支持设置「${targetTitle}」，请切换到下方的所属范围继续。`
-          : `${searchTarget.title} is not available for the selected target. Choose its owning scope to continue.`}
+        {gt(
+          "{title} is not available for the selected target. Choose its owning scope to continue.",
+          { title: m(searchTarget.title) },
+        )}
       </SettingsScopeNotice>
     );
   }
@@ -106,23 +104,16 @@ function SettingsScopeBoundary({ pathname, children }: { pathname: string; child
   if (scope.kind === "unavailable")
     return (
       <SettingsPageContainer>
-        <p className="text-sm text-muted-foreground">
-          {translateWebSource(uiLocale, scope.message)}
-        </p>
+        <p className="text-sm text-muted-foreground">{scope.message}</p>
       </SettingsPageContainer>
     );
   if (scope.kind === "environment" && connectedEnvironments.length === 0) {
     return (
       <SettingsPageContainer>
         <p className="text-sm text-muted-foreground">
-          {uiLocale === "zh-CN" ? (
-            `请重新连接 ${scope.label} 后再修改其设置。`
-          ) : (
-            <>
-              {translateWebSource(uiLocale, "Reconnect")} {scope.label}{" "}
-              {translateWebSource(uiLocale, "to change its settings.")}
-            </>
-          )}
+          <T>
+            Reconnect <Var>{scope.label}</Var> to change its settings.
+          </T>
         </p>
       </SettingsPageContainer>
     );
@@ -131,12 +122,8 @@ function SettingsScopeBoundary({ pathname, children }: { pathname: string; child
 }
 
 function SettingsContentLayout() {
-  const { locale: translationLocale } = useI18n();
-  const contentArea = workspaceAreaProps(
-    "settings",
-    1,
-    translateWebSource(translationLocale, "Settings content"),
-  );
+  const gt = useGT();
+  const contentArea = workspaceAreaProps("settings", 1, gt("Settings content"));
   const location = useLocation();
   const { search, environment } = useSettingsScope();
   const contentScopeKey =
@@ -146,7 +133,7 @@ function SettingsContentLayout() {
   const [restoreSignal, setRestoreSignal] = useState(0);
 
   return (
-    <AppRouteModal label={translateWebSource(translationLocale, "Settings")}>
+    <AppRouteModal label={gt("Settings")}>
       <div className="relative flex min-h-0 flex-1">
         <SettingsSidebarNav pathname={location.pathname} />
         <div {...contentArea} className="flex min-h-0 min-w-0 flex-1 flex-col">

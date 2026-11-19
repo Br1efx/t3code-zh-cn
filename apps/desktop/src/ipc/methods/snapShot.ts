@@ -14,28 +14,22 @@ import {
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Schema from "effect/Schema";
+import { msg } from "gt-i18n";
 import type * as Electron from "electron";
 
 import * as ElectronWindow from "../../electron/ElectronWindow.ts";
 import * as ElectronDialog from "../../electron/ElectronDialog.ts";
-import {
-  isZhCn,
-  OptionalDesktopLocaleField,
-  resolveCurrentDesktopLocale,
-  withDesktopLocale,
-} from "../../i18n/DesktopLocale.ts";
 import * as DesktopSnapShot from "../../snapShot/DesktopSnapShot.ts";
+import { m } from "../../i18n/messages.ts";
 import * as IpcChannels from "../channels.ts";
 import * as DesktopIpc from "../DesktopIpc.ts";
 
 class SnapShotIpcUnauthorizedSenderError extends Schema.TaggedError<SnapShotIpcUnauthorizedSenderError>()(
   "SnapShotIpcUnauthorizedSenderError",
-  {
-    locale: OptionalDesktopLocaleField,
-  },
+  {},
 ) {
   override get message(): string {
-    return isZhCn(this.locale) ? "已拒绝快捷截图请求。" : "Snapshot request was rejected.";
+    return "Snapshot request was rejected.";
   }
 }
 
@@ -47,8 +41,7 @@ const ensureTrustedSnapShotSender = Effect.fn("desktop.ipc.snapShot.ensureTruste
       Option.isNone(main) ||
       main.value.webContents.id !== event.sender.id
     ) {
-      const locale = yield* resolveCurrentDesktopLocale;
-      return yield* new SnapShotIpcUnauthorizedSenderError(withDesktopLocale(locale));
+      return yield* new SnapShotIpcUnauthorizedSenderError();
     }
     return main.value;
   },
@@ -122,13 +115,12 @@ export const previewSnapShotConfig = DesktopIpc.makeIpcMethod({
     let selectedPath: string | undefined;
     if (request.chooseFile) {
       const state = yield* capture.state;
-      const locale = yield* resolveCurrentDesktopLocale;
       const paths = yield* (yield* ElectronDialog.ElectronDialog).pickFiles({
         owner: Option.some(window),
         defaultPath: Option.fromUndefinedOr(state.shortcutConfigPath),
         filters: [
           {
-            name: isZhCn(locale) ? "桌面配置文件" : "Desktop config",
+            name: m(msg("Desktop config")),
             extensions: state.linuxBackend === "niri" ? ["kdl"] : ["conf", "lua"],
           },
         ],

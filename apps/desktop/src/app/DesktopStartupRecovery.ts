@@ -7,19 +7,20 @@ import type * as Scope from "effect/Scope";
 import * as Stream from "effect/Stream";
 import * as SubscriptionRef from "effect/SubscriptionRef";
 import type * as Electron from "electron";
+import { msg } from "gt-i18n";
 
 import * as ElectronApp from "../electron/ElectronApp.ts";
 import * as ElectronShell from "../electron/ElectronShell.ts";
 import * as ElectronTheme from "../electron/ElectronTheme.ts";
 import * as ElectronWindow from "../electron/ElectronWindow.ts";
-import * as DesktopLocale from "../i18n/DesktopLocale.ts";
+import { m } from "../i18n/messages.ts";
 import * as DesktopUpdates from "../updates/DesktopUpdates.ts";
 import type { BackendStartupFailure } from "../backend/DesktopBackendManager.ts";
 import * as DesktopEnvironment from "./DesktopEnvironment.ts";
 import * as DesktopObservability from "./DesktopObservability.ts";
 import * as DesktopState from "./DesktopState.ts";
 
-const RELEASES_URL = "https://github.com/Br1efx/t3code-zh-cn/releases";
+const RELEASES_URL = "https://github.com/pingdotgg/t3code/releases";
 const LAST_STARTED_VERSION_FILE = "desktop-last-started-version";
 // Buttons are plain links to this host; will-navigate cancels them and runs the action.
 const ACTION_ORIGIN = "https://startup-recovery.invalid";
@@ -79,79 +80,62 @@ const escapeHtml = (value: string) =>
 const actionLink = (action: StartupRecoveryAction, label: string, primary = false) =>
   `<a class="button${primary ? " primary" : ""}" href="${ACTION_ORIGIN}/${action}">${escapeHtml(label)}</a>`;
 
-function localizeFailureReason(reason: string, isZh: boolean): string {
-  if (!isZh) return reason;
-  if (reason === "The server started but did not become ready in time.") {
-    return "本地后台服务启动超时，未能及时准备就绪。";
-  }
-  const match = /^The server could not start \((.+)\)\.$/.exec(reason);
-  if (match?.[1]) {
-    return `本地后台服务无法启动（${match[1]}）。`;
-  }
-  return reason;
-}
-
-function describeOffer(
-  offer: StartupRecoveryOffer,
-  isZh: boolean,
-): { text: string; action: string } {
-  if (isZh) {
-    switch (offer._tag) {
-      case "Checking":
-        return { text: "正在检查是否有可用的修复版本…", action: "" };
-      case "Update":
-        return {
-          text: `发现新版本 ${offer.version}，可能已修复此问题。`,
-          action: actionLink("update", `更新到 ${offer.version}`, true),
-        };
-      case "Downloading":
-        return {
-          text: `正在下载 ${offer.version}${offer.percent === null ? "" : `（${Math.floor(offer.percent / 10) * 10}%）`}… 下载完成后软件将自动重启。`,
-          action: "",
-        };
-      case "Reinstall":
-        return {
-          text: `旧版本 ${offer.version} 曾在这台电脑上正常启动，你可以下载并重新安装以回退到该版本。`,
-          action: actionLink("reinstall", `下载 ${offer.version}`, true),
-        };
-      case "Releases":
-        return {
-          text: "你也可以前往版本发布页下载其他版本。",
-          action: actionLink("releases", "打开版本下载页", true),
-        };
-      case "ManagedPolicy":
-        return {
-          text: "你所在机构的管理策略阻止了 T3 Code 启动。请复制下方错误详情并发送给 IT 管理员。",
-          action: "",
-        };
-    }
-  }
+function describeOffer(offer: StartupRecoveryOffer): { text: string; action: string } {
   switch (offer._tag) {
     case "Checking":
-      return { text: "Checking for a newer version…", action: "" };
+      return { text: m(msg("Checking for a newer version…")), action: "" };
     case "Update":
       return {
-        text: `Version ${offer.version} is available. It can contain a fix.`,
-        action: actionLink("update", `Update to ${offer.version}`, true),
+        text: m(msg("Version {version} is available. It can contain a fix."), {
+          version: offer.version,
+        }),
+        action: actionLink(
+          "update",
+          m(msg("Update to {version}"), { version: offer.version }),
+          true,
+        ),
       };
     case "Downloading":
       return {
-        text: `Downloading ${offer.version}${offer.percent === null ? "" : ` (${Math.floor(offer.percent / 10) * 10}%)`}. T3 Code restarts when the download is done.`,
+        text:
+          offer.percent === null
+            ? m(msg("Downloading {version}. T3 Code restarts when the download is done."), {
+                version: offer.version,
+              })
+            : m(
+                msg(
+                  "Downloading {version} ({percent}%). T3 Code restarts when the download is done.",
+                ),
+                { version: offer.version, percent: String(Math.floor(offer.percent / 10) * 10) },
+              ),
         action: "",
       };
     case "Reinstall":
       return {
-        text: `Version ${offer.version} started correctly on this computer. Download it and install it to go back.`,
-        action: actionLink("reinstall", `Download ${offer.version}`, true),
+        text: m(
+          msg(
+            "Version {version} started correctly on this computer. Download it and install it to go back.",
+          ),
+          { version: offer.version },
+        ),
+        action: actionLink(
+          "reinstall",
+          m(msg("Download {version}"), { version: offer.version }),
+          true,
+        ),
       };
     case "Releases":
       return {
-        text: "Get a different version from the releases page.",
-        action: actionLink("releases", "Open releases", true),
+        text: m(msg("Get a different version from the releases page.")),
+        action: actionLink("releases", m(msg("Open releases")), true),
       };
     case "ManagedPolicy":
       return {
-        text: "Your organization's managed policy stopped T3 Code from starting. Send the details below to your IT administrator.",
+        text: m(
+          msg(
+            "Your organization's managed policy stopped T3 Code from starting. Send the details below to your IT administrator.",
+          ),
+        ),
         action: "",
       };
   }
@@ -162,25 +146,15 @@ function buildStartupRecoveryHtml(input: {
   readonly failure: BackendStartupFailure;
   readonly offer: StartupRecoveryOffer;
   readonly logDir: string;
-  readonly locale: DesktopLocale.ResolvedAppLocale;
 }): string {
-  const isZh = DesktopLocale.isZhCn(input.locale);
-  const offer = describeOffer(input.offer, isZh);
+  const offer = describeOffer(input.offer);
   const output = input.failure.output.trim();
-  const title = isZh ? "T3 Code 无法正常启动" : "T3 Code could not start";
-  const reason = localizeFailureReason(input.failure.reason, isZh);
-  const copyLabel = isZh ? "复制错误详情" : "Copy details";
-  const quitLabel = isZh ? "退出软件" : "Quit";
-  const emptyOutput = isZh ? "后台服务未输出任何日志信息。" : "The server wrote no output.";
-  const footer = isZh
-    ? `当前版本：${escapeHtml(input.appVersion)}。软件正在后台自动重试启动。日志文件夹：${escapeHtml(input.logDir)}`
-    : `Version ${escapeHtml(input.appVersion)}. T3 Code tries again in the background. Logs: ${escapeHtml(input.logDir)}`;
-
-  return `<!doctype html><html lang="${isZh ? "zh-CN" : "en"}"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>${title}</title><style>
+  const title = escapeHtml(m(msg("T3 Code could not start")));
+  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>${title}</title><style>
 :root{color-scheme:light dark;--bg:#fff;--fg:#111;--muted:#666;--line:#ddd;--code:#f4f4f4}
 @media (prefers-color-scheme:dark){:root{--bg:#000;--fg:#fff;--muted:#999;--line:#333;--code:#111}}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--fg)}
-body{font:13px/1.5 system-ui,-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;padding:28px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px}
+body{font:13px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;padding:28px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px}
 h1{font-size:18px;margin:0}p{margin:0}.muted{color:var(--muted)}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
 .button{color:var(--fg);text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:6px 12px}
@@ -188,11 +162,11 @@ h1{font-size:18px;margin:0}p{margin:0}.muted{color:var(--muted)}
 pre{flex:1;min-height:60px;margin:0;overflow:auto;background:var(--code);border:1px solid var(--line);border-radius:6px;padding:10px;font:11px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
 </style></head><body>
 <h1>${title}</h1>
-<p>${escapeHtml(reason)}</p>
+<p>${escapeHtml(input.failure.reason)}</p>
 <p>${escapeHtml(offer.text)}</p>
-<div class="actions">${offer.action}${actionLink("copy", copyLabel)}${actionLink("quit", quitLabel)}</div>
-<pre>${escapeHtml(output.length > 0 ? output : emptyOutput)}</pre>
-<p class="muted">${footer}</p>
+<div class="actions">${offer.action}${actionLink("copy", m(msg("Copy details")))}${actionLink("quit", m(msg("Quit", { $context: "button, quits the app" })))}</div>
+<pre>${escapeHtml(output.length > 0 ? output : m(msg("The server wrote no output.")))}</pre>
+<p class="muted">${escapeHtml(m(msg("Version {version}. T3 Code tries again in the background. Logs: {logDir}"), { version: input.appVersion, logDir: input.logDir }))}</p>
 </body></html>`;
 }
 
@@ -218,7 +192,6 @@ export const listen: Effect.Effect<
   const electronTheme = yield* ElectronTheme.ElectronTheme;
   const electronWindow = yield* ElectronWindow.ElectronWindow;
   const fileSystem = yield* FileSystem.FileSystem;
-  const resolveLocale = yield* DesktopLocale.makeDesktopLocaleResolver;
   const runFork = Effect.runForkWith(yield* Effect.context<never>());
 
   const lastStartedVersionPath = environment.path.join(
@@ -253,13 +226,11 @@ export const listen: Effect.Effect<
     const window = yield* Ref.get(windowRef);
     const failure = yield* Ref.get(failureRef);
     if (Option.isNone(window) || Option.isNone(failure) || window.value.isDestroyed()) return;
-    const locale = yield* resolveLocale;
     const html = buildStartupRecoveryHtml({
       appVersion: environment.appVersion,
       failure: failure.value,
       offer: yield* offer,
       logDir: environment.logDir,
-      locale,
     });
     if ((yield* Ref.getAndSet(renderedHtmlRef, html)) === html) return;
     void window.value.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
@@ -324,8 +295,6 @@ export const listen: Effect.Effect<
         return;
       }
       const shouldUseDarkColors = yield* electronTheme.shouldUseDarkColors;
-      const locale = yield* resolveLocale;
-      const isZh = DesktopLocale.isZhCn(locale);
       const window = yield* electronWindow.create(
         {
           width: 640,
@@ -333,7 +302,7 @@ export const listen: Effect.Effect<
           minWidth: 420,
           minHeight: 320,
           show: false,
-          title: isZh ? "T3 Code 无法正常启动" : "T3 Code could not start",
+          title: m(msg("T3 Code could not start")),
           autoHideMenuBar: true,
           backgroundColor: shouldUseDarkColors ? "#000000" : "#ffffff",
           webPreferences: {

@@ -1,4 +1,4 @@
-import { localizeMobileString } from "../../i18n/mobileStrings";
+import { useGT } from "gt-react-native";
 import { Pressable, View } from "react-native";
 
 import { NativeStackScreenOptions } from "../../native/StackHeader";
@@ -12,10 +12,11 @@ import { useControlTheme } from "./useControlTheme";
 import type { SheetCloseButtonProps, SheetHeaderProps } from "./SheetHeader.types";
 
 export function SheetCloseButton(props: SheetCloseButtonProps) {
+  const gt = useGT();
   return (
     <IconButton
       icon="xmark"
-      accessibilityLabel={props.accessibilityLabel ?? (props.onCancel ? "Cancel" : "Close")}
+      accessibilityLabel={props.accessibilityLabel ?? (props.onCancel ? gt("Cancel") : gt("Close"))}
       disabled={props.disabled}
       onPress={props.onCancel ?? props.onClose}
     />
@@ -43,9 +44,10 @@ function SheetDismissGuard(props: { readonly dismissDisabled: boolean | undefine
 }
 
 function NativeSheetHeader(props: SheetHeaderProps) {
+  const gt = useGT();
   const { colors } = useControlTheme();
   const onDismiss = props.onCancel ?? props.onClose;
-  const dismissLabel = props.accessibilityLabel ?? (props.onCancel ? "Cancel" : "Close");
+  const dismissLabel = props.accessibilityLabel ?? (props.onCancel ? gt("Cancel") : gt("Close"));
   const confirmation = props.confirm;
 
   // Toolbar children are parsed as native items, so keep the actual Button
@@ -90,7 +92,7 @@ function NativeSheetHeader(props: SheetHeaderProps) {
               <View
                 className="size-11 items-center justify-center"
                 accessible
-                accessibilityLabel={localizeMobileString(confirmation.label)}
+                accessibilityLabel={confirmation.label}
                 accessibilityState={{ busy: true }}
               >
                 <AppActivityIndicator colorClassName="accent-prominent-action" />
@@ -102,7 +104,7 @@ function NativeSheetHeader(props: SheetHeaderProps) {
               variant="prominent"
               visibilityPriority="high"
               tintColor={colors["--color-prominent-action"]}
-              accessibilityLabel={localizeMobileString(confirmation.label)}
+              accessibilityLabel={confirmation.label}
               disabled={confirmation.disabled}
               onPress={confirmation.onPress}
             />
@@ -122,7 +124,7 @@ function InlineConfirmation({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={localizeMobileString(confirmation.label)}
+      accessibilityLabel={confirmation.label}
       accessibilityState={{
         disabled: Boolean(confirmDisabled),
         busy: Boolean(confirmation.loading),
@@ -185,7 +187,6 @@ function InlineSheetHeader(props: SheetHeaderProps) {
         </AppText>
         {props.subtitle ? (
           <AppText
-            localize={false}
             numberOfLines={1}
             ellipsizeMode="middle"
             className="text-xs text-foreground-muted"

@@ -1,14 +1,9 @@
 import {
   DEFAULT_CLIENT_SETTINGS,
-  EnvironmentId,
-  ProjectId,
   SourceControlProviderKind,
   type ClientSettings,
-  type PullRequestComment,
-  type PullRequestDetailView,
 } from "@t3tools/contracts";
-import { WebI18nContext } from "~/i18n/WebI18nContext";
-import { translateWebMessage } from "~/i18n/messages";
+import { EnvironmentId, ProjectId, type PullRequestDetailView } from "@t3tools/contracts";
 import { expect, it, vi } from "vite-plus/test";
 import { userEvent } from "vite-plus/test/browser";
 
@@ -206,109 +201,6 @@ it("leaves description checkboxes read-only without the right to edit it", async
     true,
   );
 });
-
-function chineseTab(value: PullRequestDetailView) {
-  return (
-    <WebI18nContext
-      value={{
-        locale: "zh-CN",
-        appLocale: "zh-CN",
-        setAppLocale: () => {},
-        t: (key, values) => translateWebMessage("zh-CN", key, values),
-      }}
-    >
-      {tab(value)}
-    </WebI18nContext>
-  );
-}
-
-it("filters bot comments using Chinese labels and hidden counts", async () => {
-  setup();
-  using _storage = emptyLocalStorage();
-  const value: PullRequestDetailView = {
-    ...detail,
-    commentCount: 1,
-    comments: [
-      {
-        id: "bot-comment",
-        kind: "issue-comment",
-        author: { login: "review-app", name: null, avatarUrl: null, isBot: true },
-        body: "Bot finding",
-        createdAt: "2026-09-01T00:00:00Z",
-        url: null,
-        path: null,
-        reviewState: null,
-      },
-    ],
-  };
-  await using screen = await renderUi(chineseTab(value));
-  expect(screen.getByRole("button", { name: "筛选评论" }).element().textContent).toContain(
-    "已隐藏 1 条",
-  );
-  expect(screen.container.innerText).not.toContain("Bot finding");
-  expect(screen.container.innerText).toContain("唯一的评论已被筛选器隐藏。");
-  await userEvent.click(screen.getByRole("button", { name: "筛选评论" }));
-  await userEvent.click(filterItem("机器人评论"));
-  expect(filterItem("机器人评论").getAttribute("aria-checked")).toBe("true");
-  await userEvent.keyboard("{Escape}");
-  expect(screen.container.innerText).toContain("Bot finding");
-});
-
-it("localizes partial reply counts and keeps the link to unloaded host replies", async () => {
-  setup();
-  using _storage = emptyLocalStorage();
-  const finding: PullRequestComment = {
-    id: "finding",
-    kind: "review-comment",
-    author: detail.author,
-    body: "Review finding",
-    createdAt: "2026-09-01T00:00:00Z",
-    url: `${detail.url}#comment-finding`,
-    path: "src/index.ts",
-    reviewState: null,
-  };
-  const value: PullRequestDetailView = {
-    ...detail,
-    comments: [finding],
-    commentCount: 4,
-    reviewThreads: [
-      {
-        id: "partial-thread",
-        path: "src/index.ts",
-        line: 1,
-        side: "right",
-        isResolved: false,
-        isOutdated: false,
-        comments: [finding],
-        commentCount: 4,
-        nextCommentsCursor: "next-page",
-      },
-    ],
-  };
-  await using screen = await renderUi(chineseTab(value));
-  expect(screen.container.innerText).toContain("还有 3 条回复");
-  expect(screen.getByRole("link", { name: "在托管平台查看" }).element().getAttribute("href")).toBe(
-    finding.url,
-  );
-});
-
-function emptyLocalStorage() {
-  const snapshot = { ...localStorage };
-  localStorage.clear();
-  return {
-    [Symbol.dispose]() {
-      localStorage.clear();
-      for (const [key, value] of Object.entries(snapshot)) localStorage.setItem(key, value);
-    },
-  };
-}
-function filterItem(label: string) {
-  const item = [...document.querySelectorAll<HTMLElement>('[role="menuitemcheckbox"]')].find(
-    (element) => element.textContent?.includes(label),
-  );
-  if (!item) throw new Error(`Missing filter: ${label}`);
-  return item;
-}
 
 it("fixes an overview thread as its opening remark, since it has no line to attach", async () => {
   setup();

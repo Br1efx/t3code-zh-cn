@@ -1,4 +1,3 @@
-import { localizeMobileString } from "../../i18n/mobileStrings";
 import type { IconButtonProps } from "./IconButton.types";
 import { NativeThemeHost } from "./NativeThemeHost.android";
 import {
@@ -41,7 +40,7 @@ export function IconButton(props: IconButtonProps) {
   return (
     <View
       accessible
-      accessibilityLabel={localizeMobileString(props.accessibilityLabel)}
+      accessibilityLabel={props.accessibilityLabel}
       accessibilityRole="button"
       accessibilityState={{ disabled: Boolean(props.disabled), selected: props.selected }}
       accessibilityActions={[{ name: "activate" }]}

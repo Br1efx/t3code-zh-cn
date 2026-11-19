@@ -1,6 +1,5 @@
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
 import type { DesktopPreviewColorScheme } from "@t3tools/contracts";
+import { msg, T, useGT, useMessages, Var } from "gt-react";
 import { Minus, MoreVertical, Plus as PlusIcon, RotateCcw } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
@@ -25,9 +24,9 @@ const COLOR_SCHEME_OPTIONS: ReadonlyArray<{
   value: DesktopPreviewColorScheme;
   label: string;
 }> = [
-  { value: "system", label: "System" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
+  { value: "system", label: msg("System", { $context: "color scheme" }) },
+  { value: "light", label: msg("Light", { $context: "color scheme" }) },
+  { value: "dark", label: msg("Dark", { $context: "color scheme" }) },
 ];
 
 export interface PreviewMoreMenuActions {
@@ -57,7 +56,7 @@ interface Props {
 }
 
 const MenuTriggerButton = () => {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
   return (
     <Tooltip>
       <TooltipTrigger
@@ -68,7 +67,7 @@ const MenuTriggerButton = () => {
                 variant="ghost"
                 size="icon-xs"
                 type="button"
-                aria-label={translateWebSource(translationLocale, "Preview menu")}
+                aria-label={gt("Preview menu")}
               />
             }
           />
@@ -76,7 +75,9 @@ const MenuTriggerButton = () => {
       >
         <MoreVertical />
       </TooltipTrigger>
-      <TooltipPopup>{translateWebSource(translationLocale, "More")}</TooltipPopup>
+      <TooltipPopup>
+        <T context="more actions menu">More</T>
+      </TooltipPopup>
     </Tooltip>
   );
 };
@@ -93,7 +94,8 @@ export function PreviewMoreMenu({
   findShortcutLabel,
   move,
 }: Props) {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
+  const m = useMessages();
   const zoomLabel = `${Math.round(zoomFactor * 100)}%`;
   const disabled = !enabled;
   return (
@@ -102,42 +104,32 @@ export function PreviewMoreMenu({
       <MenuPopup align="end" sideOffset={6}>
         {actions.find ? (
           <MenuItem onClick={actions.find} disabled={disabled}>
-            {translateWebSource(translationLocale, "Find on page")}
+            <T>Find on page</T>
             {findShortcutLabel ? <MenuShortcut>{findShortcutLabel}</MenuShortcut> : null}
           </MenuItem>
         ) : null}
         <MenuItem onClick={actions.hardReload} disabled={disabled}>
-          {translateWebSource(translationLocale, "Hard reload")}
+          <T>Hard reload</T>
         </MenuItem>
         {actions.openDevTools ? (
           <MenuItem onClick={actions.openDevTools} disabled={disabled}>
-            {translateWebSource(translationLocale, "Open DevTools")}
+            <T>Open DevTools</T>
           </MenuItem>
         ) : null}
         {actions.toggleNativePictureInPicture ? (
           <MenuItem onClick={actions.toggleNativePictureInPicture} disabled={disabled}>
-            {translateWebSource(
-              translationLocale,
-              nativePictureInPicture
-                ? "Close separate preview window"
-                : "Open separate preview window",
-            )}
+            {nativePictureInPicture
+              ? gt("Close separate preview window")
+              : gt("Open separate preview window")}
           </MenuItem>
         ) : null}
-        {move ? (
-          <MenuItem onClick={move.onMove}>
-            {translateWebSource(translationLocale, move.label)}
-          </MenuItem>
-        ) : null}
+        {move ? <MenuItem onClick={move.onMove}>{move.label}</MenuItem> : null}
         <MenuItem onClick={onToggleDeviceToolbar} disabled={disabled}>
-          {translateWebSource(
-            translationLocale,
-            deviceToolbarVisible ? "Hide device toolbar" : "Show device toolbar",
-          )}
+          {deviceToolbarVisible ? gt("Hide device toolbar") : gt("Show device toolbar")}
         </MenuItem>
         <MenuSub>
           <MenuSubTrigger disabled={disabled}>
-            {translateWebSource(translationLocale, "Appearance")}
+            <T>Appearance</T>
           </MenuSubTrigger>
           <MenuSubPopup>
             <MenuRadioGroup
@@ -146,7 +138,7 @@ export function PreviewMoreMenu({
             >
               {COLOR_SCHEME_OPTIONS.map((option) => (
                 <MenuRadioItem key={option.value} value={option.value}>
-                  {translateWebSource(translationLocale, option.label)}
+                  {m(option.label)}
                 </MenuRadioItem>
               ))}
             </MenuRadioGroup>
@@ -159,14 +151,16 @@ export function PreviewMoreMenu({
           className="justify-between"
           disabled={disabled}
         >
-          <span>{translateWebSource(translationLocale, "Zoom")}</span>
+          <span>
+            <T>Zoom</T>
+          </span>
           <span className="flex items-center gap-1">
             <Button
               variant="outline"
               size="icon-xs"
               type="button"
               onClick={actions.zoomOut}
-              aria-label={translateWebSource(translationLocale, "Zoom out")}
+              aria-label={gt("Zoom out")}
               disabled={disabled}
             >
               <Minus />
@@ -179,7 +173,7 @@ export function PreviewMoreMenu({
               size="icon-xs"
               type="button"
               onClick={actions.zoomIn}
-              aria-label={translateWebSource(translationLocale, "Zoom in")}
+              aria-label={gt("Zoom in")}
               disabled={disabled}
             >
               <PlusIcon />
@@ -189,7 +183,7 @@ export function PreviewMoreMenu({
               size="icon-xs"
               type="button"
               onClick={actions.resetZoom}
-              aria-label={translateWebSource(translationLocale, "Reset zoom")}
+              aria-label={gt("Reset zoom")}
               disabled={disabled}
             >
               <RotateCcw />
@@ -201,17 +195,17 @@ export function PreviewMoreMenu({
           {profileName ? (
             <MenuGroupLabel className="max-w-64">
               <span className="block truncate">
-                {translationLocale === "zh-CN"
-                  ? `浏览器配置：${profileName}`
-                  : `Profile: ${profileName}`}
+                <T>
+                  Profile: <Var>{profileName}</Var>
+                </T>
               </span>
             </MenuGroupLabel>
           ) : null}
           <MenuItem onClick={actions.clearCookies}>
-            {translateWebSource(translationLocale, "Clear cookies")}
+            <T>Clear cookies</T>
           </MenuItem>
           <MenuItem onClick={actions.clearCache}>
-            {translateWebSource(translationLocale, "Clear cache")}
+            <T>Clear cache</T>
           </MenuItem>
         </MenuGroup>
       </MenuPopup>

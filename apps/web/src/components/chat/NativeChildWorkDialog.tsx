@@ -1,5 +1,3 @@
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
 import type {
   EnvironmentId,
   OrchestrationV2GetNativeChildWorkResult,
@@ -7,6 +5,7 @@ import type {
   OrchestrationV2NativeChildWork,
   ThreadId,
 } from "@t3tools/contracts";
+import { T, useGT } from "gt-react";
 import { ListTreeIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -33,24 +32,22 @@ export function NativeChildWorkDialog(props: {
   readonly environmentId: EnvironmentId;
   readonly threadId: ThreadId;
 }) {
-  const { locale: translationLocale } = useI18n();
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
         <ListTreeIcon />
         <span className="@max-[420px]/composer-surface:sr-only">
-          {translateWebSource(translationLocale, "Subagent work")}
+          <T>Subagent work</T>
         </span>
       </Button>
       <DialogPopup className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{translateWebSource(translationLocale, "Subagent work")}</DialogTitle>
+          <DialogTitle>
+            <T>Subagent work</T>
+          </DialogTitle>
           <DialogDescription>
-            {translateWebSource(
-              translationLocale,
-              "Read only. These subagents cannot take messages.",
-            )}
+            <T>Read only. These subagents cannot take messages.</T>
           </DialogDescription>
         </DialogHeader>
         {open ? <NativeChildWorkContent {...props} /> : null}
@@ -63,7 +60,6 @@ function NativeChildWorkContent(props: {
   readonly environmentId: EnvironmentId;
   readonly threadId: ThreadId;
 }) {
-  const { locale: translationLocale } = useI18n();
   const query = useEnvironmentQuery<OrchestrationV2GetNativeChildWorkResult, unknown>(
     orchestrationEnvironment.nativeChildWork({
       environmentId: props.environmentId,
@@ -78,14 +74,11 @@ function NativeChildWorkContent(props: {
           <p className="text-sm text-destructive-foreground">{query.error}</p>
         ) : children === undefined ? (
           <p className="text-sm text-muted-foreground">
-            {translateWebSource(translationLocale, "Loading…")}
+            <T>Loading…</T>
           </p>
         ) : children.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            {translateWebSource(
-              translationLocale,
-              "The provider has no record of which subagents this call started.",
-            )}
+            <T>The provider has no record of which subagents this call started.</T>
           </p>
         ) : (
           children.map((child) => <NativeChild key={child.conversationId} child={child} />)
@@ -93,7 +86,7 @@ function NativeChildWorkContent(props: {
       </DialogPanel>
       <DialogFooter variant="bare">
         <Button size="sm" variant="outline" disabled={query.isPending} onClick={query.refresh}>
-          {translateWebSource(translationLocale, "Refresh")}
+          <T>Refresh</T>
         </Button>
       </DialogFooter>
     </>
@@ -101,24 +94,23 @@ function NativeChildWorkContent(props: {
 }
 
 function NativeChild(props: { readonly child: OrchestrationV2NativeChildWork }) {
-  const { locale: i18nLocale } = useI18n();
   const { child } = props;
+  const gt = useGT();
+  const role = child.role || gt("Subagent");
   return (
-    <section aria-label={child.role || "Subagent"} className="flex min-w-0 flex-col gap-2">
-      <h3 className="text-sm font-medium text-foreground">
-        {child.role || translateWebSource(i18nLocale, "Subagent")}
-      </h3>
+    <section aria-label={role} className="flex min-w-0 flex-col gap-2">
+      <h3 className="text-sm font-medium text-foreground">{role}</h3>
       <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">
         {child.prompt}
       </p>
       {child.truncated ? (
         <p className="text-xs text-muted-foreground">
-          {translateWebSource(i18nLocale, "Earlier steps are not shown.")}
+          <T>Earlier steps are not shown.</T>
         </p>
       ) : null}
       {child.steps === null ? (
         <p className="text-xs text-muted-foreground">
-          {translateWebSource(i18nLocale, "No transcript yet.")}
+          <T>No transcript yet.</T>
         </p>
       ) : (
         <ol className="m-0 flex list-none flex-col gap-2 border-s ps-3">

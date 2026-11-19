@@ -1,7 +1,7 @@
+import { useGT } from "gt-react-native";
 import { Platform, Pressable, View, type StyleProp, type ViewStyle } from "react-native";
 
 import { cn } from "../lib/cn";
-import { localizeMobileString } from "../i18n/mobileStrings";
 import type { DraftComposerFileAttachment } from "../lib/composerImages";
 import { useMediaActions } from "../state/mediaActions";
 import { type MediaActionsSource } from "../lib/mediaActionsSource";
@@ -22,6 +22,7 @@ export function VideoAttachmentTile(props: {
   readonly className?: string;
   readonly style?: StyleProp<ViewStyle>;
 }) {
+  const gt = useGT();
   const mediaActions = useMediaActions(props.disabled ? undefined : props.actionsSource);
   const hasActions = mediaActions.actions.length > 0;
   return (
@@ -29,7 +30,7 @@ export function VideoAttachmentTile(props: {
       identifier={props.sourceIdentifier}
       accessible={Platform.OS === "ios"}
       accessibilityRole="button"
-      accessibilityLabel={localizeMobileString(`Play ${props.name}`)}
+      accessibilityLabel={gt("Play {name}", { name: props.name })}
       accessibilityState={{ disabled: props.disabled ?? false }}
       onAccessibilityTap={() => {
         if (!props.disabled) props.onPress(props.sourceIdentifier);
@@ -46,10 +47,8 @@ export function VideoAttachmentTile(props: {
       <MediaActionsMenu media={mediaActions}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={localizeMobileString(`Play ${props.name}`)}
-          accessibilityHint={
-            hasActions ? localizeMobileString("Touch and hold for media actions") : undefined
-          }
+          accessibilityLabel={gt("Play {name}", { name: props.name })}
+          accessibilityHint={hasActions ? gt("Touch and hold for media actions") : undefined}
           accessibilityState={{ disabled: props.disabled ?? false }}
           disabled={props.disabled}
           onPress={() => props.onPress(props.sourceIdentifier)}

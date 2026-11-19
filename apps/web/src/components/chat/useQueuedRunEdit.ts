@@ -1,3 +1,6 @@
+import { msg } from "gt-react";
+import { thrownErrorMessage } from "@t3tools/client-runtime/errors";
+import { m } from "~/i18n/messages";
 import { useAtomValue } from "@effect/atom-react";
 import {
   makeQueuedRunEditStore,
@@ -5,10 +8,6 @@ import {
 } from "@t3tools/client-runtime/queued-run-edit";
 import type { ComposerDispatchMode } from "@t3tools/client-runtime/state/composer-dispatch";
 import type { ThreadStructure } from "@t3tools/client-runtime/state/shell";
-import { useI18n } from "~/i18n/WebI18nContext";
-import { translateWebSource } from "~/i18n/messages";
-
-import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import { deriveThreadQueueWorkflowState } from "@t3tools/client-runtime/state/thread-workflows";
 import {
   PROVIDER_SEND_TURN_MAX_ATTACHMENTS,
@@ -109,7 +108,6 @@ const isDraftOwnedRecord = (record: ComposerContextRecord) =>
   record.kind === "thread" || record.kind === "environment";
 
 async function submitQueuedRunEdit(input: {
-  readonly locale: ResolvedAppLocale;
   readonly environmentId: EnvironmentId;
   readonly draftTarget: ComposerThreadTarget;
   readonly editing: EditingQueuedRun;
@@ -117,7 +115,7 @@ async function submitQueuedRunEdit(input: {
   readonly editQueuedRun: ReturnType<typeof useEditQueuedRunCommand>;
   readonly draftChanged: () => boolean;
 }): Promise<string | null> {
-  const { environmentId, draftTarget, editing, content, locale } = input;
+  const { environmentId, draftTarget, editing, content } = input;
   const editText = content.prompt.trim();
   const newAttachments = [...content.images, ...content.files];
   const uploadFiles = async (files: ReadonlyArray<ComposerFileAttachment>) => {
@@ -138,8 +136,7 @@ async function submitQueuedRunEdit(input: {
     await refreshExpiredAttachmentUploads({ environmentId, images: files, draftTarget });
     validateFiles();
     const uploaded = getUploadedAttachments({ environmentId, images: files });
-    if (uploaded === null)
-      throw new Error(translateWebSource(locale, "Retry or remove failed uploads before saving."));
+    if (uploaded === null) throw new Error(m(msg("Retry or remove failed uploads before saving.")));
     return uploaded;
   };
   try {
@@ -151,10 +148,7 @@ async function submitQueuedRunEdit(input: {
       uploadFiles,
     });
     if (input.draftChanged())
-      return translateWebSource(
-        locale,
-        "Draft changed while preparing this message. Review it and save again.",
-      );
+      return m(msg("Draft changed while preparing this message. Review it and save again."));
     // The edit draft owns thread and machine mentions, so a chip removed while editing is dropped.
     const keptRecords = (editing.context?.records ?? []).filter(
       (record) =>
@@ -199,13 +193,9 @@ async function submitQueuedRunEdit(input: {
         },
       },
     });
-    return result._tag === "Failure"
-      ? translateWebSource(locale, "Could not save the edited queued message.")
-      : null;
+    return result._tag === "Failure" ? m(msg("Could not save the edited queued message.")) : null;
   } catch (error) {
-    return error instanceof Error
-      ? error.message
-      : translateWebSource(locale, "Could not save the edited queued message.");
+    return thrownErrorMessage(error, m) ?? m(msg("Could not save the edited queued message."));
   }
 }
 
@@ -223,7 +213,6 @@ export function useQueuedRunEdit(input: {
   readonly promptRef: { current: string };
   readonly composerRef: RefObject<ChatComposerHandle | null>;
 }) {
-  const { t, locale } = useI18n();
   const {
     environmentId,
     routeThreadRef,
@@ -329,15 +318,18 @@ export function useQueuedRunEdit(input: {
           const title = appAtomRegistry.get(
             environmentThreadShells.threadShellAtom(threadRef),
           )?.title;
-          const where = title === undefined ? "" : ` in “${title}”`;
           toastManager.add(
             stackedThreadToast({
               type: recovery === "kept" ? "info" : "warning",
-              title: translateWebSource(locale, "Queued message is no longer queued"),
+              title: m(msg("Queued message is no longer queued")),
               description:
-                recovery === "kept"
-                  ? `Your unsaved edit${where} was kept in the composer.`
-                  : `Your unsaved edit${where} was discarded.`,
+                title === undefined
+                  ? recovery === "kept"
+                    ? m(msg("Your unsaved edit was kept in the composer."))
+                    : m(msg("Your unsaved edit was discarded."))
+                  : recovery === "kept"
+                    ? m(msg("Your unsaved edit in “{title}” was kept in the composer.", { title }))
+                    : m(msg("Your unsaved edit in “{title}” was discarded.", { title })),
             }),
           );
         },
@@ -403,7 +395,11 @@ export function useQueuedRunEdit(input: {
     ) {
       setThreadError(
         editing.threadId,
-        t("chat.queuedEdit.tooManyAttachments", { count: PROVIDER_SEND_TURN_MAX_ATTACHMENTS }),
+        m(
+          msg("A message can have at most {max} attachments.", {
+            max: PROVIDER_SEND_TURN_MAX_ATTACHMENTS,
+          }),
+        ),
       );
       return;
     }
@@ -425,7 +421,6 @@ export function useQueuedRunEdit(input: {
         useComposerDraftStore.getState().getComposerDraft(draftTarget),
       );
     const error = await submitQueuedRunEdit({
-      locale,
       environmentId,
       draftTarget,
       editing,
@@ -437,10 +432,7 @@ export function useQueuedRunEdit(input: {
     setThreadError(
       editing.threadId,
       changedAfterSave
-        ? translateWebSource(
-            locale,
-            "The earlier edit was saved. Review your newer changes and save again.",
-          )
+        ? m(msg("The earlier edit was saved. Review your newer changes and save again."))
         : error,
     );
     const current = finishSave(error === null && !changedAfterSave);

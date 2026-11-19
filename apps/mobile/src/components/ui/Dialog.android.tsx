@@ -1,4 +1,3 @@
-import { localizeMobileString } from "../../i18n/mobileStrings";
 import { NativeThemeHost } from "./NativeThemeHost.android";
 import {
   AlertDialog,
@@ -16,7 +15,9 @@ import { verticalScroll } from "@expo/ui/jetpack-compose/modifiers";
 import { useAppearancePreferences } from "../../features/settings/appearance/AppearancePreferencesProvider";
 import { useScaledTextRole } from "../../features/settings/appearance/useScaledTextRole";
 
+import { msg, useGT } from "gt-react-native";
 import { useSyncExternalStore } from "react";
+import { m } from "../../i18n/messages";
 import { themeColorWithContrast } from "../../lib/mobileTheme";
 import type { Alert, AlertButton } from "react-native";
 import type { ConfirmDialogRequest, TextInputDialogRequest } from "./Dialog.types";
@@ -52,13 +53,20 @@ function setPresented(next: PresentedDialog | null) {
 function submitRequest(dialog: DialogRequest) {
   const replaced = presented;
   setPresented({ ...dialog, id: ++nextPresentationId });
-  // A replaced alert closed without an answer, which its owner hears as a dismissal.
-  if (replaced?.kind === "alert") replaced.request.options?.onDismiss?.();
+  // A replaced dialog closed without an answer, which its owner hears as a dismissal.
+  if (replaced) closeUnanswered(replaced);
+}
+
+function closeUnanswered(dialog: DialogRequest) {
+  if (dialog.kind === "alert") dialog.request.options?.onDismiss?.();
+  else dialog.request.onCancel?.();
 }
 
 /** Closes the dialog only if it is still the one the action came from. */
 function dismiss(id: number) {
-  if (presented?.id === id) setPresented(null);
+  if (presented?.id !== id) return false;
+  setPresented(null);
+  return true;
 }
 
 function subscribe(listener: () => void) {
@@ -73,9 +81,9 @@ function getPresented() {
 }
 
 export function alert(...[title, message, buttons, options]: Parameters<typeof Alert.alert>): void {
-  const actions = buttons?.length ? buttons.slice(0, 3) : [{ text: "OK" }];
+  const actions = buttons?.length ? buttons.slice(0, 3) : [{ text: m(msg("OK")) }];
   const normalized = actions.map((action, index) =>
-    index === actions.length - 1 ? { ...action, text: action.text || "OK" } : action,
+    index === actions.length - 1 ? { ...action, text: action.text || m(msg("OK")) } : action,
   );
   submitRequest({
     kind: "alert",
@@ -92,18 +100,16 @@ export function prompt(request: TextInputDialogRequest): void {
 }
 
 export function Host() {
+  const gt = useGT();
   const presented = useSyncExternalStore(subscribe, getPresented, getPresented);
 
   const handleCancel = () => {
-    if (!presented) return;
-    dismiss(presented.id);
-    if (presented.kind === "alert") presented.request.options?.onDismiss?.();
-    else presented.request.onCancel?.();
+    if (!presented || !dismiss(presented.id)) return;
+    closeUnanswered(presented);
   };
 
   const handleConfirm = (nativeInputValue?: string) => {
-    if (!presented) return;
-    dismiss(presented.id);
+    if (!presented || !dismiss(presented.id)) return;
     if (presented.kind === "confirm") {
       presented.request.onConfirm();
     } else if (presented.kind === "text-input") {
@@ -120,7 +126,7 @@ export function Host() {
           message: presented.request.message ?? undefined,
           confirmText: "",
         }}
-        alertActions={presented.request.buttons ?? [{ text: "OK" }]}
+        alertActions={presented.request.buttons ?? [{ text: gt("OK") }]}
         dismissable={presented.request.options?.cancelable ?? false}
         onAlertAction={(action) => {
           dismiss(presented.id);
@@ -147,6 +153,7 @@ export function Host() {
 }
 
 function DialogPresentation(props: DialogPresentationProps) {
+  const gt = useGT();
   const { themeVariables: colors } = useAppearancePreferences();
   const titleTypography = useScaledTextRole("title");
   const bodyTypography = useScaledTextRole("footnote");
@@ -158,7 +165,7 @@ function DialogPresentation(props: DialogPresentationProps) {
     props.onConfirm(value);
   };
   const actions = props.alertActions ?? [
-    { text: props.request.cancelText ?? "Cancel", onPress: props.onCancel },
+    { text: props.request.cancelText ?? gt("Cancel"), onPress: props.onCancel },
     {
       text: props.request.confirmText,
       style: props.request.destructive ? ("destructive" as const) : ("default" as const),
@@ -189,7 +196,7 @@ function DialogPresentation(props: DialogPresentationProps) {
               : colors["--color-foreground"],
         }}
       >
-        <Text style={bodyTypography}>{localizeMobileString(action.text ?? "")}</Text>
+        <Text style={bodyTypography}>{action.text ?? ""}</Text>
       </Component>
     );
   };
@@ -217,14 +224,14 @@ function DialogPresentation(props: DialogPresentationProps) {
                 size={24}
               />
             ) : null}
-            <Text style={titleTypography}>{localizeMobileString(props.request.title)}</Text>
+            <Text style={titleTypography}>{props.request.title}</Text>
           </Column>
         </AlertDialog.Title>
         {props.inputInitialValue !== undefined ? (
           <AlertDialog.Text>
             <Column verticalArrangement={{ spacedBy: 16 }}>
               {props.request.message ? (
-                <Text style={bodyTypography}>{localizeMobileString(props.request.message)}</Text>
+                <Text style={bodyTypography}>{props.request.message}</Text>
               ) : null}
               <OutlinedTextField
                 autoFocus
@@ -245,13 +252,11 @@ function DialogPresentation(props: DialogPresentationProps) {
                 }}
               >
                 <OutlinedTextField.Label>
-                  <Text style={bodyTypography}>{localizeMobileString(props.request.title)}</Text>
+                  <Text style={bodyTypography}>{props.request.title}</Text>
                 </OutlinedTextField.Label>
                 {props.inputPlaceholder ? (
                   <OutlinedTextField.Placeholder>
-                    <Text style={bodyTypography}>
-                      {localizeMobileString(props.inputPlaceholder)}
-                    </Text>
+                    <Text style={bodyTypography}>{props.inputPlaceholder}</Text>
                   </OutlinedTextField.Placeholder>
                 ) : null}
               </OutlinedTextField>

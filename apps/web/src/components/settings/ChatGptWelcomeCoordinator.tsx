@@ -1,8 +1,6 @@
-import { localizeWebString } from "~/i18n/localizeWebChildren";
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { useAtomValue } from "@effect/atom-react";
 import { usesChatGptSharing } from "@t3tools/shared/usageLimits";
+import { T, Var } from "gt-react";
 import { useState } from "react";
 import { environmentPresentations } from "../../state/presentation";
 import { OpenAI } from "../Icons";
@@ -30,7 +28,6 @@ function readAcknowledgedProfiles(): string[] {
 }
 
 export function ChatGptWelcomeCoordinator() {
-  const { locale: translationLocale } = useI18n();
   const presentations = useAtomValue(environmentPresentations.presentationsAtom);
   const providersByEnvironment = useAtomValue(environmentPresentations.providersByEnvironmentAtom);
   const [acknowledged, setAcknowledged] = useState(readAcknowledgedProfiles);
@@ -68,20 +65,26 @@ export function ChatGptWelcomeCoordinator() {
       <DialogPopup>
         <DialogHeader>
           <OpenAI className="mb-2 size-8" aria-hidden="true" />
-          <DialogTitle>Your ChatGPT plan is connected</DialogTitle>
+          <DialogTitle>
+            <T>Your ChatGPT plan is connected</T>
+          </DialogTitle>
           <DialogDescription>
-            Eligible usage in T3 Code uses your ChatGPT plan. Manage your shared usage and any
-            credit settings in ChatGPT.
+            <T>
+              Eligible usage in T3 Code uses your ChatGPT plan. Manage your shared usage and any
+              credit settings in ChatGPT.
+            </T>
           </DialogDescription>
           <p className="text-xs text-muted-foreground">
-            {next?.providerName}
-            {localizeWebString(translationLocale, " on ")}
-            {next?.environmentLabel}
+            <T>
+              <Var>{next?.providerName}</Var> on <Var>{next?.environmentLabel}</Var>
+            </T>
           </p>
         </DialogHeader>
         <DialogFooter>
           <ChatGptUsageButton />
-          <Button onClick={dismiss}>{translateWebSource(translationLocale, "Continue")}</Button>
+          <Button onClick={dismiss}>
+            <T>Continue</T>
+          </Button>
         </DialogFooter>
       </DialogPopup>
     </Dialog>

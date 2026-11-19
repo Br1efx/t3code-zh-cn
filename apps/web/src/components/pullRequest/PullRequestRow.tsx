@@ -1,6 +1,6 @@
-import { translateWebSource } from "~/i18n/messages";
 import type { PullRequestAction } from "@t3tools/contracts";
 import { sourceControlClients } from "@t3tools/client-runtime/source-control-clients";
+import { T } from "gt-react";
 import { SearchIcon } from "lucide-react";
 import { PullRequestChangeBreakdownStat } from "./PullRequestChangeBreakdownStat";
 import { PullRequestStackPopover } from "./PullRequestStackPopover";
@@ -12,10 +12,10 @@ import { memo, type RefCallback } from "react";
 
 import { cn } from "~/lib/utils";
 import { getSourceControlPresentationForKind } from "~/sourceControlPresentation";
-import { useI18n } from "../../i18n/WebI18nContext";
 
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { PullRequestChecksPopover } from "./PullRequestChecksPopover";
+import { pullRequestPanelReference } from "./usePullRequestDetail";
 import type { EnvironmentPullRequestEntry } from "./pullRequestList.logic";
 import { openOnHostLabel, showPullRequestLinkContextMenu } from "./pullRequestLinkContextMenu";
 import {
@@ -105,7 +105,6 @@ function PullRequestRowImpl({
   sweeping?: boolean;
   onCloseSweepStart?: (entry: EnvironmentPullRequestEntry, event: PointerEvent) => void;
 }) {
-  const { t, locale: uiLocale } = useI18n();
   const { Icon, providerName, terminology } = getSourceControlPresentationForKind(entry.provider);
   return (
     <div
@@ -167,9 +166,8 @@ function PullRequestRowImpl({
                   checksState={entry.checksState}
                   environmentId={entry.environmentId}
                   reference={{
-                    projectId: entry.projectId,
-                    repository: entry.repository,
-                    number: entry.number,
+                    ...pullRequestPanelReference({ ...entry, host: entry.host.toLowerCase() }),
+                    allowStale: false,
                   }}
                 />
               )}
@@ -220,14 +218,16 @@ function PullRequestRowImpl({
                     }
                   >
                     <span className="sr-only">
-                      {translateWebSource(uiLocale, "matched in the description")}
+                      <T>matched in the description</T>
                     </span>
                     <SearchIcon aria-hidden className="size-3 shrink-0" />
                     <span aria-hidden className="hidden truncate @xs/pr-row-meta:block">
-                      {translateWebSource(uiLocale, "matched in the description")}
+                      <T>matched in the description</T>
                     </span>
                   </TooltipTrigger>
-                  <TooltipPopup side="top">{t("pullRequests.row.matchedDescription")}</TooltipPopup>
+                  <TooltipPopup side="top">
+                    <T>Matched in the description</T>
+                  </TooltipPopup>
                 </Tooltip>
               ) : null}
               {showProvider ? (

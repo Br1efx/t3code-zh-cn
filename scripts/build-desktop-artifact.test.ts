@@ -504,7 +504,7 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
     }),
   );
 
-  it.effect("omits update feeds for all preview builds", () =>
+  it.effect("omits update feeds for pull request preview builds", () =>
     Effect.gen(function* () {
       const preview = yield* createBuildConfig(
         "mac",
@@ -535,22 +535,6 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
         undefined,
       );
 
-      for (const [platform, target] of [
-        ["mac", "dmg"],
-        ["win", "nsis"],
-        ["linux", "AppImage"],
-      ] as const) {
-        const communityPreview = yield* createBuildConfig(
-          platform,
-          target,
-          "0.1.1-zh.1",
-          false,
-          true,
-          undefined,
-          undefined,
-        );
-        assert.isNull(communityPreview.publish);
-      }
       assert.isNull(preview.publish);
       assert.isNull(previewChannel.publish);
       assert.deepStrictEqual(release.publish, [
@@ -1002,35 +986,6 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
         assert.deepStrictEqual(result.unpackedFiles, ["node_modules/native/addon.node"]);
         assert.isBelow(result.fileCount, WINDOWS_PACKAGED_PAYLOAD_FILE_LIMIT);
         assert.deepStrictEqual(secondAsar, firstAsar);
-
-        // The stable Windows build includes 92 files with the speech runtime and Cursor SDK.
-        for (let index = result.fileCount; index < 92; index++) {
-          yield* fs.writeFileString(
-            path.join(fixture.packagedAppDir, `runtime-${index}.dll`),
-            "native",
-          );
-        }
-        const expanded = yield* validateWindowsPackagedPayload({
-          stageDistDir: fixture.stageDistDir,
-          appExecutableName: fixture.appExecutableName,
-          targetArch: "x64",
-          appVersion: WINDOWS_PAYLOAD_FIXTURE_VERSION,
-        });
-        assert.equal(expanded.fileCount, 92);
-        for (let index = 92; index < 101; index++) {
-          yield* fs.writeFileString(
-            path.join(fixture.packagedAppDir, `runtime-${index}.dll`),
-            "native",
-          );
-        }
-        const oversized = yield* validateWindowsPackagedPayload({
-          stageDistDir: fixture.stageDistDir,
-          appExecutableName: fixture.appExecutableName,
-          targetArch: "x64",
-          appVersion: WINDOWS_PAYLOAD_FIXTURE_VERSION,
-        }).pipe(Effect.flip);
-        assert.instanceOf(oversized, WindowsPackagedPayloadValidationError);
-        assert.equal(oversized.reason, "file-limit-exceeded");
       }),
     ).pipe(Effect.provideService(HostProcess.Platform, "linux")),
   );

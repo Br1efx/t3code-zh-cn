@@ -33,8 +33,8 @@ import * as DesktopLocalEnvironmentAuth from "../../backend/DesktopLocalEnvironm
 import * as DesktopEnvironment from "../../app/DesktopEnvironment.ts";
 import * as DesktopManagedPolicy from "../../app/DesktopManagedPolicy.ts";
 import * as DesktopPrimaryPaste from "../../app/DesktopPrimaryPaste.ts";
-import { isZhCn, resolveCurrentDesktopLocale } from "../../i18n/DesktopLocale.ts";
 import * as DesktopAppSettings from "../../settings/DesktopAppSettings.ts";
+import * as DesktopShellEnvironment from "../../shell/DesktopShellEnvironment.ts";
 import * as DesktopWslBackend from "../../wsl/DesktopWslBackend.ts";
 import * as DesktopWslEnvironment from "../../wsl/DesktopWslEnvironment.ts";
 import * as ElectronApp from "../../electron/ElectronApp.ts";
@@ -45,8 +45,10 @@ import * as ElectronShell from "../../electron/ElectronShell.ts";
 import * as ElectronTheme from "../../electron/ElectronTheme.ts";
 import * as ElectronWindow from "../../electron/ElectronWindow.ts";
 import * as Electron from "electron";
+import { msg } from "gt-i18n";
 import * as MacPermissions from "../../permissions/MacPermissions.ts";
 import { safariPermissionCheck } from "../../preview/BrowserImport/SafariPermission.ts";
+import { m } from "../../i18n/messages.ts";
 import * as IpcChannels from "../channels.ts";
 import * as DesktopIpc from "../DesktopIpc.ts";
 import {
@@ -83,22 +85,28 @@ export const getAppBranding = DesktopIpc.makeSyncIpcMethod({
 
 /**
  * Relay traces leave the machine, so a policy with `telemetry: false`, or one that cannot be read,
- * stops them. Read once here: a sync IPC handler cannot wait on the filesystem.
+ * stops them. Read once here: a sync IPC handler cannot wait on the filesystem. Until the login
+ * shell's environment (which may opt out) is known, answer null so the renderer asks again.
  */
 export const installRelayTelemetryEnabled = Effect.fn("desktop.ipc.window.installRelayTelemetry")(
   function* () {
     const ipc = yield* DesktopIpc.DesktopIpc;
-    const enabled =
-      isRelayTracingEnabled(yield* HostProcess.Environment) &&
-      (yield* (yield* DesktopManagedPolicy.DesktopManagedPolicy).read.pipe(
-        Effect.map((found) => found?.document.limits?.telemetry !== false),
-        Effect.orElseSucceed(() => false),
-      ));
+    const env = yield* HostProcess.Environment;
+    const policyAllows = yield* (yield* DesktopManagedPolicy.DesktopManagedPolicy).read.pipe(
+      Effect.map((found) => found?.document.limits?.telemetry !== false),
+      Effect.orElseSucceed(() => false),
+    );
+    const shellEnvironment = yield* DesktopShellEnvironment.DesktopShellEnvironment;
     yield* ipc.handleSync(
       DesktopIpc.makeSyncIpcMethod({
         channel: IpcChannels.GET_RELAY_TELEMETRY_ENABLED_CHANNEL,
-        result: Schema.Boolean,
-        handler: () => Effect.succeed(enabled),
+        result: Schema.NullOr(Schema.Boolean),
+        handler: () =>
+          shellEnvironment.discoveryFinished.pipe(
+            Effect.map((known) =>
+              !policyAllows || !isRelayTracingEnabled(env) ? false : known ? true : null,
+            ),
+          ),
       }),
     );
   },
@@ -304,14 +312,13 @@ export const pickProjectFavicon = DesktopIpc.makeIpcMethod({
     if (!(yield* appSettings.get).localEnvironmentEnabled) {
       return null;
     }
-    const locale = yield* resolveCurrentDesktopLocale;
     const paths = yield* dialog.pickFiles({
       owner: yield* electronWindow.focusedMainOrFirst,
       defaultPath: Option.fromNullishOr(initialPath),
       multiple: false,
       filters: [
         {
-          name: isZhCn(locale) ? "图片文件" : "Images",
+          name: m(msg("Images")),
           extensions: PROJECT_FAVICON_EXTENSIONS.map((extension) => extension.slice(1)),
         },
       ],
@@ -563,11 +570,10 @@ export const pickThemeFiles = DesktopIpc.makeIpcMethod({
     const defaultPath = yield* fileSystem
       .exists(extensionsDir)
       .pipe(Effect.orElseSucceed(() => false));
-    const locale = yield* resolveCurrentDesktopLocale;
     const paths = yield* dialog.pickFiles({
       owner: yield* electronWindow.focusedMainOrFirst,
       defaultPath: defaultPath ? Option.some(extensionsDir) : Option.none(),
-      filters: [{ name: isZhCn(locale) ? "JSON 主题文件" : "JSON", extensions: ["json"] }],
+      filters: [{ name: "JSON", extensions: ["json"] }],
       multiple: true,
     });
     if (paths.length === 0) {

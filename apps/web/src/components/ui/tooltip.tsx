@@ -9,8 +9,6 @@ import {
   type RefObject,
 } from "react";
 
-import { localizeWebChildren } from "~/i18n/localizeWebChildren";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 import { useNativeTitlebarHeight } from "~/lib/windowControlsOverlay";
 
@@ -137,8 +135,6 @@ function TooltipPopup({
   variant?: "default" | "glass" | "code";
   anchor?: TooltipPrimitive.Positioner.Props["anchor"];
 }) {
-  const { locale } = useI18n();
-  const localizedChildren = variant === "code" ? children : localizeWebChildren(locale, children);
   return (
     <TooltipPrimitive.Portal>
       <TooltipPositioner align={align} anchor={anchor} side={side} sideOffset={sideOffset}>
@@ -157,7 +153,7 @@ function TooltipPopup({
           {...props}
         >
           <div className="min-w-0 px-2 py-1" data-slot="tooltip-viewport">
-            {localizedChildren}
+            {children}
           </div>
         </TooltipPrimitive.Popup>
       </TooltipPositioner>

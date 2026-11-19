@@ -6,9 +6,9 @@ import {
   subagentGroupSummary,
   summarizeSubagentStatuses,
 } from "@t3tools/client-runtime/state/subagent-display";
+import { useGT, useMessages } from "gt-react";
 import { memo, use, useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 import { Collapsible, CollapsibleTrigger, CollapsiblePanel } from "../ui/collapsible";
 import { EnvironmentSubagentAvatar, SubagentElapsed, V2LifecycleRow } from "./V2LifecycleRow";
@@ -16,22 +16,6 @@ import { LinkRequestCard } from "./LinkRequestCard";
 import { SecretRequestCard } from "./SecretRequestCard";
 import { TimelineRowCtx, type TimelineRow } from "./timelineRowContext";
 import { subagentGroupTiming } from "./TimelineV2EventRow.logic";
-
-const ZH_SUBAGENT_STATUS_LABELS: Record<string, string> = {
-  working: "运行中",
-  done: "已完成",
-  failed: "失败",
-  stopped: "已停止",
-  idle: "空闲",
-};
-
-function localizeSubagentStatusSummary(summary: string, isZh: boolean): string {
-  if (!isZh) return summary;
-  return summary.replace(
-    /\b(\d+)\s+(working|done|failed|stopped|idle)\b/gu,
-    (_match, count: string, key: string) => `${count} ${ZH_SUBAGENT_STATUS_LABELS[key] ?? key}`,
-  );
-}
 
 export function V2EventTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "event" }> }) {
   const ctx = use(TimelineRowCtx);
@@ -73,9 +57,9 @@ const V2SubagentGroup = memo(function V2SubagentGroup({
 }: {
   row: Extract<TimelineRow, { kind: "event" }>;
 }) {
-  const { locale: i18nLocale } = useI18n();
-  const isZh = i18nLocale === "zh-CN";
   const ctx = use(TimelineRowCtx);
+  const gt = useGT();
+  const m = useMessages();
   const groupId = `subagent-group:${row.id}`;
   const [expanded, setExpanded] = useState(() =>
     ctx.workGroupViewState.expandedEntries.has(groupId),
@@ -98,13 +82,13 @@ const V2SubagentGroup = memo(function V2SubagentGroup({
       completedAt: live?.completedAt ?? item.completedAt,
     };
   });
-  const summary = subagentGroupSummary(agents);
-  const label = isZh
-    ? `${members.length} 个子智能体`
-    : `${members.length} ${members.length === 1 ? "subagent" : "subagents"}`;
-  const statusSummary = localizeSubagentStatusSummary(
-    summarizeSubagentStatuses(agents.map(({ status }) => status)),
-    isZh,
+  const summary = subagentGroupSummary(agents, m);
+  const label = gt("{count, plural, one {{count} subagent} other {{count} subagents}}", {
+    count: members.length,
+  });
+  const statusSummary = summarizeSubagentStatuses(
+    agents.map(({ status }) => status),
+    m,
   );
   const toggleExpanded = (open: boolean) => {
     ctx.onToggleWorkEntry(row.id, expanded);

@@ -1,7 +1,5 @@
-import { useI18n } from "~/i18n/WebI18nContext";
-import { translateWebSource } from "~/i18n/messages";
-import { localizeWebString } from "~/i18n/localizeWebChildren";
 import type { ManagedPolicySummary } from "@t3tools/contracts";
+import { T, Var } from "gt-react";
 import { BuildingIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -53,11 +51,11 @@ export function ManagedNotice({ children }: { children: ReactNode }) {
 
 /** "This environment is managed by <organization>", linking the support page when there is one. */
 export function ManagedByOrganization({ policy }: { policy: ManagedPolicySummary }) {
-  const { locale: i18nLocale } = useI18n();
   return (
     <ManagedNotice>
-      {localizeWebString(i18nLocale, "This environment is managed by ")}
-      {policy.organization}.
+      <T>
+        This environment is managed by <Var>{policy.organization}</Var>.
+      </T>
       {policy.supportUrl ? (
         <>
           {" "}
@@ -67,7 +65,7 @@ export function ManagedByOrganization({ policy }: { policy: ManagedPolicySummary
             rel="noreferrer"
             className="text-foreground underline underline-offset-2"
           >
-            {translateWebSource(i18nLocale, "Get help")}
+            <T>Get help</T>
           </a>
         </>
       ) : null}

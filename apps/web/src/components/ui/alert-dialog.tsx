@@ -1,8 +1,6 @@
 import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog";
 import { useRender } from "@base-ui/react/use-render";
 
-import { localizeWebChildren } from "~/i18n/localizeWebChildren";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 import {
   DIALOG_BACKDROP_CLASS,
@@ -123,25 +121,17 @@ function AlertDialogFooter({
   );
 }
 
-function AlertDialogTitle({ className, children, ...props }: AlertDialogPrimitive.Title.Props) {
-  const { locale } = useI18n();
+function AlertDialogTitle({ className, ...props }: AlertDialogPrimitive.Title.Props) {
   return (
     <AlertDialogPrimitive.Title
       className={cn("wrap-anywhere shrink-0 font-semibold text-xl leading-snug", className)}
       data-slot="alert-dialog-title"
       {...props}
-    >
-      {localizeWebChildren(locale, children)}
-    </AlertDialogPrimitive.Title>
+    />
   );
 }
 
-function AlertDialogDescription({
-  className,
-  children,
-  ...props
-}: AlertDialogPrimitive.Description.Props) {
-  const { locale } = useI18n();
+function AlertDialogDescription({ className, ...props }: AlertDialogPrimitive.Description.Props) {
   return (
     <AlertDialogPrimitive.Description
       className={cn(
@@ -150,9 +140,7 @@ function AlertDialogDescription({
       )}
       data-slot="alert-dialog-description"
       {...props}
-    >
-      {localizeWebChildren(locale, children)}
-    </AlertDialogPrimitive.Description>
+    />
   );
 }
 

@@ -1,8 +1,7 @@
+import { useGT } from "gt-react";
 import { CheckIcon } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 
-import { localizeWebString } from "~/i18n/localizeWebChildren";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "../../lib/utils";
 import { AnimatedHeight } from "../AnimatedHeight";
 import { DialogPopup, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "./dialog";
@@ -79,67 +78,66 @@ export function WizardSteps({
   readonly isStepDisabled?: (step: number) => boolean;
   readonly onStepChange?: (step: number) => void;
 }) {
-  const { locale } = useI18n();
+  const gt = useGT();
   const Step = onStepChange ? "button" : "div";
   return (
     <ol
       className="grid auto-cols-fr grid-flow-col gap-1 rounded-xl bg-background p-1 ring-1 ring-black/5 dark:bg-white/4 dark:ring-white/5"
       role="list"
-      aria-label={localizeWebString(locale, "Setup progress")}
+      aria-label={gt("Setup progress")}
     >
-      {steps.map((step, index) => {
-        const localizedStep = localizeWebString(locale, step);
-        const rawSummary = summaries?.[index];
-        const localizedSummary = rawSummary ? localizeWebString(locale, rawSummary) : null;
-        const stepAriaLabel =
-          locale === "zh-CN"
-            ? `${localizedStep}，第 ${index + 1} 步${index < currentStep && localizedSummary ? `，${localizedSummary}` : ""}`
-            : `${step}, step ${index + 1}${index < currentStep && summaries?.[index] ? `, ${summaries?.[index]}` : ""}`;
-        return (
-          <li key={step} className="min-w-0">
-            <Step
-              {...(onStepChange
-                ? { type: "button" as const, disabled: isStepDisabled?.(index) }
-                : {})}
+      {steps.map((step, index) => (
+        <li key={step} className="min-w-0">
+          <Step
+            {...(onStepChange
+              ? { type: "button" as const, disabled: isStepDisabled?.(index) }
+              : {})}
+            className={cn(
+              "flex w-full min-w-0 items-center gap-2 rounded-lg px-2.5 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring max-sm:justify-center max-sm:px-2",
+              onStepChange &&
+                "cursor-pointer hover:bg-card disabled:cursor-default disabled:hover:bg-transparent",
+              index === currentStep &&
+                "bg-card text-foreground shadow-xs ring-1 ring-inset ring-black/5 hover:bg-card dark:shadow-none dark:ring-white/5",
+            )}
+            aria-current={index === currentStep ? "step" : undefined}
+            aria-label={
+              index < currentStep && summaries?.[index]
+                ? gt("{step}, step {number}, {summary}", {
+                    step,
+                    number: index + 1,
+                    summary: summaries[index],
+                  })
+                : gt("{step}, step {number}", { step, number: index + 1 })
+            }
+            onClick={onStepChange ? () => onStepChange(index) : undefined}
+          >
+            <span
               className={cn(
-                "flex w-full min-w-0 items-center gap-2 rounded-lg px-2.5 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring max-sm:justify-center max-sm:px-2",
-                onStepChange &&
-                  "cursor-pointer hover:bg-card disabled:cursor-default disabled:hover:bg-transparent",
-                index === currentStep &&
-                  "bg-card text-foreground shadow-xs ring-1 ring-inset ring-black/5 hover:bg-card dark:shadow-none dark:ring-white/5",
+                "grid size-5 shrink-0 place-items-center rounded-full text-sm font-medium ring-1",
+                index < currentStep
+                  ? "bg-primary text-primary-foreground ring-primary"
+                  : index === currentStep
+                    ? "bg-primary/10 text-primary ring-primary/30"
+                    : "bg-card text-muted-foreground ring-black/10 dark:bg-white/5 dark:ring-white/10",
               )}
-              aria-current={index === currentStep ? "step" : undefined}
-              aria-label={stepAriaLabel}
-              onClick={onStepChange ? () => onStepChange(index) : undefined}
+              aria-hidden
             >
-              <span
-                className={cn(
-                  "grid size-5 shrink-0 place-items-center rounded-full text-sm font-medium ring-1",
-                  index < currentStep
-                    ? "bg-primary text-primary-foreground ring-primary"
-                    : index === currentStep
-                      ? "bg-primary/10 text-primary ring-primary/30"
-                      : "bg-card text-muted-foreground ring-black/10 dark:bg-white/5 dark:ring-white/10",
-                )}
-                aria-hidden
-              >
-                {index < currentStep ? <CheckIcon className="size-4 shrink-0" /> : index + 1}
-              </span>
-              <span
-                className={cn(
-                  "min-w-0 truncate text-sm font-medium max-sm:hidden",
-                  index === currentStep ? "text-foreground" : "text-muted-foreground",
-                )}
-              >
-                {localizedStep}
-                {showSummaries && index < currentStep && localizedSummary
-                  ? `: ${localizedSummary}`
-                  : null}
-              </span>
-            </Step>
-          </li>
-        );
-      })}
+              {index < currentStep ? <CheckIcon className="size-4 shrink-0" /> : index + 1}
+            </span>
+            <span
+              className={cn(
+                "min-w-0 truncate text-sm font-medium max-sm:hidden",
+                index === currentStep ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
+              {step}
+              {showSummaries && index < currentStep && summaries?.[index]
+                ? `: ${summaries[index]}`
+                : null}
+            </span>
+          </Step>
+        </li>
+      ))}
     </ol>
   );
 }

@@ -1,10 +1,9 @@
-import { translateWebSource } from "~/i18n/messages";
-import { useI18n } from "~/i18n/WebI18nContext";
 import { DeviceHostUpdates } from "./DeviceHostUpdates";
 import type { DevicePlatform, DeviceServiceState, EnvironmentId } from "@t3tools/contracts";
 import { Check, CircleAlert } from "lucide-react";
 import { AuthSettingsWriteScope } from "@t3tools/contracts";
 import { useAtomMount } from "@effect/atom-react";
+import { msg, T, useGT, useMessages, Var } from "gt-react";
 import { useState } from "react";
 
 import { Button } from "~/components/ui/button";
@@ -16,13 +15,16 @@ import { deviceEnvironment, deviceHostProbeAtom, NO_DEVICE_PROBE_ATOM } from "~/
 import { useAtomCommand } from "~/state/use-atom-command";
 import { readEnvironmentScope, useEnvironmentScope } from "~/state/session";
 import { cn } from "~/lib/utils";
+import { m, type MessageResolver } from "~/i18n/messages";
 
 const platformName = (platform: DevicePlatform) => (platform === "ios" ? "iOS" : "Android");
 
-const deviceHubDescription =
-  "Enable this environment to open simulators and emulators, whether they run here or on a remote device host.";
-const agentDeviceDescription =
-  "Allow new agent sessions in this environment to start and control local and remote devices, with required tools set up automatically.";
+const deviceHubDescription = msg(
+  "Enable this environment to open simulators and emulators, whether they run here or on a remote device host.",
+);
+const agentDeviceDescription = msg(
+  "Allow new agent sessions in this environment to start and control local and remote devices, with required tools set up automatically.",
+);
 
 /** Platforms whose latest listing on a ready host may be missing devices. */
 export const incompleteListings = (
@@ -79,25 +81,27 @@ function DeviceHostDiagnostics(props: {
     <div role="status" className={cn("space-y-1 text-xs text-muted-foreground", props.className)}>
       {diagnostics.map(({ hostId, label, detail }) => (
         <p key={hostId} className="whitespace-pre-line break-words">
-          {label}: {detail}
+          <T>
+            <Var>{label}</Var>: <Var>{detail}</Var>
+          </T>
         </p>
       ))}
     </div>
   );
 }
 
+/** Components pass `useMessages()` so the message follows a language switch. */
 export function platformSetupStatus(
   state: DeviceServiceState,
   platform: DevicePlatform,
-  locale: "en" | "zh-CN" = "en",
+  resolve: MessageResolver = m,
 ) {
   const hasDevices = state.devices.some((device) => device.platform === platform);
   if (platform === "android" && !hasDevices && isAndroidDiscoveryUncertain(state)) {
     return {
       ready: false,
-      message: translateWebSource(
-        locale,
-        "The Android device list may be incomplete. Check the device host and try again.",
+      message: resolve(
+        msg("The Android device list may be incomplete. Check the device host and try again."),
       ),
     };
   }
@@ -114,9 +118,7 @@ export function platformSetupStatus(
       ready: false,
       message:
         availabilities[0]?.reason ??
-        (locale === "zh-CN"
-          ? `未检测到 ${platformName(platform)} 支持。`
-          : `${platformName(platform)} support was not detected.`),
+        resolve(msg("{platform} support was not detected.", { platform: platformName(platform) })),
     };
   }
   const readyHosts = supportingHosts.filter(
@@ -132,40 +134,51 @@ export function platformSetupStatus(
     ) {
       return {
         ready: false,
-        message:
-          locale === "zh-CN"
-            ? `由于设备检测报告了问题，未能列出 ${platformName(platform)} 设备。`
-            : `No ${platformName(platform)} devices were listed because device discovery reported a problem.`,
+        message: resolve(
+          msg("No {platform} devices were listed because device discovery reported a problem.", {
+            platform: platformName(platform),
+          }),
+        ),
       };
     }
     return {
       ready: false,
-      message: translateWebSource(
-        locale,
+      message:
         platform === "ios"
-          ? "Xcode is installed, but no iOS Simulator is available. Install a runtime in Xcode Settings → Components."
-          : "The Android SDK is installed, but no virtual device exists. Create one in Android Studio → Device Manager.",
-      ),
+          ? resolve(
+              msg(
+                "Xcode is installed, but no iOS Simulator is available. Install a runtime in Xcode Settings → Components.",
+              ),
+            )
+          : resolve(
+              msg(
+                "The Android SDK is installed, but no virtual device exists. Create one in Android Studio → Device Manager.",
+              ),
+            ),
     };
   }
   const remoteHost = supportingHosts.every((host) => host.kind !== "local")
     ? supportingHosts[0]
     : undefined;
-  const location = remoteHost ? ` on ${remoteHost.label}` : "";
+  const host = remoteHost?.label;
   return {
     ready: true,
     message:
       remoteHost?.kind === "eas"
-        ? locale === "zh-CN"
-          ? `${remoteHost.label} 会通过 Expo Simulators 在云端启动 ${platform === "ios" ? "iOS 模拟器" : "Android 模拟器"}。`
-          : `${remoteHost.label} starts ${platform === "ios" ? "iOS Simulators" : "Android emulators"} in the cloud with Expo Simulators.`
+        ? platform === "ios"
+          ? resolve(
+              msg("{host} starts iOS Simulators in the cloud with Expo Simulators.", { host }),
+            )
+          : resolve(
+              msg("{host} starts Android emulators in the cloud with Expo Simulators.", { host }),
+            )
         : platform === "ios"
-          ? locale === "zh-CN"
-            ? `Xcode 与 iOS 模拟器已就绪${remoteHost ? `（位于 ${remoteHost.label}）` : ""}。`
-            : `Xcode and iOS Simulator are available${location}.`
-          : locale === "zh-CN"
-            ? `Android SDK 与模拟器已就绪${remoteHost ? `（位于 ${remoteHost.label}）` : ""}。`
-            : `The Android SDK and Emulator are available${location}.`,
+          ? host
+            ? resolve(msg("Xcode and iOS Simulator are available on {host}.", { host }))
+            : resolve(msg("Xcode and iOS Simulator are available."))
+          : host
+            ? resolve(msg("The Android SDK and Emulator are available on {host}.", { host }))
+            : resolve(msg("The Android SDK and Emulator are available.")),
   };
 }
 
@@ -174,8 +187,9 @@ export function DeviceSetup(props: {
   readonly state: DeviceServiceState;
   readonly onComplete?: () => void;
 }) {
-  const { locale: translationLocale } = useI18n();
   const canConfigure = useEnvironmentScope(props.environmentId, AuthSettingsWriteScope);
+  const gt = useGT();
+  const m = useMessages();
   const configure = useAtomCommand(deviceEnvironment.configure);
   const list = useAtomCommand(deviceEnvironment.list, { reportFailure: false });
   const [pending, setPending] = useState<"hub" | "check" | "agent" | "complete" | null>(null);
@@ -202,18 +216,13 @@ export function DeviceSetup(props: {
   return (
     <>
       <WizardHeader
-        title={translateWebSource(translationLocale, "Set up devices")}
-        description={translateWebSource(
-          translationLocale,
+        title={gt("Set up devices")}
+        description={gt(
           "Review what runs on this environment before using simulators and emulators.",
         )}
       >
         <WizardSteps
-          steps={[
-            translateWebSource(translationLocale, "Device hub"),
-            translateWebSource(translationLocale, "Simulators"),
-            translateWebSource(translationLocale, "Agent access"),
-          ]}
+          steps={[gt("Device hub"), gt("Simulators"), gt("Agent access")]}
           currentStep={step}
           onStepChange={setStep}
           isStepDisabled={(requested) => busy || pending !== null || requested > step}
@@ -225,16 +234,14 @@ export function DeviceSetup(props: {
         {step === 0 ? (
           <section className="space-y-3 text-sm">
             <h3 className="font-medium">
-              {translateWebSource(translationLocale, "Enable the device hub")}
+              <T>Enable the device hub</T>
             </h3>
             <div className="flex items-start justify-between gap-4">
-              <p className="text-muted-foreground">
-                {translateWebSource(translationLocale, deviceHubDescription)}
-              </p>
+              <p className="text-muted-foreground">{m(deviceHubDescription)}</p>
               <Switch
                 checked={enabled}
                 disabled={!canConfigure || busy || pending !== null}
-                aria-label={translateWebSource(translationLocale, "Enable device hub")}
+                aria-label={gt("Enable device hub")}
                 onCheckedChange={(checked) =>
                   void update("hub", {
                     enabled: Boolean(checked),
@@ -253,7 +260,7 @@ export function DeviceSetup(props: {
         {step === 1 || (step === 0 && enabled && localPlatformsUnavailable) ? (
           <section className={cn("space-y-3 text-sm", step === 0 && "mt-4")}>
             <h3 className="font-medium">
-              {translateWebSource(translationLocale, "Check simulator support")}
+              <T>Check simulator support</T>
             </h3>
             <DevicePlatformSetup
               state={props.state}
@@ -272,19 +279,14 @@ export function DeviceSetup(props: {
         {step === 2 ? (
           <section className="space-y-3 text-sm">
             <h3 className="font-medium">
-              {translateWebSource(translationLocale, "Allow agent control")}
+              <T>Allow agent control</T>
             </h3>
             <div className="flex items-start justify-between gap-4">
-              <p className="text-muted-foreground">
-                {translateWebSource(translationLocale, agentDeviceDescription)}
-              </p>
+              <p className="text-muted-foreground">{m(agentDeviceDescription)}</p>
               <Switch
                 checked={props.state.agentAccessEnabled}
                 disabled={!canConfigure || !enabled || busy || pending !== null}
-                aria-label={translateWebSource(
-                  translationLocale,
-                  "Allow agents to control devices",
-                )}
+                aria-label={gt("Allow agents to control devices")}
                 onCheckedChange={(checked) =>
                   void update("agent", { agentAccessEnabled: Boolean(checked) })
                 }
@@ -292,10 +294,7 @@ export function DeviceSetup(props: {
             </div>
             <AgentDeviceSetupStatus state={props.state} pending={pending === "agent"} />
             <p className="text-xs text-muted-foreground">
-              {translateWebSource(
-                translationLocale,
-                "Leave this off to keep manual device controls without giving agents access.",
-              )}
+              <T>Leave this off to keep manual device controls without giving agents access.</T>
             </p>
           </section>
         ) : null}
@@ -309,7 +308,7 @@ export function DeviceSetup(props: {
       <WizardFooter>
         {step === 0 ? (
           <DialogClose render={<Button variant="outline" />}>
-            {translateWebSource(translationLocale, "Cancel")}
+            <T>Cancel</T>
           </DialogClose>
         ) : (
           <Button
@@ -317,19 +316,19 @@ export function DeviceSetup(props: {
             disabled={busy || pending !== null}
             onClick={() => setStep(step - 1)}
           >
-            {translateWebSource(translationLocale, "Back")}
+            <T>Back</T>
           </Button>
         )}
         {step < 2 ? (
           <Button disabled={!ready || pending !== null} onClick={() => setStep(step + 1)}>
-            {translateWebSource(translationLocale, "Continue")}
+            <T>Continue</T>
           </Button>
         ) : (
           <Button
             disabled={!canConfigure || !ready || pending !== null}
             onClick={() => void update("complete", { onboardingCompleted: true })}
           >
-            {translateWebSource(translationLocale, pending === "complete" ? "Saving…" : "Done")}
+            {pending === "complete" ? gt("Saving…") : gt("Done")}
           </Button>
         )}
       </WizardFooter>
@@ -346,25 +345,24 @@ export function DeviceHubSetupStatus({
   readonly pending: boolean;
   readonly compact?: boolean;
 }) {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
   if (!pending && !deviceHubReadiness(state).ready) return null;
-  const statusText = pending
-    ? state.hostStatus === "installing"
-      ? compact
-        ? "Installing…"
-        : "Installing device hub…"
-      : state.hostStatus === "starting"
-        ? compact
-          ? "Starting…"
-          : "Starting device hub…"
-        : compact
-          ? "Updating…"
-          : "Updating device hub…"
-    : "Device hub is ready.";
   return (
     <p role="status" className="flex items-center gap-2 text-xs text-muted-foreground">
       {pending ? <Spinner size="xs" /> : <Check className="size-3 text-success" />}
-      {translateWebSource(translationLocale, statusText)}
+      {pending
+        ? state.hostStatus === "installing"
+          ? compact
+            ? gt("Installing…")
+            : gt("Installing device hub…")
+          : state.hostStatus === "starting"
+            ? compact
+              ? gt("Starting…")
+              : gt("Starting device hub…")
+            : compact
+              ? gt("Updating…")
+              : gt("Updating device hub…")
+        : gt("Device hub is ready.")}
     </p>
   );
 }
@@ -375,27 +373,19 @@ function DevicePlatformSetup(props: {
   readonly disabled: boolean;
   readonly onCheck: () => void;
 }) {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
+  const m = useMessages();
   return (
     <div className="space-y-3">
-      <PlatformStatus
-        platform="iOS"
-        status={platformSetupStatus(props.state, "ios", translationLocale)}
-      />
-      <PlatformStatus
-        platform="Android"
-        status={platformSetupStatus(props.state, "android", translationLocale)}
-      />
+      <PlatformStatus platform="iOS" status={platformSetupStatus(props.state, "ios", m)} />
+      <PlatformStatus platform="Android" status={platformSetupStatus(props.state, "android", m)} />
       <DeviceHostDiagnostics hosts={props.state.hosts} hostStatuses={props.state.hostStatuses} />
       <p className="text-xs text-muted-foreground">
-        {translateWebSource(
-          translationLocale,
-          "You can use either platform. Fixing a missing platform does not block the other one.",
-        )}
+        <T>You can use either platform. Fixing a missing platform does not block the other one.</T>
       </p>
       <Button size="compact" variant="outline" disabled={props.disabled} onClick={props.onCheck}>
         {props.checking ? <Spinner size="xs" /> : null}
-        {translateWebSource(translationLocale, props.checking ? "Checking…" : "Check again")}
+        {props.checking ? gt("Checking…") : gt("Check again")}
       </Button>
     </div>
   );
@@ -406,24 +396,24 @@ export function AgentDeviceSetupStatus(props: {
   readonly pending: boolean;
   readonly compact?: boolean;
 }) {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
   if (props.pending) {
     const label =
       props.state.hostStatus === "installing"
         ? props.compact
-          ? "Installing…"
-          : "Installing agent tools…"
+          ? gt("Installing…")
+          : gt("Installing agent tools…")
         : props.state.hostStatus === "starting"
           ? props.compact
-            ? "Starting…"
-            : "Starting agent tools…"
+            ? gt("Starting…")
+            : gt("Starting agent tools…")
           : props.compact
-            ? "Updating…"
-            : "Updating agent access…";
+            ? gt("Updating…")
+            : gt("Updating agent access…");
     return (
       <p role="status" className="flex items-center gap-2 text-xs text-muted-foreground">
         <Spinner size="xs" />
-        {translateWebSource(translationLocale, label)}
+        {label}
       </p>
     );
   }
@@ -435,7 +425,7 @@ export function AgentDeviceSetupStatus(props: {
     return (
       <p role="status" className="flex items-center gap-2 text-xs text-muted-foreground">
         <Check className="size-3 text-success" />
-        {translateWebSource(translationLocale, "Agent tools are ready.")}
+        <T>Agent tools are ready.</T>
       </p>
     );
   }
@@ -447,7 +437,7 @@ function PlatformStatus(props: {
   readonly status: { readonly ready: boolean; readonly message: string };
   readonly compact?: boolean;
 }) {
-  const { locale: translationLocale } = useI18n();
+  const gt = useGT();
   return (
     <div
       className={cn("flex gap-2", !props.compact && "rounded-md border border-border/60 px-3 py-2")}
@@ -461,7 +451,7 @@ function PlatformStatus(props: {
         <p className="font-medium">{props.platform}</p>
         <p className="text-xs text-muted-foreground">
           {props.compact && props.status.ready
-            ? translateWebSource(translationLocale, "Ready")
+            ? gt("Ready", { $context: "platform status" })
             : props.status.message}
         </p>
       </div>

@@ -2,10 +2,9 @@ import {
   connectionStatusText,
   type EnvironmentConnectionPresentation,
 } from "@t3tools/client-runtime/connection";
+import { msg } from "gt-react";
 
-import { localizeRelayErrorMessage } from "../../cloud/relayFailureReason";
-import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
-import { translateWebSource } from "../../i18n/messages";
+import { m, type MessageResolver } from "~/i18n/messages";
 
 export interface SavedCloudEnvironmentConnectionPresentation {
   readonly buttonLabel: string;
@@ -13,55 +12,54 @@ export interface SavedCloudEnvironmentConnectionPresentation {
   readonly tone: "connected" | "connecting" | "error" | "idle";
 }
 
+/** Components pass `useMessages()` so the label follows a language switch. */
 export function presentSavedCloudEnvironmentConnection(
   connection: EnvironmentConnectionPresentation,
-  locale: ResolvedAppLocale = "en",
+  resolve: MessageResolver = m,
 ): SavedCloudEnvironmentConnectionPresentation {
-  const statusText = localizeRelayErrorMessage(locale, connectionStatusText(connection));
   switch (connection.phase) {
     case "connected":
       return {
-        buttonLabel: translateWebSource(locale, "Connected"),
-        statusText,
+        buttonLabel: resolve(msg("Connected")),
+        statusText: connectionStatusText(connection, resolve),
         tone: "connected",
       };
     case "connecting":
       return {
-        buttonLabel: translateWebSource(locale, "Connecting…"),
-        statusText,
+        buttonLabel: resolve(msg("Connecting…")),
+        statusText: connectionStatusText(connection, resolve),
         tone: "connecting",
       };
     case "reconnecting":
       return {
-        buttonLabel: translateWebSource(
-          locale,
-          connection.awaitingApproval ? "Waiting for approval…" : "Reconnecting…",
-        ),
-        statusText,
+        buttonLabel: connection.awaitingApproval
+          ? resolve(msg("Waiting for approval…"))
+          : resolve(msg("Reconnecting…")),
+        statusText: connectionStatusText(connection, resolve),
         tone: "connecting",
       };
     case "unsupported":
       return {
-        buttonLabel: translateWebSource(locale, "Client not supported"),
-        statusText,
+        buttonLabel: resolve(msg("Client not supported")),
+        statusText: connectionStatusText(connection, resolve),
         tone: "idle",
       };
     case "error":
       return {
-        buttonLabel: translateWebSource(locale, "Connection failed"),
-        statusText,
+        buttonLabel: resolve(msg("Connection failed")),
+        statusText: connectionStatusText(connection, resolve),
         tone: "error",
       };
     case "offline":
       return {
-        buttonLabel: translateWebSource(locale, "Offline"),
-        statusText,
+        buttonLabel: resolve(msg("Offline")),
+        statusText: connectionStatusText(connection, resolve),
         tone: "idle",
       };
     case "available":
       return {
-        buttonLabel: translateWebSource(locale, "Not connected"),
-        statusText,
+        buttonLabel: resolve(msg("Not connected")),
+        statusText: connectionStatusText(connection, resolve),
         tone: "idle",
       };
   }

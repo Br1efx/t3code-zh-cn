@@ -1,5 +1,3 @@
-import { localizeWebChildren } from "~/i18n/localizeWebChildren";
-import { useI18n } from "~/i18n/WebI18nContext";
 import type { ReactNode } from "react";
 
 import { T3Wordmark } from "../T3Wordmark";
@@ -22,22 +20,18 @@ export function StandalonePageHeader({
   readonly title: ReactNode;
   readonly description: ReactNode;
 }) {
-  const { locale } = useI18n();
   return (
     <>
       <div className="flex items-baseline justify-between gap-3 text-muted-foreground">
         <span className="flex items-baseline gap-1.5" role="img" aria-label="T3 Code">
           <T3Wordmark className="h-3 w-auto shrink-0 text-foreground" aria-hidden />
+          {/* oxlint-disable-next-line t3code/no-untranslated-copy -- product wordmark */}
           <span className="text-lg font-medium tracking-tight">Code</span>
         </span>
-        {context ? <span className="text-sm">{localizeWebChildren(locale, context)}</span> : null}
+        {context ? <span className="text-sm">{context}</span> : null}
       </div>
-      <h1 className="mt-6 text-xl leading-tight font-semibold">
-        {localizeWebChildren(locale, title)}
-      </h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        {localizeWebChildren(locale, description)}
-      </p>
+      <h1 className="mt-6 text-xl leading-tight font-semibold">{title}</h1>
+      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
     </>
   );
 }

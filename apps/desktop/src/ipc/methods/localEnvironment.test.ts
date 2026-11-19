@@ -1,4 +1,3 @@
-import * as DesktopTray from "../../window/DesktopTray.ts";
 import { assert, describe, it } from "@effect/vitest";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import * as FileSystem from "effect/FileSystem";
@@ -30,10 +29,6 @@ const layerUnusedLifecycleRuntime = Layer.mergeAll(
     ),
   ),
   Layer.mock(DesktopWindow.DesktopWindow, {}),
-  Layer.mock(DesktopTray.DesktopTray, {
-    markQuitRequested: () => undefined,
-    shouldHideOnClose: () => false,
-  }),
   Layer.mock(ElectronApp.ElectronApp, {}),
   Layer.mock(ElectronTheme.ElectronTheme, {}),
 );

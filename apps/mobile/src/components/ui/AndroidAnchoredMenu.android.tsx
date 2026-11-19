@@ -1,5 +1,3 @@
-import { localizeMenuActions } from "../../i18n/localizeMenuActions";
-import { localizeMobileString } from "../../i18n/mobileStrings";
 import type { MenuAction, MenuComponentProps } from "@react-native-menu/menu";
 import type { ReactNode } from "react";
 import { use, useRef, useState } from "react";
@@ -46,7 +44,6 @@ export type AndroidAnchoredMenuProps = {
 };
 
 export function AndroidAnchoredMenu(props: AndroidAnchoredMenuProps) {
-  const localizedActions = localizeMenuActions(props.actions);
   const { scale, menuWidth: desiredMenuWidth, menuItemHeight } = useAndroidControlSizing();
   const [anchor, setAnchor] = useState<AnchorSnapshot | null>(null);
   const [path, setPath] = useState<readonly MenuAction[]>([]);
@@ -93,7 +90,7 @@ export function AndroidAnchoredMenu(props: AndroidAnchoredMenuProps) {
   });
 
   const parent = path[path.length - 1] ?? null;
-  const levelActions = (parent?.subactions ?? localizedActions).filter(
+  const levelActions = (parent?.subactions ?? props.actions).filter(
     (action) => !(action.attributes?.hidden ?? false),
   );
 
@@ -182,7 +179,7 @@ export function AndroidAnchoredMenu(props: AndroidAnchoredMenuProps) {
                 anchor={windowHinge ? { ...local, x: left, width: menuWidth } : local}
                 menuWidth={menuWidth}
                 actions={levelActions}
-                title={props.title === undefined ? undefined : localizeMobileString(props.title)}
+                title={props.title}
                 parent={parent}
                 onPress={onPressItem}
                 onBack={() => setPath((current) => current.slice(0, -1))}
@@ -213,9 +210,7 @@ export function AndroidAnchoredMenu(props: AndroidAnchoredMenuProps) {
                     anchor={local}
                     menuWidth={menuWidth}
                     actions={levelActions}
-                    title={
-                      props.title === undefined ? undefined : localizeMobileString(props.title)
-                    }
+                    title={props.title}
                     parent={parent}
                     onPress={onPressItem}
                     onBack={() => setPath((current) => current.slice(0, -1))}
