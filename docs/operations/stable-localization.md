@@ -17,4 +17,4 @@ Source validation does not create client artifacts. For a release pass, dispatch
 
 Dispatch **发布已验证的简体中文客户端** only when publishing is requested. It requires the successful candidate run, its exact source SHA, and artifact review. Select the same `client_targets` value as the reviewed build. It verifies provenance and publishes those existing desktop artifacts without rebuilding. Android publication remains separate and requires a signing identity.
 
-Chinese desktop versions have no automatic update feed. Downloads and provenance belong to `Michaelihc/t3code-zh-cn`; the original Chinese repository and official T3 Code releases are upstream sources, not this fork's update channel.
+Chinese desktop versions have no automatic update feed. Downloads and provenance belong to `Br1efx/t3code-zh-cn`; the original Chinese repository and official T3 Code releases are upstream sources, not this fork's update channel.

@@ -1,5 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 
+import { localizeWebChildren } from "~/i18n/localizeWebChildren";
+import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 
 const emptySizeClassName = {
@@ -87,13 +89,17 @@ function EmptyMedia({
   );
 }
 
-function EmptyTitle({ className, ...props }: React.ComponentProps<"div">) {
+function EmptyTitle({ className, children, ...props }: React.ComponentProps<"div">) {
+  const { locale } = useI18n();
   return (
-    <div className={cn("font-semibold text-xl", className)} data-slot="empty-title" {...props} />
+    <div className={cn("font-semibold text-xl", className)} data-slot="empty-title" {...props}>
+      {localizeWebChildren(locale, children)}
+    </div>
   );
 }
 
-function EmptyDescription({ className, ...props }: React.ComponentProps<"p">) {
+function EmptyDescription({ className, children, ...props }: React.ComponentProps<"p">) {
+  const { locale } = useI18n();
   return (
     <div
       className={cn(
@@ -102,7 +108,9 @@ function EmptyDescription({ className, ...props }: React.ComponentProps<"p">) {
       )}
       data-slot="empty-description"
       {...props}
-    />
+    >
+      {localizeWebChildren(locale, children)}
+    </div>
   );
 }
 

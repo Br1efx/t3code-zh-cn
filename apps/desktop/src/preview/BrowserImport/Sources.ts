@@ -10,6 +10,8 @@ import * as Stream from "effect/Stream";
 import { ChildProcess, ChildProcessSpawner } from "effect/process";
 import * as SqlClient from "effect/sql/SqlClient";
 
+import { isZhCn, type ResolvedAppLocale } from "../../i18n/DesktopLocale.ts";
+
 export type BrowserImportEngine = "chromium" | "firefox" | "safari";
 
 export interface BrowserImportPathContext {
@@ -345,6 +347,12 @@ const countProfileCookies = Effect.fnUntraced(function* (
   if (database === undefined) return undefined;
   return yield* Effect.gen(function* () {
     const sql = yield* SqlClient.SqlClient;
+    // readChromiumCookieDatabase imports a razed jar as empty; Firefox has no such reader guard.
+    if (definition.engine !== "firefox") {
+      const tables =
+        yield* sql`select 1 from sqlite_master where type = 'table' and name = 'cookies'`;
+      if (tables.length === 0) return 0;
+    }
     const rows =
       definition.engine === "firefox"
         ? yield* sql`select count(*) as count from moz_cookies where originAttributes = ''`
@@ -380,6 +388,7 @@ const isSafariProfileUuid = (value: string) =>
 const listSafariProfiles = Effect.fnUntraced(function* (
   context: BrowserImportPathContext,
   root: string,
+  locale: ResolvedAppLocale = "en",
 ) {
   const fileSystem = yield* FileSystem.FileSystem;
   const library = context.path.dirname(root);
@@ -401,7 +410,9 @@ const listSafariProfiles = Effect.fnUntraced(function* (
   const profiles: Array<BrowserImportSourceProfile> = [
     {
       directory: ".",
-      name: defaultProfile ? defaultProfile.title?.trim() || "Personal" : "Safari",
+      name: defaultProfile
+        ? defaultProfile.title?.trim() || (isZhCn(locale) ? "个人" : "Personal")
+        : "Safari",
     },
   ];
   const stores = context.path.join(library, "WebKit", "WebsiteDataStore");
@@ -430,13 +441,14 @@ const listSafariProfiles = Effect.fnUntraced(function* (
 const listSourceProfilesInDirectory = Effect.fnUntraced(function* (
   definition: BrowserImportSourceDefinition,
   context: BrowserImportPathContext,
+  locale: ResolvedAppLocale = "en",
 ): Effect.fn.Return<ReadonlyArray<BrowserImportSourceProfile>, never, FileSystem.FileSystem> {
   const fileSystem = yield* FileSystem.FileSystem;
   const root = definition.userDataDirectory(context);
   if (root === undefined) return [];
 
   if (definition.engine === "safari") {
-    return yield* listSafariProfiles(context, root);
+    return yield* listSafariProfiles(context, root, locale);
   }
 
   if (definition.engine === "firefox") {
@@ -509,9 +521,10 @@ const listSourceProfilesInDirectory = Effect.fnUntraced(function* (
 export const listSourceProfiles = Effect.fn("BrowserImportSources.listSourceProfiles")(function* (
   definition: BrowserImportSourceDefinition,
   context: BrowserImportPathContext,
+  locale: ResolvedAppLocale = "en",
 ): Effect.fn.Return<ReadonlyArray<BrowserImportSourceProfile>, never, FileSystem.FileSystem> {
   if (definition.engine !== "firefox" || context.platform !== "linux") {
-    return yield* listSourceProfilesInDirectory(definition, context);
+    return yield* listSourceProfilesInDirectory(definition, context, locale);
   }
 
   const root = definition.userDataDirectory(context);
@@ -522,6 +535,7 @@ export const listSourceProfiles = Effect.fn("BrowserImportSources.listSourceProf
     const found = yield* listSourceProfilesInDirectory(
       { ...definition, userDataDirectory: () => directory },
       context,
+      locale,
     );
     for (const profile of found) {
       const absolute = context.path.resolve(directory, profile.directory);

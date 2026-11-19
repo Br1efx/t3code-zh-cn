@@ -3,16 +3,24 @@ import { EnvironmentId, ProviderInstanceId } from "@t3tools/contracts";
 
 import { ProviderSettingsPanel } from "../components/settings/ProviderSettingsPanel";
 import { useSettingsScope } from "../components/settings/SettingsScopeContext";
+import { translateWebSource } from "../i18n/messages";
+import { useI18n } from "../i18n/WebI18nContext";
 
 function SettingsProvidersRoute() {
+  const { locale: translationLocale } = useI18n();
   const target = Route.useSearch();
   const { environment, scope } = useSettingsScope();
   if (!environment) {
     return (
       <p className="p-8 text-sm text-muted-foreground">
         {scope.kind === "environment"
-          ? `Reconnect ${scope.label} to set up its providers.`
-          : "Connect an environment to set up its providers."}
+          ? translationLocale === "zh-CN"
+            ? `请重新连接 ${scope.label} 后再配置其 AI 服务。`
+            : `Reconnect ${scope.label} to set up its providers.`
+          : translateWebSource(
+              translationLocale,
+              "Connect an environment to set up its providers.",
+            )}
       </p>
     );
   }

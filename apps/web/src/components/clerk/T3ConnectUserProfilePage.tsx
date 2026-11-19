@@ -127,6 +127,8 @@ function T3ConnectEnvironmentRow(props: {
 }
 
 function T3ConnectTunnelUsage() {
+  const { locale } = useI18n();
+  const tx = (source: string) => translateWebSource(locale, source);
   const usage = useManagedTunnelUsage();
   const t3Chat = useT3ChatLink();
   if (usage.used === null || usage.limit === null) return null;
@@ -136,24 +138,39 @@ function T3ConnectTunnelUsage() {
       {usage.upgrade ? (
         <p className="mt-2 text-xs leading-4.5 text-muted-foreground">
           {usage.upgrade === "link" && t3Chat.linkUrl ? (
-            <>
-              Confirm on{" "}
-              <a
-                className="underline"
-                href={t3Chat.linkUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                t3.chat
-              </a>
-              , then select Refresh.
-            </>
+            locale === "zh-CN" ? (
+              <>
+                请前往{" "}
+                <a
+                  className="underline"
+                  href={t3Chat.linkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {translateWebSource(locale, "t3.chat")}
+                </a>{" "}
+                确认绑定，完成后点击“刷新”。
+              </>
+            ) : (
+              <>
+                {translateWebSource(locale, "Confirm on")}{" "}
+                <a
+                  className="underline"
+                  href={t3Chat.linkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {translateWebSource(locale, "t3.chat")}
+                </a>
+                {translateWebSource(locale, ", then select Refresh.")}
+              </>
+            )
           ) : (
             <>
-              {tunnelUpgradeCopy(usage.upgrade)}{" "}
+              {tx(tunnelUpgradeCopy(usage.upgrade))}{" "}
               {usage.upgrade === "link" ? (
                 <InlineButton disabled={t3Chat.pending !== null} onClick={() => void t3Chat.link()}>
-                  {t3Chat.pending === "link" ? "Opening…" : "Link T3 Chat"}
+                  {t3Chat.pending === "link" ? tx("Opening…") : tx("Link T3 Chat")}
                 </InlineButton>
               ) : (
                 <a
@@ -162,7 +179,7 @@ function T3ConnectTunnelUsage() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Upgrade on T3 Chat
+                  {tx("Upgrade on T3 Chat")}
                 </a>
               )}
             </>
@@ -174,7 +191,6 @@ function T3ConnectTunnelUsage() {
 }
 
 export function T3ConnectUserProfilePage() {
-  const { locale: translationLocale } = useI18n();
   const { locale } = useI18n();
   const tx = (source: string) => translateWebSource(locale, source);
 
@@ -272,7 +288,7 @@ export function T3ConnectUserProfilePage() {
 
   return (
     <ClerkUserProfilePage
-      title={translateWebSource(translationLocale, "T3 Connect")}
+      title={tx("T3 Connect")}
       description={tx(
         "Environments registered to your account. Connections on this device are managed in Settings.",
       )}

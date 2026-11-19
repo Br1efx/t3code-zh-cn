@@ -16,6 +16,7 @@ interface MediaVideoPlayerProps {
   readonly src: string | null;
   readonly label: string;
   readonly sourceFailed?: boolean | undefined;
+  readonly unavailableDetail?: string | undefined;
   readonly originalUrl?: string | undefined;
   readonly revision?: string | null | undefined;
   readonly preload?: "visible" | "metadata" | undefined;
@@ -34,6 +35,7 @@ export function MediaVideoPlayer({
   src: latestSrc,
   label,
   sourceFailed = false,
+  unavailableDetail,
   originalUrl,
   revision = null,
   preload = "visible",
@@ -139,10 +141,9 @@ export function MediaVideoPlayer({
             stateClassName,
           )}
         >
-          <span className="inline-flex items-center gap-1.5">
+          <span data-thread-find-ignore className="inline-flex items-center gap-1.5">
             <TriangleAlertIcon aria-hidden className="size-3.5 shrink-0" />
-            {t("media.videoUnavailable")}
-            {label ? ` · ${label}` : ""}
+            {[t("media.videoUnavailable"), label, unavailableDetail].filter(Boolean).join(" · ")}
           </span>
           <span className="flex flex-wrap items-center justify-center gap-2">
             {latestSrc !== null || onRetry ? (
@@ -208,7 +209,7 @@ export function MediaVideoPlayer({
       {onOpen ? (
         <button
           type="button"
-          aria-label={label ? `Play ${label}` : "Play video"}
+          aria-label={label ? `Play ${label}` : translateWebSource(uiLocale, "Play video")}
           onClick={onOpen}
           className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-lg focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring"
         >

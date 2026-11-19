@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useAtomValue } from "@effect/atom-react";
@@ -164,7 +165,7 @@ export function SimlockDeviceHostEditor(props: {
               />
             </label>
             <label className="block space-y-1.5 text-sm">
-              <span>Gateway URL</span>
+              <span>{translateWebSource(translationLocale, "Gateway URL")}</span>
               <Input
                 required
                 type="url"
@@ -203,11 +204,21 @@ export function SimlockDeviceHostEditor(props: {
                 />
               ))}
               <p className="text-xs text-muted-foreground">
-                Leases, drives, and streams devices. Create one{several ? " per environment" : ""}{" "}
-                with <code>simlock --gateway token create --role agent</code>, or leave it blank to
-                add it later. A blank token uses the machine's{" "}
-                <code>AGENT_DEVICE_DAEMON_AUTH_TOKEN</code> when its{" "}
-                <code>AGENT_DEVICE_DAEMON_BASE_URL</code> is this gateway.
+                {translateWebSource(
+                  translationLocale,
+                  "Leases, drives, and streams devices. Create one",
+                )}
+                {several ? localizeWebString(translationLocale, " per environment") : ""}{" "}
+                {localizeWebString(translationLocale, "with ")}
+                <code>simlock --gateway token create --role agent</code>
+                {translateWebSource(
+                  translationLocale,
+                  ", or leave it blank to add it later. A blank token uses the machine's",
+                )}{" "}
+                <code>AGENT_DEVICE_DAEMON_AUTH_TOKEN</code>
+                {localizeWebString(translationLocale, " when its")}{" "}
+                <code>AGENT_DEVICE_DAEMON_BASE_URL</code>
+                {localizeWebString(translationLocale, " is this gateway.")}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
@@ -215,8 +226,16 @@ export function SimlockDeviceHostEditor(props: {
               {limit("maxLeaseMinutes", "Lease minutes", 5, 240)}
             </div>
             <p className="text-xs text-muted-foreground">
-              A lease ends after the lease minutes even while in use.
-              {props.isNew ? null : " Saving restarts this host, which releases its devices."}
+              {translateWebSource(
+                translationLocale,
+                "A lease ends after the lease minutes even while in use.",
+              )}
+              {props.isNew
+                ? null
+                : localizeWebString(
+                    translationLocale,
+                    " Saving restarts this host, which releases its devices.",
+                  )}
             </p>
             {problem === null || !gatewayUrl ? null : (
               <p className="text-xs text-destructive" role="alert">
@@ -307,7 +326,8 @@ function SimlockTokenField(props: {
         <SecretSourceInput
           key={inputKey}
           id={id}
-          aria-label="Agent token"
+          aria-label={translateWebSource(translationLocale, "Agent token")}
+          environmentId={props.environmentId}
           className="min-w-0 flex-1"
           configured={props.token.kind === "saved" && typeof props.saved === "string"}
           value={

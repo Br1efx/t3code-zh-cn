@@ -1,5 +1,7 @@
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover";
 
+import { localizeWebChildren } from "~/i18n/localizeWebChildren";
+import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 
 import { renderClosingPositioner } from "./closing-positioner";
@@ -94,10 +96,12 @@ function PopoverPopup({
           className={cn(
             "relative flex h-(--popup-height,auto) w-(--popup-width,auto) origin-(--transform-origin) rounded-lg text-popover-foreground outline-none transition-[width,height,scale,opacity] before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] has-data-[slot=calendar]:rounded-xl has-data-[slot=calendar]:before:rounded-[calc(var(--radius-xl)-1px)] data-ending-style:scale-98 data-starting-style:scale-98 data-ending-style:opacity-0 data-starting-style:opacity-0 dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",
             variant !== "panel" && "dropdown-glass",
+            // Without it, Chromium re-snaps text after the scale-in at fractional zoom, so hovered rows jump a pixel.
+            "will-change-[scale]",
             // Electron drag hit-testing ignores z-index; popups over a drag region would swallow hover.
             "[-webkit-app-region:no-drag]",
             tooltipStyle &&
-              "w-fit text-balance rounded-md text-xs shadow-md/5 before:rounded-[calc(var(--radius-md)-1px)]",
+              "w-fit rounded-md text-xs shadow-md/5 before:rounded-[calc(var(--radius-md)-1px)]",
             !tooltipStyle &&
               variant !== "panel" &&
               "shadow-[0_16px_40px_-18px_rgb(0_0_0/55%)] dark:shadow-[0_18px_44px_-18px_rgb(0_0_0/80%)]",
@@ -133,13 +137,16 @@ function PopoverClose({ ...props }: PopoverPrimitive.Close.Props) {
   return <PopoverPrimitive.Close data-slot="popover-close" {...props} />;
 }
 
-function PopoverTitle({ className, ...props }: PopoverPrimitive.Title.Props) {
+function PopoverTitle({ className, children, ...props }: PopoverPrimitive.Title.Props) {
+  const { locale } = useI18n();
   return (
     <PopoverPrimitive.Title
       className={cn("font-semibold text-sm leading-none", className)}
       data-slot="popover-title"
       {...props}
-    />
+    >
+      {localizeWebChildren(locale, children)}
+    </PopoverPrimitive.Title>
   );
 }
 

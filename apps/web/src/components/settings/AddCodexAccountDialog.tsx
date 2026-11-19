@@ -93,7 +93,9 @@ export function AddCodexAccountDialog({
     >
       <WizardPopup size="wide">
         <WizardHeader
-          title={instanceId ? displayName : "Add ChatGPT account"}
+          title={
+            instanceId ? displayName : translateWebSource(translationLocale, "Add ChatGPT account")
+          }
           description="Each account has its own Codex instance and sign-in. Choose the other account on the sign-in page."
         />
         <WizardPanel>

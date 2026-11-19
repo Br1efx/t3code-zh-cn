@@ -18,16 +18,24 @@ import type * as Electron from "electron";
 
 import * as ElectronWindow from "../../electron/ElectronWindow.ts";
 import * as ElectronDialog from "../../electron/ElectronDialog.ts";
+import {
+  isZhCn,
+  OptionalDesktopLocaleField,
+  resolveCurrentDesktopLocale,
+  withDesktopLocale,
+} from "../../i18n/DesktopLocale.ts";
 import * as DesktopSnapShot from "../../snapShot/DesktopSnapShot.ts";
 import * as IpcChannels from "../channels.ts";
 import * as DesktopIpc from "../DesktopIpc.ts";
 
 class SnapShotIpcUnauthorizedSenderError extends Schema.TaggedError<SnapShotIpcUnauthorizedSenderError>()(
   "SnapShotIpcUnauthorizedSenderError",
-  {},
+  {
+    locale: OptionalDesktopLocaleField,
+  },
 ) {
   override get message(): string {
-    return "Snapshot request was rejected.";
+    return isZhCn(this.locale) ? "已拒绝快捷截图请求。" : "Snapshot request was rejected.";
   }
 }
 
@@ -39,7 +47,8 @@ const ensureTrustedSnapShotSender = Effect.fn("desktop.ipc.snapShot.ensureTruste
       Option.isNone(main) ||
       main.value.webContents.id !== event.sender.id
     ) {
-      return yield* new SnapShotIpcUnauthorizedSenderError();
+      const locale = yield* resolveCurrentDesktopLocale;
+      return yield* new SnapShotIpcUnauthorizedSenderError(withDesktopLocale(locale));
     }
     return main.value;
   },
@@ -113,12 +122,13 @@ export const previewSnapShotConfig = DesktopIpc.makeIpcMethod({
     let selectedPath: string | undefined;
     if (request.chooseFile) {
       const state = yield* capture.state;
+      const locale = yield* resolveCurrentDesktopLocale;
       const paths = yield* (yield* ElectronDialog.ElectronDialog).pickFiles({
         owner: Option.some(window),
         defaultPath: Option.fromUndefinedOr(state.shortcutConfigPath),
         filters: [
           {
-            name: "Desktop config",
+            name: isZhCn(locale) ? "桌面配置文件" : "Desktop config",
             extensions: state.linuxBackend === "niri" ? ["kdl"] : ["conf", "lua"],
           },
         ],

@@ -1,5 +1,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import { ChevronDownIcon } from "lucide-react";
+import { localizeOptionalWebAttr, localizeWebChildren } from "~/i18n/localizeWebChildren";
+import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "../../lib/utils";
 
 const tones = {
@@ -14,6 +16,7 @@ export function CollapsibleSectionHeader({
   tone = "muted",
   variant = "default",
   accessory,
+  "aria-label": ariaLabel,
   ...buttonProps
 }: Omit<ComponentProps<"button">, "className" | "style" | "aria-expanded"> & {
   expanded: boolean;
@@ -21,18 +24,20 @@ export function CollapsibleSectionHeader({
   variant?: "default" | "panel";
   accessory?: ReactNode;
 }) {
+  const { locale } = useI18n();
   return (
     <button
       {...buttonProps}
       type="button"
       aria-expanded={expanded}
+      aria-label={localizeOptionalWebAttr(locale, ariaLabel)}
       className={cn(
         "flex h-8 w-full cursor-pointer items-center gap-2 rounded-md text-left text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/70",
         variant === "panel" ? "ps-2 pe-2.5" : "px-2",
         tones[tone].label,
       )}
     >
-      <span className="min-w-0 truncate">{children}</span>
+      <span className="min-w-0 truncate">{localizeWebChildren(locale, children)}</span>
       <span
         aria-hidden
         // A header with a trailing count drops its rule so it doesn't read as a leader.
@@ -48,7 +53,10 @@ export function CollapsibleSectionHeader({
 }
 
 export function SectionHeaderStatus({ children }: { children: ReactNode }) {
+  const { locale } = useI18n();
   return (
-    <span className="shrink-0 text-3xs leading-none text-destructive-foreground">{children}</span>
+    <span className="shrink-0 text-3xs leading-none text-destructive-foreground">
+      {localizeWebChildren(locale, children)}
+    </span>
   );
 }

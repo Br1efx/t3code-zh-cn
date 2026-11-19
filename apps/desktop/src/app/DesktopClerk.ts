@@ -19,6 +19,7 @@ import { clerkFrontendApiHostnameFromPublishableKey } from "@t3tools/shared/rela
 import * as ElectronApp from "../electron/ElectronApp.ts";
 import * as ElectronProtocol from "../electron/ElectronProtocol.ts";
 import * as ElectronWindow from "../electron/ElectronWindow.ts";
+import * as DesktopLocale from "../i18n/DesktopLocale.ts";
 import * as DesktopUserData from "./DesktopUserData.ts";
 import * as DesktopEnvironment from "./DesktopEnvironment.ts";
 import { openClerkTokenStorage } from "./ClerkTokenStore.ts";
@@ -177,17 +178,22 @@ export const make = Effect.gen(function* () {
         void runPromise(
           Effect.gen(function* () {
             yield* electronApp.whenReady;
+            const locale = yield* DesktopLocale.resolveCurrentDesktopLocale;
+            const isZh = DesktopLocale.isZhCn(locale);
             yield* Effect.tryPromise({
-              try: () =>
+              try: (signal) =>
                 receiveCodexAuthCallback(
                   request.authorizationUrl,
                   (url) => runPromise(shell.openExternal(url)),
                   (callbackUrl) => codexAuthDeliveryUrl(request, callbackUrl),
+                  signal,
+                  locale,
                 ),
               catch: () =>
                 new CodexAuthCallbackError({
-                  detail:
-                    "Could not receive hosted web ChatGPT sign-in. Retry or use the redirect URL in the web app.",
+                  detail: isZh
+                    ? "无法接收网页端发起的 ChatGPT 登录结果，请重试或在网页端粘贴跳转网址。"
+                    : "Could not receive hosted web ChatGPT sign-in. Retry or use the redirect URL in the web app.",
                 }),
             });
           }).pipe(

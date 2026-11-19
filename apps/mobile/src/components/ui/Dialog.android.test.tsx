@@ -87,9 +87,9 @@ it("localizes native dialog actions without changing their callbacks", () => {
   act(() =>
     Dialog.confirm({ title: "Commit changes", confirmText: "Commit", onConfirm, onCancel }),
   );
-  expect(container.textContent).toContain("提交更改");
+  expect(container.textContent).toContain("提交改动");
   const buttons = Array.from(container.querySelectorAll("button"));
-  expect(buttons.map((button) => button.textContent)).toEqual(["取消", "提交"]);
+  expect(buttons.map((button) => button.textContent)).toEqual(["取消", "提交保存"]);
   act(() => buttons[1]!.click());
   expect(onConfirm).toHaveBeenCalledOnce();
   expect(onCancel).not.toHaveBeenCalled();
@@ -115,7 +115,7 @@ it("presents a dialog requested before any Host mounted", () => {
 
   const { container } = mountHost();
 
-  expect(container.textContent).toContain("无法导入共享内容");
+  expect(container.textContent).toContain("未能导入分享内容");
 });
 
 it("keeps a dialog raised while the activity is replaced", () => {
@@ -126,6 +126,15 @@ it("keeps a dialog raised while the activity is replaced", () => {
   act(() => previous.root.unmount());
 
   expect(current.container.textContent).toContain("Shared content imported");
+});
+
+it("tells a replaced alert it was dismissed", () => {
+  mountHost();
+  const onDismiss = vi.fn();
+  act(() => Dialog.alert("Older", undefined, [{ text: "OK" }], { onDismiss }));
+  act(() => Dialog.alert("Newer", undefined, [{ text: "OK" }]));
+
+  expect(onDismiss).toHaveBeenCalledOnce();
 });
 
 it("ignores a late action from a dialog that a newer one replaced", () => {

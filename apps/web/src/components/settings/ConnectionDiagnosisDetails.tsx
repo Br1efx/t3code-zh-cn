@@ -95,7 +95,7 @@ function RetryCountdownTicker({ retryAt }: { readonly retryAt: number }) {
           : "正在重试"
         : seconds > 0
           ? `retrying in ${seconds}s`
-          : "retrying"}
+          : translateWebSource(locale, "retrying")}
     </>
   );
 }
@@ -162,11 +162,6 @@ export function ConnectionDiagnosisPanel({
   const { locale: sourceLocale } = useI18n();
   const { copyToClipboard } = useCopyToClipboard({
     target: translateWebSource(sourceLocale, "connection diagnostics"),
-    onCopy: () =>
-      toastManager.add({
-        type: "success",
-        title: translateWebSource(sourceLocale, "Diagnostics copied"),
-      }),
     onError: (error) =>
       toastManager.add(
         stackedThreadToast({

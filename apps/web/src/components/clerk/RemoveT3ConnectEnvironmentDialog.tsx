@@ -42,6 +42,7 @@ export function RemoveT3ConnectEnvironmentDialog({
     setShown({ label: environmentLabel, registration });
   }
   const openAccountPage = accountPage.open;
+  const accountPageLabel = translateWebSource(translationLocale, "T3 Connect settings");
   const accountPageLink = openAccountPage ? (
     <InlineButton
       onClick={() => {
@@ -49,10 +50,10 @@ export function RemoveT3ConnectEnvironmentDialog({
         openAccountPage();
       }}
     >
-      T3 Connect settings
+      {accountPageLabel}
     </InlineButton>
   ) : (
-    "T3 Connect settings"
+    accountPageLabel
   );
 
   return (
@@ -66,19 +67,36 @@ export function RemoveT3ConnectEnvironmentDialog({
         <AlertDialogPopup>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {translateWebSource(translationLocale, "Remove")} {shown.label} from this device?
+              {translationLocale === "zh-CN" ? (
+                `要从当前设备移除 ${shown.label} 吗？`
+              ) : (
+                <>
+                  {translateWebSource(translationLocale, "Remove")} {shown.label} from this device?
+                </>
+              )}
             </AlertDialogTitle>
             <AlertDialogDescription>
               This forgets its pairing, credentials, and cached threads here.
             </AlertDialogDescription>
             <AlertDialogDescription>
               {shown.registration === "registered" ? (
-                <>
-                  It stays on your T3 Connect account and keeps its host space. Deregister it in{" "}
-                  {accountPageLink} to free it.
-                </>
+                translationLocale === "zh-CN" ? (
+                  <>
+                    该设备仍会保留在你的 T3 Connect 账号中并占用远程名额。如需释放名额，请前往{" "}
+                    {accountPageLink} 取消注册。
+                  </>
+                ) : (
+                  <>
+                    It stays on your T3 Connect account and keeps its host space. Deregister it in{" "}
+                    {accountPageLink} to free it.
+                  </>
+                )
               ) : shown.registration === "unregistered" ? (
-                "It's no longer on your T3 Connect account."
+                translateWebSource(translationLocale, "It's no longer on your T3 Connect account.")
+              ) : translationLocale === "zh-CN" ? (
+                <>
+                  这不会修改你的 T3 Connect 账号。如需在账号中取消注册，请前往 {accountPageLink}。
+                </>
               ) : (
                 <>
                   This doesn't change your T3 Connect account. To deregister it there, use{" "}

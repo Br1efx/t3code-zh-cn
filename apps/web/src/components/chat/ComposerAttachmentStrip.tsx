@@ -63,10 +63,11 @@ function ComposerAttachmentUploadProgress({
 }
 
 function ComposerImageFallback() {
+  const { locale: i18nLocale } = useI18n();
   return (
     <span
       role="img"
-      aria-label="Image attachment"
+      aria-label={translateWebSource(i18nLocale, "Image attachment")}
       className="flex size-full items-center justify-center p-3 text-secondary-label"
     >
       <ImageIcon aria-hidden="true" className="size-4" />

@@ -18,6 +18,7 @@ import {
   usePrimarySettingsAvailable,
 } from "../../hooks/useSettings";
 import { cn } from "../../lib/utils";
+import { localizeWebChildren } from "../../i18n/localizeWebChildren";
 import { useI18n } from "../../i18n/WebI18nContext";
 import { translateWebSource } from "../../i18n/messages";
 import { WorkspacePageContainer, type WorkspacePageWidth } from "../WorkspacePageContainer";
@@ -242,7 +243,7 @@ export function SettingsSection({
       ) : (
         <div
           data-settings-scroll-target
-          className="flex min-h-7 items-start justify-between gap-4 px-3 sm:px-4"
+          className="flex min-h-7 flex-wrap items-start justify-between gap-x-4 gap-y-1 px-3 sm:px-4"
         >
           <div className="flex min-w-0 items-center gap-1">
             <h2 className="flex min-h-7 items-center gap-2 text-base font-semibold text-foreground">
@@ -251,7 +252,9 @@ export function SettingsSection({
             </h2>
             {titleAction}
           </div>
-          <div className="flex min-h-7 min-w-7 items-center justify-end">{headerAction}</div>
+          {headerAction ? (
+            <div className="flex min-h-7 min-w-7 items-center justify-end">{headerAction}</div>
+          ) : null}
         </div>
       )}
       <SettingsGroup data-settings-scroll-target={hideTitle ? "" : undefined} variant={variant}>
@@ -268,13 +271,14 @@ export function SettingsUnavailableGroup({
   children: ReactNode;
   message?: ReactNode;
 }) {
+  const { locale } = useI18n();
   if (message === undefined) return children;
 
   return (
     <div className="border-border/60 bg-muted/20 py-1.5">
       <div className="flex items-start gap-2 px-3 py-2 text-xs leading-relaxed text-muted-foreground sm:px-4">
         <InfoIcon className="mt-0.5 size-3.5 shrink-0 text-warning" />
-        <p>{message}</p>
+        <p>{localizeWebChildren(locale, message)}</p>
       </div>
       <div className="[&_h3]:opacity-64 [&_p]:opacity-64">{children}</div>
     </div>
@@ -315,6 +319,7 @@ export function SettingsRow({
   onResetOverride,
   control,
   serverScoped = false,
+  devicePreference = false,
   settingKeys = EMPTY_SETTING_KEYS,
   managedPaths = EMPTY_MANAGED_PATHS,
   mixed: mixedOverride,
@@ -330,6 +335,8 @@ export function SettingsRow({
   onResetOverride?: () => void;
   control?: ReactNode;
   serverScoped?: boolean;
+  /** Saved on this device, so a project cannot override it and the row is read-only there. */
+  devicePreference?: boolean;
   settingKeys?: readonly (keyof ServerSettings)[];
   /** Dot paths inside a setting, such as `storageCleanup.logsAfterDays`, an administrator can lock. */
   managedPaths?: readonly string[];
@@ -375,6 +382,7 @@ export function SettingsRow({
     context !== null && (context.scope.kind === "project" || context.scope.kind === "checkout");
   const scopedKeys = settingKeys.filter(isProjectScopedSettingKey);
   const environmentWide = isProjectScope && serverScoped && scopedKeys.length === 0;
+  const deviceReadOnly = isProjectScope && devicePreference;
   const mixed =
     mixedOverride ?? (context !== null && scopedSettingsAreMixed(context.targets, settingKeys));
   const source =
@@ -398,8 +406,10 @@ export function SettingsRow({
   );
   const overridingProjects = isProjectScope ? [] : projectOverrides(context, scopedKeys);
   const renderedReset =
-    unavailable || managedBy !== undefined || managed !== undefined ? null : isProjectScope &&
-      scopedKeys.length > 0 ? (
+    unavailable ||
+    deviceReadOnly ||
+    managedBy !== undefined ||
+    managed !== undefined ? null : isProjectScope && scopedKeys.length > 0 ? (
       source === "project" || source === "mixed" ? (
         <SettingResetButton
           label={typeof title === "string" ? title : "override"}
@@ -427,32 +437,38 @@ export function SettingsRow({
           {control}
         </div>
       </TooltipTrigger>
-      <TooltipPopup side="top">{message}</TooltipPopup>
+      <TooltipPopup side="top">{translateWebSource(locale, message)}</TooltipPopup>
     </Tooltip>
   );
+  const unwritableTargetLabel = context
+    ? context.connectedEnvironments
+        .filter((target) => !writableIds.has(target.environmentId))
+        .map((target) => target.label)
+        .join(", ") || (locale === "zh-CN" ? "所选运行设备" : "the selected environment")
+    : (primaryEnvironment?.label ??
+      (locale === "zh-CN" ? "主运行设备" : "the primary environment"));
   const renderedControl =
     managed !== undefined && control
       ? inertControl(managed)
       : managedBy !== undefined && control
-        ? inertControl(`Managed by ${managedBy}.`)
+        ? inertControl(
+            locale === "zh-CN" ? `由 ${managedBy} 统一管理。` : `Managed by ${managedBy}.`,
+          )
         : unavailable && control
           ? inertControl(
               !canWriteSettings
-                ? `This connection lacks permission to change settings on ${
-                    context
-                      ? context.connectedEnvironments
-                          .filter((target) => !writableIds.has(target.environmentId))
-                          .map((target) => target.label)
-                          .join(", ") || "the selected environment"
-                      : (primaryEnvironment?.label ?? "the primary environment")
-                  }.`
+                ? locale === "zh-CN"
+                  ? `当前连接没有权限修改 ${unwritableTargetLabel} 上的设置。`
+                  : `This connection lacks permission to change settings on ${unwritableTargetLabel}.`
                 : context
                   ? "Reconnect the selected environment to change this setting."
                   : PRIMARY_SETTINGS_UNAVAILABLE_MESSAGE,
             )
           : environmentWide && control
             ? inertControl("Environment-wide setting. Select an environment to change it.")
-            : control;
+            : deviceReadOnly && control
+              ? inertControl("Saved on this device. Select All projects to change it.")
+              : control;
   const customized =
     context !== null &&
     settingKeys.some((key) =>
@@ -465,16 +481,31 @@ export function SettingsRow({
       }),
     );
   const inheritance: { state: SettingInheritanceState; summary: string } = mixed
-    ? { state: "mixed", summary: "Mixed across selected environments" }
+    ? {
+        state: "mixed",
+        summary: translateWebSource(locale, "Mixed across selected environments"),
+      }
     : source === "project"
-      ? { state: "overridden", summary: "Overridden for this project" }
+      ? { state: "overridden", summary: translateWebSource(locale, "Overridden for this project") }
       : source === "t3.json"
-        ? { state: "inherited", summary: "Inherited from the repository's t3.json" }
+        ? {
+            state: "inherited",
+            summary: translateWebSource(locale, "Inherited from the repository's t3.json"),
+          }
         : source === "environment" && scopedKeys.length > 0
-          ? { state: "inherited", summary: `Inherited from ${inheritedFrom}` }
+          ? {
+              state: "inherited",
+              summary:
+                locale === "zh-CN"
+                  ? `继承自${inheritedFrom === "environment" ? "运行设备" : ` ${inheritedFrom}`}`
+                  : `Inherited from ${inheritedFrom}`,
+            }
           : customized
-            ? { state: "environment", summary: "Set on the environment" }
-            : { state: "default", summary: "Built-in default" };
+            ? {
+                state: "environment",
+                summary: translateWebSource(locale, "Set on the environment"),
+              }
+            : { state: "default", summary: translateWebSource(locale, "Built-in default") };
   const renderedInheritance =
     context && serverScoped && settingKeys.length > 0 ? (
       <SettingInheritance
@@ -492,10 +523,10 @@ export function SettingsRow({
           : {})}
       />
     ) : null;
-  const renderedTitle = typeof title === "string" ? translateWebSource(locale, title) : title;
+  const renderedTitle = localizeWebChildren(locale, title);
   const renderedDescription =
-    typeof description === "string" ? translateWebSource(locale, description) : description;
-  const renderedStatus = typeof status === "string" ? translateWebSource(locale, status) : status;
+    description !== undefined ? localizeWebChildren(locale, description) : undefined;
+  const renderedStatus = status !== undefined ? localizeWebChildren(locale, status) : undefined;
 
   return (
     <div
@@ -588,7 +619,7 @@ export function SettingResetButton({
           </Button>
         }
       />
-      <TooltipPopup side="top">{tooltip}</TooltipPopup>
+      <TooltipPopup side="top">{translateWebSource(locale, tooltip)}</TooltipPopup>
     </Tooltip>
   );
 }

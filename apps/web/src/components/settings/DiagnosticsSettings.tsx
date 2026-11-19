@@ -35,18 +35,16 @@ import { useRelativeTimeState } from "../../hooks/useRelativeTimeState";
 import { useEnvironmentQuery } from "../../state/query";
 import { serverEnvironment } from "../../state/server";
 import { useCopyToClipboard } from "../../hooks/useCopyToClipboard";
-import { useI18n } from "../../i18n/WebI18nContext";
-import { splitWebTranslation } from "../../i18n/WebI18nContext";
+import { splitWebTranslation, useI18n, type WebTranslate } from "../../i18n/WebI18nContext";
 import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
 import { Toggle, ToggleGroup } from "../ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { toastManager } from "../ui/toast";
+import { formatDiagnosticsDuration } from "./DiagnosticsSettings.logic";
 import { ExpandableText } from "./ExpandableText";
-import {
-  ResourceTelemetryDiagnostics,
-  translateDiagnosticsRuntimeMessage,
-} from "./ResourceTelemetryDiagnostics";
+import { ResourceTelemetryDiagnostics } from "./ResourceTelemetryDiagnostics";
+import { formatCpuTime } from "./ResourceTelemetryDiagnostics.logic";
 import { SettingsPageContainer, SettingsSection } from "./settingsLayout";
 import { useAtomCommand } from "../../state/use-atom-command";
 import { useSettingsScope } from "./SettingsScopeContext";
@@ -54,13 +52,15 @@ import { TelemetryExportSettings } from "./TelemetryExportSettings";
 
 const NUMBER_FORMAT = new Intl.NumberFormat();
 
-function formatCount(value: number): string {
-  return NUMBER_FORMAT.format(value);
+function translateDiagnosticsRuntimeMessage(message: string, t: WebTranslate): string {
+  const binaryMissing = /^Resource monitor binary was not found for (.+)\.$/u.exec(message);
+  return binaryMissing
+    ? t("diagnostics.resource.binaryMissing", { platform: binaryMissing[1] ?? "" })
+    : message;
 }
 
-function formatDuration(value: number): string {
-  if (value < 1_000) return `${Math.round(value)} ms`;
-  return `${(value / 1_000).toFixed(value >= 10_000 ? 1 : 2).replace(/\.0+$/, "")} s`;
+function formatCount(value: number): string {
+  return NUMBER_FORMAT.format(value);
 }
 
 function RelativeTimeNoWrap(props: { value: DateTime.Utc }) {
@@ -407,7 +407,8 @@ function ProcessDiagnosticsTable({
             {visibleProcesses.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-4 text-xs text-muted-foreground sm:px-5">
-                  {emptyLabel ?? "No live descendant processes found."}
+                  {emptyLabel ??
+                    translateWebSource(translationLocale, "No live descendant processes found.")}
                 </td>
               </tr>
             ) : null}
@@ -463,13 +464,6 @@ const RESOURCE_HISTORY_WINDOWS = [
   { label: "30m", windowMs: 30 * 60_000, bucketMs: 2 * 60_000 },
   { label: "1h", windowMs: 60 * 60_000, bucketMs: 5 * 60_000 },
 ] as const;
-
-function formatCpuTime(seconds: number): string {
-  if (seconds < 60) return `${seconds.toFixed(seconds >= 10 ? 1 : 2).replace(/\.0+$/, "")}s`;
-  const minutes = seconds / 60;
-  if (minutes < 60) return `${minutes.toFixed(minutes >= 10 ? 1 : 2).replace(/\.0+$/, "")}m`;
-  return `${(minutes / 60).toFixed(2).replace(/\.0+$/, "")}h`;
-}
 
 function formatShortProcessName(command: string): string {
   const name = formatProcessName(command);
@@ -573,9 +567,10 @@ function ResourceHistoryWindowSelector({
   selectedWindowMs: number;
   onSelect: (windowMs: number) => void;
 }) {
+  const { locale: i18nLocale } = useI18n();
   return (
     <ToggleGroup
-      aria-label="Process history period"
+      aria-label={translateWebSource(i18nLocale, "Process history period")}
       variant="segmented"
       value={[String(selectedWindowMs)]}
       onValueChange={(next) => {
@@ -643,7 +638,9 @@ function ProcessResourceHistoryTable({
               <th className="px-3 py-2 text-right font-semibold">
                 {translateWebSource(translationLocale, "Peak")}
               </th>
-              <th className="px-3 py-2 text-right font-semibold">Max Mem</th>
+              <th className="px-3 py-2 text-right font-semibold">
+                {translateWebSource(translationLocale, "Max Mem")}
+              </th>
               <th className="px-3 py-2 font-semibold">
                 {translateWebSource(translationLocale, "Command")}
               </th>
@@ -981,9 +978,9 @@ function DiagnosticsSettingsBody() {
       <SettingsPageContainer>
         <p className="text-sm text-muted-foreground">
           {environmentId === null
-            ? "Connect an environment to see diagnostics."
+            ? translateWebSource(locale, "Connect an environment to see diagnostics.")
             : diagnosticsAccess.isPending
-              ? "Checking diagnostics access…"
+              ? translateWebSource(locale, "Checking diagnostics access…")
               : diagnosticsAccess.error}
         </p>
       </SettingsPageContainer>
@@ -1095,7 +1092,7 @@ function DiagnosticsSettingsBody() {
               resourceData
                 ? resourceData.sampleIntervalMs === 0
                   ? translateWebSource(locale, "On demand")
-                  : formatDuration(resourceData.sampleIntervalMs)
+                  : formatDiagnosticsDuration(resourceData.sampleIntervalMs)
                 : "..."
             }
           />
@@ -1180,7 +1177,7 @@ function DiagnosticsSettingsBody() {
             tooltip={
               data
                 ? t("diagnostics.tooltip.slowSpansValue", {
-                    duration: formatDuration(data.slowSpanThresholdMs),
+                    duration: formatDiagnosticsDuration(data.slowSpanThresholdMs),
                   })
                 : t("diagnostics.tooltip.slowSpans")
             }
@@ -1246,7 +1243,7 @@ function DiagnosticsSettingsBody() {
                   <ExpandableText text={failure.cause} />
                 </td>
                 <td className="px-4 py-3 align-top font-mono tabular-nums">
-                  {formatDuration(failure.durationMs)}
+                  {formatDiagnosticsDuration(failure.durationMs)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 align-top font-mono tabular-nums text-muted-foreground last:sm:pr-5">
                   <RelativeTimeNoWrap value={failure.endedAt} />
@@ -1322,7 +1319,7 @@ function DiagnosticsSettingsBody() {
                   {span.name}
                 </td>
                 <td className="px-4 py-3 align-top font-mono tabular-nums">
-                  {formatDuration(span.durationMs)}
+                  {formatDiagnosticsDuration(span.durationMs)}
                 </td>
                 <td className="w-px whitespace-nowrap px-4 py-3 align-top font-mono tabular-nums text-muted-foreground">
                   <RelativeTimeNoWrap value={span.endedAt} />
@@ -1448,10 +1445,10 @@ function DiagnosticsSettingsBody() {
                   {formatCount(span.failureCount)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 align-top font-mono tabular-nums">
-                  {formatDuration(span.averageDurationMs)}
+                  {formatDiagnosticsDuration(span.averageDurationMs)}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 align-top font-mono tabular-nums last:sm:pr-5">
-                  {formatDuration(span.maxDurationMs)}
+                  {formatDiagnosticsDuration(span.maxDurationMs)}
                 </td>
               </tr>
             ))}

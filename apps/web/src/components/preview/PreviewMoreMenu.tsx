@@ -8,6 +8,7 @@ import {
   Menu,
   MenuItem,
   MenuPopup,
+  MenuShortcut,
   MenuRadioGroup,
   MenuRadioItem,
   MenuGroup,
@@ -39,6 +40,7 @@ export interface PreviewMoreMenuActions {
   readonly clearCache: () => void;
   readonly openDevTools?: () => void;
   readonly toggleNativePictureInPicture?: () => void;
+  readonly find?: () => void;
 }
 
 interface Props {
@@ -50,23 +52,34 @@ interface Props {
   onToggleDeviceToolbar: () => void;
   nativePictureInPicture: boolean;
   profileName: string | undefined;
+  findShortcutLabel?: string | null;
   move?: { readonly label: string; readonly onMove: () => void };
 }
 
-const MenuTriggerButton = () => (
-  <Tooltip>
-    <TooltipTrigger
-      render={
-        <MenuTrigger
-          render={<Button variant="ghost" size="icon-xs" type="button" aria-label="Preview menu" />}
-        />
-      }
-    >
-      <MoreVertical />
-    </TooltipTrigger>
-    <TooltipPopup>More</TooltipPopup>
-  </Tooltip>
-);
+const MenuTriggerButton = () => {
+  const { locale: translationLocale } = useI18n();
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <MenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                type="button"
+                aria-label={translateWebSource(translationLocale, "Preview menu")}
+              />
+            }
+          />
+        }
+      >
+        <MoreVertical />
+      </TooltipTrigger>
+      <TooltipPopup>{translateWebSource(translationLocale, "More")}</TooltipPopup>
+    </Tooltip>
+  );
+};
 
 export function PreviewMoreMenu({
   enabled,
@@ -77,6 +90,7 @@ export function PreviewMoreMenu({
   onToggleDeviceToolbar,
   nativePictureInPicture,
   profileName,
+  findShortcutLabel,
   move,
 }: Props) {
   const { locale: translationLocale } = useI18n();
@@ -86,24 +100,40 @@ export function PreviewMoreMenu({
     <Menu>
       <MenuTriggerButton />
       <MenuPopup align="end" sideOffset={6}>
+        {actions.find ? (
+          <MenuItem onClick={actions.find} disabled={disabled}>
+            {translateWebSource(translationLocale, "Find on page")}
+            {findShortcutLabel ? <MenuShortcut>{findShortcutLabel}</MenuShortcut> : null}
+          </MenuItem>
+        ) : null}
         <MenuItem onClick={actions.hardReload} disabled={disabled}>
-          Hard reload
+          {translateWebSource(translationLocale, "Hard reload")}
         </MenuItem>
         {actions.openDevTools ? (
           <MenuItem onClick={actions.openDevTools} disabled={disabled}>
-            Open DevTools
+            {translateWebSource(translationLocale, "Open DevTools")}
           </MenuItem>
         ) : null}
         {actions.toggleNativePictureInPicture ? (
           <MenuItem onClick={actions.toggleNativePictureInPicture} disabled={disabled}>
-            {nativePictureInPicture
-              ? "Close separate preview window"
-              : "Open separate preview window"}
+            {translateWebSource(
+              translationLocale,
+              nativePictureInPicture
+                ? "Close separate preview window"
+                : "Open separate preview window",
+            )}
           </MenuItem>
         ) : null}
-        {move ? <MenuItem onClick={move.onMove}>{move.label}</MenuItem> : null}
+        {move ? (
+          <MenuItem onClick={move.onMove}>
+            {translateWebSource(translationLocale, move.label)}
+          </MenuItem>
+        ) : null}
         <MenuItem onClick={onToggleDeviceToolbar} disabled={disabled}>
-          {deviceToolbarVisible ? "Hide device toolbar" : "Show device toolbar"}
+          {translateWebSource(
+            translationLocale,
+            deviceToolbarVisible ? "Hide device toolbar" : "Show device toolbar",
+          )}
         </MenuItem>
         <MenuSub>
           <MenuSubTrigger disabled={disabled}>
@@ -116,7 +146,7 @@ export function PreviewMoreMenu({
             >
               {COLOR_SCHEME_OPTIONS.map((option) => (
                 <MenuRadioItem key={option.value} value={option.value}>
-                  {option.label}
+                  {translateWebSource(translationLocale, option.label)}
                 </MenuRadioItem>
               ))}
             </MenuRadioGroup>
@@ -129,14 +159,14 @@ export function PreviewMoreMenu({
           className="justify-between"
           disabled={disabled}
         >
-          <span>Zoom</span>
+          <span>{translateWebSource(translationLocale, "Zoom")}</span>
           <span className="flex items-center gap-1">
             <Button
               variant="outline"
               size="icon-xs"
               type="button"
               onClick={actions.zoomOut}
-              aria-label="Zoom out"
+              aria-label={translateWebSource(translationLocale, "Zoom out")}
               disabled={disabled}
             >
               <Minus />
@@ -149,7 +179,7 @@ export function PreviewMoreMenu({
               size="icon-xs"
               type="button"
               onClick={actions.zoomIn}
-              aria-label="Zoom in"
+              aria-label={translateWebSource(translationLocale, "Zoom in")}
               disabled={disabled}
             >
               <PlusIcon />
@@ -159,7 +189,7 @@ export function PreviewMoreMenu({
               size="icon-xs"
               type="button"
               onClick={actions.resetZoom}
-              aria-label="Reset zoom"
+              aria-label={translateWebSource(translationLocale, "Reset zoom")}
               disabled={disabled}
             >
               <RotateCcw />
@@ -170,11 +200,19 @@ export function PreviewMoreMenu({
         <MenuGroup>
           {profileName ? (
             <MenuGroupLabel className="max-w-64">
-              <span className="block truncate">Profile: {profileName}</span>
+              <span className="block truncate">
+                {translationLocale === "zh-CN"
+                  ? `浏览器配置：${profileName}`
+                  : `Profile: ${profileName}`}
+              </span>
             </MenuGroupLabel>
           ) : null}
-          <MenuItem onClick={actions.clearCookies}>Clear cookies</MenuItem>
-          <MenuItem onClick={actions.clearCache}>Clear cache</MenuItem>
+          <MenuItem onClick={actions.clearCookies}>
+            {translateWebSource(translationLocale, "Clear cookies")}
+          </MenuItem>
+          <MenuItem onClick={actions.clearCache}>
+            {translateWebSource(translationLocale, "Clear cache")}
+          </MenuItem>
         </MenuGroup>
       </MenuPopup>
     </Menu>

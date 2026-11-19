@@ -142,7 +142,9 @@ function ProjectIconPickerBody({
 
         {mode !== "emoji" ? (
           <div>
-            <div className="mb-2 text-xs font-medium text-muted-foreground">Color</div>
+            <div className="mb-2 text-xs font-medium text-muted-foreground">
+              {translateWebSource(translationLocale, "Color")}
+            </div>
             <div
               className="flex flex-wrap gap-1.5"
               role="group"
@@ -211,7 +213,7 @@ function ProjectIconPickerBody({
             />
             <div className="flex-1 space-y-2">
               <label htmlFor="project-monogram" className="text-sm font-medium">
-                Letters
+                {translateWebSource(translationLocale, "Letters")}
               </label>
               <Input
                 id="project-monogram"
@@ -222,7 +224,7 @@ function ProjectIconPickerBody({
                 autoComplete="off"
               />
               <p id="project-monogram-hint" className="text-xs text-muted-foreground">
-                One or two letters or numbers.
+                {translateWebSource(translationLocale, "One or two letters or numbers.")}
               </p>
             </div>
           </div>

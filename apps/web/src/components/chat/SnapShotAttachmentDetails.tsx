@@ -129,7 +129,10 @@ export function SnapShotContentsButton({
             </div>
           ) : (
             <div className="rounded-md border border-border/70 bg-muted/45 p-2.5 text-muted-foreground text-xs leading-4">
-              The app or capture backend did not provide verified accessibility data.
+              {translateWebSource(
+                newCopyLocale,
+                "The app or capture backend did not provide verified accessibility data.",
+              )}
             </div>
           )}
         </div>
@@ -145,6 +148,7 @@ export function SnapShotAttachmentDetails({
   source: SnapShotSource;
   className?: string;
 }) {
+  const { locale: i18nLocale } = useI18n();
   return (
     <div
       className={cn(
@@ -165,7 +169,7 @@ export function SnapShotAttachmentDetails({
           <SnapShotContentsButton source={source} className="pointer-events-auto" />
         </div>
         <div className="truncate text-3xs leading-3.5 text-white/70">
-          {source.windowTitle || "Captured window"}
+          {source.windowTitle || translateWebSource(i18nLocale, "Captured window")}
         </div>
       </div>
     </div>

@@ -1,6 +1,8 @@
 import { Toggle as TogglePrimitive } from "@base-ui/react/toggle";
 import { cva, type VariantProps } from "class-variance-authority";
 
+import { localizeOptionalWebAttr, localizeWebChildren } from "~/i18n/localizeWebChildren";
+import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 
 const toggleVariants = cva(
@@ -39,14 +41,24 @@ function Toggle({
   className,
   variant,
   size,
+  children,
+  "aria-label": ariaLabel,
+  title,
   ...props
 }: TogglePrimitive.Props & VariantProps<typeof toggleVariants>) {
+  const { locale } = useI18n();
+  const localizedChildren =
+    typeof children === "function" ? children : localizeWebChildren(locale, children);
   return (
     <TogglePrimitive
+      aria-label={localizeOptionalWebAttr(locale, ariaLabel)}
       className={cn(toggleVariants({ className, size, variant }))}
       data-slot="toggle"
+      title={localizeOptionalWebAttr(locale, title)}
       {...props}
-    />
+    >
+      {localizedChildren}
+    </TogglePrimitive>
   );
 }
 

@@ -242,8 +242,9 @@ export function DevicePanel(props: {
           <DeviceHostUpdates state={state} environmentId={environmentId} />
           {bootingDevices.length > 0 ? (
             <div role="status" className="border-b px-3 py-2 text-xs text-muted-foreground">
-              Starting {bootingDevices.map((device) => device.name).join(", ")}… This can take a
-              minute.
+              {translationLocale === "zh-CN"
+                ? `正在启动 ${bootingDevices.map((device) => device.name).join("、")}… 可能需要一分钟左右。`
+                : `Starting ${bootingDevices.map((device) => device.name).join(", ")}… This can take a minute.`}
             </div>
           ) : null}
           {operationError ? (
@@ -256,7 +257,7 @@ export function DevicePanel(props: {
               key={`${environmentId}\u0000${deviceKey(activeDevice)}`}
               environmentId={environmentId}
               device={activeDevice}
-              hostLabel={activeHost?.label ?? "Device host"}
+              hostLabel={activeHost?.label ?? translateWebSource(translationLocale, "Device host")}
               hostKind={activeHost?.kind}
               hostDiagnostics={
                 diagnostics.find(({ hostId }) => hostId === activeDevice.hostId)?.detail
@@ -268,22 +269,24 @@ export function DevicePanel(props: {
             />
           ) : loading ? (
             <DeviceLoadingView
-              name={pendingDevice?.name ?? "Devices"}
+              name={pendingDevice?.name ?? translateWebSource(translationLocale, "Devices")}
               description={
                 pendingDevice
-                  ? `${state.hosts.find((host) => host.id === pendingDevice.hostId)?.label ?? "Device host"} · ${pendingDevice.version}`
+                  ? `${state.hosts.find((host) => host.id === pendingDevice.hostId)?.label ?? translateWebSource(translationLocale, "Device host")} · ${pendingDevice.version}`
                   : ""
               }
               stage="opening"
               message={
                 loadError ??
                 (pendingDevice
-                  ? pendingDevice.booted
-                    ? "Opening device…"
-                    : "Starting device…"
+                  ? translateWebSource(
+                      translationLocale,
+                      pendingDevice.booted ? "Opening device…" : "Starting device…",
+                    )
                   : state.hostStatus === "installing"
-                    ? (state.hostStatusDetail ?? "Installing device support…")
-                    : "Finding devices…")
+                    ? (state.hostStatusDetail ??
+                      translateWebSource(translationLocale, "Installing device support…"))
+                    : translateWebSource(translationLocale, "Finding devices…"))
               }
               error={loadError !== null}
             >
@@ -309,8 +312,12 @@ export function DevicePanel(props: {
                       tabIndex={state.hostStatus === "failed" ? 0 : undefined}
                     >
                       {state.hostStatus === "failed"
-                        ? (state.hostStatusDetail ?? "The device hub failed to start.")
-                        : "No simulators or emulators were found on this environment."}
+                        ? (state.hostStatusDetail ??
+                          translateWebSource(translationLocale, "The device hub failed to start."))
+                        : translateWebSource(
+                            translationLocale,
+                            "No simulators or emulators were found on this environment.",
+                          )}
                     </p>
                   </>
                 ) : null}
@@ -320,7 +327,9 @@ export function DevicePanel(props: {
                       <section key={group.platform} className="space-y-3">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Smartphone className="size-4 shrink-0" />
-                          <h3 className="font-medium">{platformLabel(group.platform)}</h3>
+                          <h3 className="font-medium">
+                            {translateWebSource(translationLocale, platformLabel(group.platform))}
+                          </h3>
                         </div>
                         <DiscoveryList>
                           {group.devices.map((device) => (
@@ -336,14 +345,18 @@ export function DevicePanel(props: {
                                   {device.name}
                                 </span>
                                 <span className="truncate text-xs text-muted-foreground">
-                                  {`${state.hosts.find((host) => host.id === device.hostId)?.label} · ${device.version} · ${device.booted ? "Running" : "Stopped"}`}
+                                  {`${state.hosts.find((host) => host.id === device.hostId)?.label} · ${device.version} · ${translateWebSource(translationLocale, device.booted ? "Running" : "Stopped")}`}
                                 </span>
                               </div>
                               <Button
                                 variant="outline"
                                 size="sm"
                                 disabled={pendingDeviceKey !== null}
-                                aria-label={`${device.booted ? "Open" : "Start"} ${device.name}`}
+                                aria-label={
+                                  translationLocale === "zh-CN"
+                                    ? `${device.booted ? "打开" : "启动"} ${device.name}`
+                                    : `${device.booted ? "Open" : "Start"} ${device.name}`
+                                }
                                 onClick={() => void selectDevice(deviceKey(device))}
                               >
                                 {pendingDeviceKey === deviceKey(device) ? (
@@ -353,7 +366,10 @@ export function DevicePanel(props: {
                                 ) : (
                                   <Play />
                                 )}
-                                {device.booted ? "Open" : "Start"}
+                                {translateWebSource(
+                                  translationLocale,
+                                  device.booted ? "Open" : "Start",
+                                )}
                               </Button>
                             </div>
                           ))}
@@ -380,7 +396,7 @@ export function DevicePanel(props: {
                     size="sm"
                     onClick={() => void list({ environmentId, input: {} })}
                   >
-                    Refresh devices
+                    {translateWebSource(translationLocale, "Refresh devices")}
                   </Button>
                 ) : null}
               </div>
@@ -393,6 +409,7 @@ export function DevicePanel(props: {
 }
 
 function DeviceNotice(props: { readonly onDismiss: () => void; readonly children: ReactNode }) {
+  const { locale: translationLocale } = useI18n();
   return (
     <div
       role="alert"
@@ -408,7 +425,7 @@ function DeviceNotice(props: { readonly onDismiss: () => void; readonly children
       <Button
         size="icon-xs"
         variant="ghost"
-        aria-label="Dismiss device error"
+        aria-label={translateWebSource(translationLocale, "Dismiss device error")}
         onClick={props.onDismiss}
       >
         <X />
@@ -443,8 +460,12 @@ function DeviceDiscoveryWarning(props: {
         <CircleAlert className="mt-px size-3.5 shrink-0 text-warning-foreground" />
         <span className="min-w-0">
           {platforms.length > 0
-            ? `${platforms.join(" and ")} ${platforms.length > 1 ? "lists" : "list"} on ${props.label} may be incomplete.`
-            : `Device discovery on ${props.label} reported a warning.`}
+            ? translationLocale === "zh-CN"
+              ? `${props.label} 上的 ${platforms.join(" 和 ")} 设备列表可能不完整。`
+              : `${platforms.join(" and ")} ${platforms.length > 1 ? "lists" : "list"} on ${props.label} may be incomplete.`
+            : translationLocale === "zh-CN"
+              ? `${props.label} 上的设备检测报告了一条警告。`
+              : `Device discovery on ${props.label} reported a warning.`}
         </span>
       </span>
       <span className="ml-auto flex shrink-0 items-center gap-0.5">
@@ -453,18 +474,24 @@ function DeviceDiscoveryWarning(props: {
             size="micro"
             variant="ghost"
             disabled={retrying}
-            aria-label={`Retry device discovery on ${props.label}`}
+            aria-label={
+              translationLocale === "zh-CN"
+                ? `重试 ${props.label} 上的设备检测`
+                : `Retry device discovery on ${props.label}`
+            }
             onClick={() => {
               setRetrying(true);
               void props.onRetry().finally(() => setRetrying(false));
             }}
           >
-            {retrying ? "Retrying…" : "Retry"}
+            {translateWebSource(translationLocale, retrying ? "Retrying…" : "Retry")}
           </Button>
         ) : null}
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger
-            aria-label={`Details for ${props.label}`}
+            aria-label={
+              translationLocale === "zh-CN" ? `${props.label} 的详情` : `Details for ${props.label}`
+            }
             render={<Button size="micro" variant="ghost" />}
           >
             {translateWebSource(translationLocale, "Details")}
@@ -478,7 +505,11 @@ function DeviceDiscoveryWarning(props: {
         <Button
           size="icon-micro"
           variant="ghost"
-          aria-label={`Dismiss device warning for ${props.label}`}
+          aria-label={
+            translationLocale === "zh-CN"
+              ? `关闭 ${props.label} 的设备警告`
+              : `Dismiss device warning for ${props.label}`
+          }
           onClick={() => {
             setOpen(false);
             setDismissedCause(cause);

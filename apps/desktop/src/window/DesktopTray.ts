@@ -22,6 +22,7 @@ export class DesktopTray extends Context.Service<
   DesktopTray,
   {
     readonly ensure: (callbacks: DesktopTrayCallbacks) => Effect.Effect<boolean>;
+    readonly refreshMenu: Effect.Effect<void>;
     readonly markQuitRequested: () => void;
     readonly shouldHideOnClose: () => boolean;
   }
@@ -47,6 +48,45 @@ export const make = Effect.gen(function* () {
   const open = () => currentCallbacks?.open();
   const quit = () => currentCallbacks?.quit();
 
+  const resolveMessages = Effect.gen(function* () {
+    const settings = yield* clientSettings.get.pipe(
+      Effect.catch((error) =>
+        logTrayWarning("Could not read the desktop language setting.", { error }).pipe(
+          Effect.as(Option.none()),
+        ),
+      ),
+    );
+    const systemLocale = yield* electronApp.systemLocale;
+    const appLocale = Option.match(settings, {
+      onNone: () => DEFAULT_APP_LOCALE_PREFERENCE,
+      onSome: (value) => value.appLocale,
+    });
+    return resolveDesktopApplicationMenuMessages(appLocale, [systemLocale]);
+  });
+
+  const buildContextMenu = (messages: ReturnType<typeof resolveDesktopApplicationMenuMessages>) => {
+    const appName = environment.displayName;
+    return Electron.Menu.buildFromTemplate([
+      { label: messages.open(appName), click: open },
+      { type: "separator" },
+      { label: messages.quit(appName), click: quit },
+    ]);
+  };
+
+  const refreshMenu = Effect.gen(function* () {
+    if (tray === undefined) {
+      return;
+    }
+    const messages = yield* resolveMessages;
+    yield* Effect.sync(() => {
+      tray?.setContextMenu(buildContextMenu(messages));
+    }).pipe(
+      Effect.catchCause((cause) =>
+        logTrayWarning("failed to refresh Windows tray menu", { cause }),
+      ),
+    );
+  }).pipe(Effect.withSpan("desktop.tray.refreshMenu"));
+
   return DesktopTray.of({
     ensure: Effect.fn("desktop.tray.ensure")(function* (callbacks: DesktopTrayCallbacks) {
       currentCallbacks = callbacks;
@@ -54,38 +94,20 @@ export const make = Effect.gen(function* () {
         return false;
       }
       if (tray !== undefined) {
+        yield* refreshMenu;
         return true;
       }
 
       const iconPath = environment.path.join(environment.resourcesPath, "icon.ico");
-
-      const settings = yield* clientSettings.get.pipe(
-        Effect.catch((error) =>
-          logTrayWarning("Could not read the desktop language setting.", { error }).pipe(
-            Effect.as(Option.none()),
-          ),
-        ),
-      );
-      const systemLocale = yield* electronApp.systemLocale;
       const appName = environment.displayName;
-      const appLocale = Option.match(settings, {
-        onNone: () => DEFAULT_APP_LOCALE_PREFERENCE,
-        onSome: (value) => value.appLocale,
-      });
-      const messages = resolveDesktopApplicationMenuMessages(appLocale, [systemLocale]);
+      const messages = yield* resolveMessages;
 
       return yield* Effect.sync(() => {
         let nextTray: Electron.Tray | undefined;
         try {
           nextTray = new Electron.Tray(iconPath);
           nextTray.setToolTip(appName);
-          nextTray.setContextMenu(
-            Electron.Menu.buildFromTemplate([
-              { label: messages.open(appName), click: open },
-              { type: "separator" },
-              { label: messages.quit(appName), click: quit },
-            ]),
-          );
+          nextTray.setContextMenu(buildContextMenu(messages));
           nextTray.on("click", open);
           nextTray.on("double-click", open);
           tray = nextTray;
@@ -100,6 +122,7 @@ export const make = Effect.gen(function* () {
         ),
       );
     }),
+    refreshMenu,
     markQuitRequested: () => {
       quitRequested = true;
     },

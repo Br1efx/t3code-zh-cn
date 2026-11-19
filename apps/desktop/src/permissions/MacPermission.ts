@@ -13,3 +13,9 @@ export const MAC_PERMISSION_TITLES: Record<MacPermission, string> = {
   accessibility: "Accessibility",
   "full-disk-access": "Full Disk Access",
 };
+
+export const MAC_PERMISSION_TITLES_ZH_CN: Record<MacPermission, string> = {
+  "screen-recording": "屏幕录制",
+  accessibility: "辅助功能",
+  "full-disk-access": "完全磁盘访问权限",
+};

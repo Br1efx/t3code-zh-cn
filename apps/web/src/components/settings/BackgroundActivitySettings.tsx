@@ -208,7 +208,9 @@ function BackgroundActivityAdvancedDialog({
                     )
                   }
                 />
-                <span className="text-xs text-muted-foreground">seconds</span>
+                <span className="text-xs text-muted-foreground">
+                  {translateWebSource(translationLocale, "seconds")}
+                </span>
               </div>
             </div>
 
@@ -241,7 +243,9 @@ function BackgroundActivityAdvancedDialog({
                     )
                   }
                 />
-                <span className="text-xs text-muted-foreground">seconds</span>
+                <span className="text-xs text-muted-foreground">
+                  {translateWebSource(translationLocale, "seconds")}
+                </span>
               </div>
             </div>
 
@@ -274,7 +278,9 @@ function BackgroundActivityAdvancedDialog({
                     )
                   }
                 />
-                <span className="text-xs text-muted-foreground">seconds</span>
+                <span className="text-xs text-muted-foreground">
+                  {translateWebSource(translationLocale, "seconds")}
+                </span>
               </div>
             </div>
 
@@ -307,7 +313,9 @@ function BackgroundActivityAdvancedDialog({
                     )
                   }
                 />
-                <span className="text-xs text-muted-foreground">seconds</span>
+                <span className="text-xs text-muted-foreground">
+                  {translateWebSource(translationLocale, "seconds")}
+                </span>
               </div>
             </div>
 
@@ -420,7 +428,7 @@ export function BackgroundActivitySettingsRow() {
             <SelectTrigger
               size="sm"
               className="w-full sm:w-40"
-              aria-label="Background activity profile"
+              aria-label={translateWebSource(translationLocale, "Background activity profile")}
             >
               <SelectValue>
                 {(value: BackgroundActivityProfileOption | null) =>

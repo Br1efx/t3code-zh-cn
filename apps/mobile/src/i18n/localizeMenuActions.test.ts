@@ -19,10 +19,10 @@ describe("localized native menu actions", () => {
       },
     ];
     const localized = localizeMenuActions(actions, "zh-CN");
-    expect(localized[0]?.title).toBe("环境");
+    expect(localized[0]?.title).toBe("运行设备");
     expect(localized[0]?.subactions?.[0]).toEqual({
       id: "environment:all",
-      title: "所有环境",
+      title: "所有运行设备",
       subtitle: "已连接",
       state: "on",
     });

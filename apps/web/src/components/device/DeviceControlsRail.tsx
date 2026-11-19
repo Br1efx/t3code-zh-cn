@@ -59,14 +59,14 @@ export function DeviceControlsRail(props: {
   const nextAppearance = settings?.appearance === "dark" ? "light" : "dark";
   return (
     <aside
-      aria-label="Device controls"
+      aria-label={translateWebSource(translationLocale, "Device controls")}
       data-layout="rail"
       className="pointer-events-none absolute inset-y-0 right-0 z-10 flex w-14 flex-col items-center gap-2 overflow-y-auto [justify-content:safe_center] py-3 pr-2 [scrollbar-width:none]"
     >
       <div className="pointer-events-auto flex shrink-0 flex-col items-center gap-1 overflow-y-auto rounded-full border border-border/50 bg-background/80 p-2 shadow-sm [scrollbar-width:none]">
         <RailButton
           tooltipSide={popupSide}
-          label="Home"
+          label={translateWebSource(translationLocale, "Home")}
           disabled={inputDisabled}
           onClick={() => handle?.pressButton("home")}
         >
@@ -84,7 +84,7 @@ export function DeviceControlsRail(props: {
             </RailButton>
             <RailButton
               tooltipSide={popupSide}
-              label="Recents"
+              label={translateWebSource(translationLocale, "Recents")}
               disabled={inputDisabled}
               onClick={() => handle?.pressButton("recents")}
             >
@@ -97,7 +97,7 @@ export function DeviceControlsRail(props: {
                     <Button
                       size="icon-sm"
                       variant="ghost"
-                      aria-label="Rotate device"
+                      aria-label={translateWebSource(translationLocale, "Rotate device")}
                       disabled={controls.disabled}
                     />
                   }
@@ -108,14 +108,14 @@ export function DeviceControlsRail(props: {
                   <MenuItem
                     onClick={() => void controls.act({ type: "setOrientation", value: "portrait" })}
                   >
-                    Portrait
+                    {translateWebSource(translationLocale, "Portrait")}
                   </MenuItem>
                   <MenuItem
                     onClick={() =>
                       void controls.act({ type: "setOrientation", value: "landscape_left" })
                     }
                   >
-                    Landscape
+                    {translateWebSource(translationLocale, "Landscape")}
                   </MenuItem>
                 </MenuPopup>
               </Menu>
@@ -124,7 +124,7 @@ export function DeviceControlsRail(props: {
         ) : props.hostKind === "simlock" ? null : (
           <RailButton
             tooltipSide={popupSide}
-            label="Rotate device"
+            label={translateWebSource(translationLocale, "Rotate device")}
             disabled={inputDisabled || !!view.keyboard?.attached}
             onClick={() => handle?.rotate()}
           >
@@ -136,7 +136,11 @@ export function DeviceControlsRail(props: {
             <RailDivider />
             <RailButton
               tooltipSide={popupSide}
-              label={`Switch device to ${nextAppearance} mode`}
+              label={
+                translationLocale === "zh-CN"
+                  ? `将设备切换为${nextAppearance === "dark" ? "深色" : "浅色"}模式`
+                  : `Switch device to ${nextAppearance} mode`
+              }
               disabled={controls.disabled || !settings?.appearance}
               onClick={() => void controls.act({ type: "setAppearance", value: nextAppearance })}
             >
@@ -148,8 +152,8 @@ export function DeviceControlsRail(props: {
                   <Button
                     size="icon-sm"
                     variant="ghost"
-                    aria-label="Device text size"
-                    title="Device text size"
+                    aria-label={translateWebSource(translationLocale, "Device text size")}
+                    title={translateWebSource(translationLocale, "Device text size")}
                     disabled={controls.disabled || !settings?.textSize}
                   />
                 }
@@ -179,7 +183,9 @@ export function DeviceControlsRail(props: {
                   ).map(([value, label]) => (
                     <MenuRadioItem key={value} value={value}>
                       <span className="flex items-center gap-2">
-                        <span className="flex-1">{label}</span>
+                        <span className="flex-1">
+                          {translateWebSource(translationLocale, label)}
+                        </span>
                         <MenuRadioItemIndicator />
                       </span>
                     </MenuRadioItem>
@@ -189,7 +195,7 @@ export function DeviceControlsRail(props: {
             </Menu>
             <RailButton
               tooltipSide={popupSide}
-              label="Device tools"
+              label={translateWebSource(translationLocale, "Device tools")}
               pressed={props.toolsOpen}
               onClick={props.onTools}
             >
@@ -200,7 +206,10 @@ export function DeviceControlsRail(props: {
         {props.hostKind === "simlock" ? null : (
           <RailButton
             tooltipSide={popupSide}
-            label={props.screenshotPending ? "Capturing screenshot" : "Save screenshot"}
+            label={translateWebSource(
+              translationLocale,
+              props.screenshotPending ? "Capturing screenshot" : "Save screenshot",
+            )}
             disabled={!view.streaming || props.screenshotPending}
             onClick={props.onScreenshot}
           >
@@ -213,8 +222,8 @@ export function DeviceControlsRail(props: {
               <Button
                 size="icon-sm"
                 variant="ghost"
-                aria-label="More device actions"
-                title="More device actions"
+                aria-label={translateWebSource(translationLocale, "More device actions")}
+                title={translateWebSource(translationLocale, "More device actions")}
               />
             }
           >
@@ -223,23 +232,26 @@ export function DeviceControlsRail(props: {
           <MenuPopup side={popupSide} align="end">
             <MenuItem onClick={props.onFloat}>
               <PictureInPicture2 />
-              Float device over chat
+              {translateWebSource(translationLocale, "Float device over chat")}
             </MenuItem>
             <MenuItem onClick={props.onClose}>
               <X />
-              Close device panel
+              {translateWebSource(translationLocale, "Close device panel")}
             </MenuItem>
             <MenuSeparator />
             <MenuItem variant="destructive" onClick={props.onPowerOff}>
               <Power />
-              {props.hostKind === "simlock" ? "Return device to the pool" : "Power off device"}
+              {translateWebSource(
+                translationLocale,
+                props.hostKind === "simlock" ? "Return device to the pool" : "Power off device",
+              )}
             </MenuItem>
           </MenuPopup>
         </Menu>
         <RailDivider />
         <RailButton
           tooltipSide={popupSide}
-          label="3D view"
+          label={translateWebSource(translationLocale, "3D view")}
           pressed={view.phone}
           disabled={!view.streaming || !!view.phoneUnavailableReason}
           description={view.phoneUnavailableReason ?? undefined}
@@ -249,7 +261,7 @@ export function DeviceControlsRail(props: {
         </RailButton>
         <RailButton
           tooltipSide={popupSide}
-          label="Flat view"
+          label={translateWebSource(translationLocale, "Flat view")}
           pressed={!view.phone}
           disabled={!view.streaming}
           onClick={view.showFlat}
@@ -259,7 +271,10 @@ export function DeviceControlsRail(props: {
         {view.keyboard ? (
           <RailButton
             tooltipSide={popupSide}
-            label={view.keyboard.attached ? "Detach Magic Keyboard" : "Attach Magic Keyboard"}
+            label={translateWebSource(
+              translationLocale,
+              view.keyboard.attached ? "Detach Magic Keyboard" : "Attach Magic Keyboard",
+            )}
             pressed={view.keyboard.attached}
             onClick={view.keyboard.toggle}
           >
@@ -267,7 +282,11 @@ export function DeviceControlsRail(props: {
           </RailButton>
         ) : null}
         {view.phone ? (
-          <RailButton tooltipSide={popupSide} label="Restore 3D view" onClick={view.resetView}>
+          <RailButton
+            tooltipSide={popupSide}
+            label={translateWebSource(translationLocale, "Restore 3D view")}
+            onClick={view.resetView}
+          >
             <Maximize />
           </RailButton>
         ) : null}

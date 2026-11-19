@@ -86,6 +86,37 @@ const checkForUpdatesFromMenu = Effect.fn("desktop.menu.checkForUpdates")(functi
       message: messages.upToDateMessage(updateState.currentVersion),
       buttons: [messages.ok],
     });
+  } else if (updateState.status === "available") {
+    const { response } = yield* electronDialog.showMessageBox({
+      type: "info",
+      title: messages.updateAvailableTitle,
+      message: messages.updateAvailableMessage(updateState.availableVersion),
+      detail: messages.updateAvailableDetail(updateState.currentVersion),
+      buttons: [messages.download, messages.later],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (response === 0) yield* updates.download;
+  } else if (updateState.status === "downloading") {
+    yield* electronDialog.showMessageBox({
+      type: "info",
+      title: messages.updateDownloadingTitle,
+      message: messages.updateDownloadingMessage(updateState.availableVersion),
+      buttons: [messages.ok],
+    });
+  } else if (updateState.status === "downloaded") {
+    const { response } = yield* electronDialog.showMessageBox({
+      type: "info",
+      title: messages.updateReadyTitle,
+      message: messages.updateReadyMessage(
+        updateState.downloadedVersion ?? updateState.availableVersion,
+      ),
+      detail: messages.updateReadyDetail,
+      buttons: [messages.restart, messages.later],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (response === 0) yield* updates.install;
   } else if (updateState.status === "error") {
     yield* electronDialog.showMessageBox({
       type: "warning",
@@ -227,7 +258,7 @@ export const make = Effect.gen(function* () {
                 { type: "separator" as const },
               ]),
           {
-            label: "Close Developer Tools",
+            label: messages.closeDeveloperTools,
             accelerator: "CmdOrCtrl+W",
             visible: false,
             click: () => {

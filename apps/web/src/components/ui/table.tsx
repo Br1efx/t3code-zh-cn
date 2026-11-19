@@ -1,5 +1,7 @@
 import * as React from "react";
 
+import { localizeWebChildren } from "~/i18n/localizeWebChildren";
+import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
@@ -41,7 +43,8 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   );
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+function TableHead({ className, children, ...props }: React.ComponentProps<"th">) {
+  const { locale } = useI18n();
   return (
     <th
       data-slot="table-head"
@@ -50,7 +53,9 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
         className,
       )}
       {...props}
-    />
+    >
+      {localizeWebChildren(locale, children)}
+    </th>
   );
 }
 

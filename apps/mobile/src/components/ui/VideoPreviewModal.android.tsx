@@ -1,3 +1,4 @@
+import { MISSING_FILE_ACCESS_MESSAGE } from "@t3tools/client-runtime/state/assets";
 import { localizeMobileString } from "../../i18n/mobileStrings";
 import { videoMimeType } from "@t3tools/shared/video";
 import { Modal, Pressable, View } from "react-native";
@@ -27,6 +28,7 @@ interface PlaybackState {
   readonly uri: string | null;
   readonly resolvePlaybackUri?: () => Promise<string | null>;
   readonly unavailable: boolean;
+  readonly unavailableDetail?: string | undefined;
   readonly error: string | null;
   readonly actionsSource: MediaActionsSource | undefined;
 }
@@ -47,6 +49,10 @@ function useMediaPlayback(source: MediaVideoPreviewSource): PlaybackState {
       uri === null &&
       environmentId !== null &&
       (connection._tag === "None" || asset._tag === "Failure"),
+    unavailableDetail:
+      asset._tag === "Failure" && asset.reason === "missing-file-access"
+        ? MISSING_FILE_ACCESS_MESSAGE
+        : undefined,
     error: null,
     actionsSource: source.actionsSource,
   };
@@ -56,7 +62,9 @@ function useLocalPlayback(source: LocalVideoPreviewSource): PlaybackState {
   const { attachment } = source;
   const preview = useLocalAttachmentPreview(attachment);
   const { uri } = preview;
-  const error = preview.error ? preview.error.message || "Could not load this video." : null;
+  const error = preview.error
+    ? preview.error.message || localizeMobileString("Could not load this video.")
+    : null;
   const mimeType = videoMimeType(attachment) ?? attachment.mimeType;
   return {
     uri,
@@ -135,13 +143,18 @@ function OpenVideoPreviewModal(props: {
             name={props.name}
             thumbnailKey={props.thumbnailKey}
             unavailable={playback.unavailable}
+            unavailableDetail={playback.unavailableDetail}
             paused={mediaActions.sharing}
             expanded
             autoPlay
           />
         )}
         {playback.error ? (
-          <AppText accessibilityRole="alert" className="px-4 pb-3 text-sm text-white/80">
+          <AppText
+            localize={false}
+            accessibilityRole="alert"
+            className="px-4 pb-3 text-sm text-white/80"
+          >
             {playback.error}
           </AppText>
         ) : null}

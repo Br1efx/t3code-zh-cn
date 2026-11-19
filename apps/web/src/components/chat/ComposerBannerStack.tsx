@@ -1,4 +1,5 @@
 import { useI18n } from "~/i18n/WebI18nContext";
+import { localizeWebChildren, localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { InfoIcon } from "lucide-react";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
@@ -73,6 +74,8 @@ export function NoticeText({
   readonly detailsLabel: string;
 }) {
   const { locale: releaseLocale } = useI18n();
+  const localizedChildren = localizeWebChildren(releaseLocale, children);
+  const localizedDetailsLabel = localizeWebString(releaseLocale, detailsLabel);
   const textRef = useRef<HTMLSpanElement>(null);
   const detailsRef = useRef<HTMLButtonElement>(null);
   const [detailsAtWidth, setDetailsAtWidth] = useState<number | null>(null);
@@ -134,7 +137,7 @@ export function NoticeText({
   return (
     <span className="contents">
       <span ref={textRef} className={className}>
-        {children}
+        {localizedChildren}
       </span>
       {showDetails ? (
         <Popover>
@@ -145,7 +148,7 @@ export function NoticeText({
                 ref={detailsRef}
                 size="icon-xs"
                 variant="ghost-muted"
-                aria-label={detailsLabel}
+                aria-label={localizedDetailsLabel}
                 className="flex-none"
               />
             }
@@ -158,7 +161,7 @@ export function NoticeText({
             side="top"
             className="max-w-[min(30rem,calc(100vw-2rem))] whitespace-normal wrap-anywhere [--inline-button-text-align:start] [--inline-button-white-space:normal] [&_[data-slot=inline-button]]:max-w-full"
           >
-            <ComposerBanner.Scroll>{children}</ComposerBanner.Scroll>
+            <ComposerBanner.Scroll>{localizedChildren}</ComposerBanner.Scroll>
           </PopoverPopup>
         </Popover>
       ) : null}
@@ -186,7 +189,7 @@ function NoticeCard({
         <ComposerBanner.Icon className="h-(--composer-banner-icon-column) self-start">
           {item.icon}
         </ComposerBanner.Icon>
-        <ComposerBanner.Content className="whitespace-nowrap">
+        <ComposerBanner.Content className="items-baseline whitespace-nowrap">
           <NoticeText
             detailsLabel={
               typeof item.title === "string"

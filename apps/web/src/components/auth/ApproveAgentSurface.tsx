@@ -15,6 +15,7 @@ import { type ReactNode, useEffect, useEffectEvent, useRef, useState } from "rea
 import { isElectron } from "../../env";
 import { runConnectMcpApproval } from "../../state/connectMcpApproval";
 import { resolveClerkSignInProps } from "../clerk/authRedirect";
+import { retryClerkLoad, useClerkLoadFailed } from "../clerk/clerkLoadFailure";
 import { Button } from "../ui/button";
 import { Spinner } from "../ui/spinner";
 import { StandalonePage, StandalonePageHeader } from "../ui/standalone-page";
@@ -89,6 +90,7 @@ export function ApproveAgentSurface() {
   );
   const clerk = useClerk();
   const { isLoaded, isSignedIn } = useAuth();
+  const loadFailed = useClerkLoadFailed();
   const session = useAtomValue(managedRelaySessionAtom);
   const signInOpened = useRef(false);
 
@@ -106,7 +108,7 @@ export function ApproveAgentSurface() {
   if (environmentId === null || transport === null) {
     return (
       <Message
-        title="This sign-in link is incomplete"
+        title={translateWebSource(translationLocale, "This sign-in link is incomplete")}
         description={translateWebSource(
           translationLocale,
           "Close this page and start the sign-in again from your agent.",
@@ -118,9 +120,24 @@ export function ApproveAgentSurface() {
   if (framed) {
     return (
       <Message
-        title="Open this page in its own window"
+        title={translateWebSource(translationLocale, "Open this page in its own window")}
         description="For your safety, agent sign-ins cannot be approved inside another site."
       />
+    );
+  }
+
+  if (loadFailed) {
+    return (
+      <Message
+        title={translateWebSource(translationLocale, "Could not load sign-in")}
+        description="T3 Connect sign-in did not load. Check your connection, then try again."
+      >
+        <div className="mt-6">
+          <Button type="button" onClick={retryClerkLoad}>
+            Retry sign-in
+          </Button>
+        </div>
+      </Message>
     );
   }
 
@@ -140,7 +157,7 @@ export function ApproveAgentSurface() {
   if (!isSignedIn) {
     return (
       <Message
-        title="Sign in to approve"
+        title={translateWebSource(translationLocale, "Sign in to approve")}
         description="Sign in to T3 Connect with the account this environment is linked to."
       >
         <div className="mt-6">

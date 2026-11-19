@@ -91,6 +91,7 @@ import {
   snapShotShortcutRegistrationFailureMessage,
   snapShotShortcutSystemConflict,
 } from "./snapShot.ts";
+import { resolveAppLocale } from "@t3tools/shared/appLocale";
 import * as HostProcess from "@t3tools/shared/HostProcess";
 import { readImageDimensions } from "@t3tools/shared/imageDimensions";
 
@@ -706,12 +707,16 @@ async function showCaptureFeedback(
     shouldAnimateSnapShot(Electron.systemPreferences.getAnimationSettings());
   if (animationsEnabled) {
     try {
+      const systemLocales =
+        typeof Electron.app?.getLocale === "function" ? [Electron.app.getLocale()] : [];
+      const locale = resolveAppLocale(settings.appLocale, systemLocales);
       await transition.begin(
         captureId,
         bounds,
         snapshotDataUrl,
         settings.snapShotFlash,
         destinationWindowBounds,
+        locale,
       );
       return true;
     } catch {

@@ -20,7 +20,7 @@ export type McpAppHandoff =
       readonly link: string;
       /**
        * Opens the installed app first, given the message; `link` is the fallback. The desktop
-       * app opens only the link shapes `APP_LAUNCH_URLS` in ElectronShell lists.
+       * app opens only the link shapes `isAppLaunchUrl` in ElectronShell accepts.
        */
       readonly appLink?: (message: string) => string;
       readonly message: (mcpUrl: string) => string;
@@ -88,12 +88,11 @@ export const MCP_APPS: readonly McpApp[] = [
     id: "grok-bot",
     name: "Grok Bot",
     logo: grokBotLogo,
-    // No web chat, and no link that prefills a message yet (Grok Bot plans one), so the app
-    // opens bare and the copied message is pasted in.
+    // No web chat. The app link prefills the message only into an empty box, so it is copied too.
     handoff: {
       kind: "copy-message",
       link: "https://x.ai/bot",
-      appLink: () => "grokbot://app",
+      appLink: (message) => `grokbot://app/v1/prompt?text=${encoded(message)}`,
       message: (url) => `Add the MCP server ${url} and connect it.`,
     },
     steps: ["Send this message to any of your Grok Bots."],
@@ -185,30 +184,32 @@ export const OTHER_MCP_APP_STEPS = ["Add a remote MCP server with OAuth."] as co
  * The primary button for `app`: its label, the https page it opens, and what it copies first.
  * Null for apps set up with commands. It never copies the approval code.
  */
-export function mcpHandoffAction(app: McpApp, mcpUrl: string) {
+export function mcpHandoffAction(app: McpApp, mcpUrl: string, locale: "en" | "zh-CN" = "en") {
   const { handoff } = app;
   switch (handoff.kind) {
     case "open":
       return {
-        label: `Open in ${app.name}`,
+        label: locale === "zh-CN" ? `在 ${app.name} 中打开` : `Open in ${app.name}`,
         link: handoff.link(mcpUrl),
         appLink: null,
         copy: null,
       };
     case "copy-url":
       return {
-        label: `Copy URL and open ${app.name}`,
+        label:
+          locale === "zh-CN" ? `复制连接地址并打开 ${app.name}` : `Copy URL and open ${app.name}`,
         link: handoff.link,
         appLink: null,
-        copy: { text: mcpUrl, title: "URL copied" },
+        copy: { text: mcpUrl, title: locale === "zh-CN" ? "已复制连接地址" : "URL copied" },
       };
     case "copy-message": {
       const message = handoff.message(mcpUrl);
       return {
-        label: `Copy message and open ${app.name}`,
+        label:
+          locale === "zh-CN" ? `复制消息并打开 ${app.name}` : `Copy message and open ${app.name}`,
         link: handoff.link,
         appLink: handoff.appLink?.(message) ?? null,
-        copy: { text: message, title: "Message copied" },
+        copy: { text: message, title: locale === "zh-CN" ? "已复制消息" : "Message copied" },
       };
     }
     case "commands":

@@ -46,6 +46,6 @@ it("localizes rate limits without losing the provider name", () => {
     (key, values) => translateWebMessage("zh-CN", key, values),
   );
   expect(result.title).toBe("已达到 GitLab 请求频率限制");
-  expect(result.description).toContain("GitLab 暂时限制了请求频率");
+  expect(result.description).toContain("GitLab 暂时限制了访问频率");
   expect(result.description).not.toContain("GitHub");
 });

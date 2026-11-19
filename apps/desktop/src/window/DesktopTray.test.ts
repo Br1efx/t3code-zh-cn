@@ -145,4 +145,55 @@ describe("DesktopTray", () => {
       assert.isTrue(electronMocks.trayInstances[0]?.destroyed);
     }),
   );
+
+  it.effect("rebuilds the existing tray context menu when appLocale switches to zh-CN", () =>
+    Effect.gen(function* () {
+      electronMocks.menuTemplates.length = 0;
+      electronMocks.trayInstances.length = 0;
+
+      const envLayer = Layer.mergeAll(
+        Layer.succeed(DesktopEnvironment.DesktopEnvironment, {
+          platform: "win32",
+          isPackaged: true,
+          displayName: "T3 Code",
+          resourcesPath: "C:\\Program Files\\T3 Code\\resources",
+          path: {
+            join: (...parts: readonly string[]) => parts.join("\\"),
+          },
+        } as unknown as DesktopEnvironment.DesktopEnvironment["Service"]),
+        Layer.mock(ElectronApp.ElectronApp)({
+          name: Effect.succeed("T3 Code"),
+          systemLocale: Effect.succeed("en-US"),
+        }),
+        DesktopClientSettings.layerTest(
+          Option.some({
+            ...DEFAULT_CLIENT_SETTINGS,
+            appLocale: "en",
+          }),
+        ),
+      );
+
+      yield* Effect.scoped(
+        Effect.gen(function* () {
+          const clientSettings = yield* DesktopClientSettings.DesktopClientSettings;
+          const tray = yield* DesktopTray.make;
+          yield* tray.ensure({ open: () => undefined, quit: () => undefined });
+
+          assert.equal(electronMocks.trayInstances.length, 1);
+          assert.equal(electronMocks.menuTemplates[0]?.[0]?.label, "Open T3 Code");
+          assert.equal(electronMocks.menuTemplates[0]?.[2]?.label, "Quit T3 Code");
+
+          yield* clientSettings.set({
+            ...DEFAULT_CLIENT_SETTINGS,
+            appLocale: "zh-CN",
+          });
+          yield* tray.refreshMenu;
+
+          assert.equal(electronMocks.trayInstances.length, 1);
+          assert.equal(electronMocks.menuTemplates[1]?.[0]?.label, "打开 T3 Code");
+          assert.equal(electronMocks.menuTemplates[1]?.[2]?.label, "退出 T3 Code");
+        }).pipe(Effect.provide(envLayer)),
+      );
+    }),
+  );
 });

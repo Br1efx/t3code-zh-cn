@@ -1,12 +1,20 @@
 import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog";
+import { useRender } from "@base-ui/react/use-render";
 
+import { localizeWebChildren } from "~/i18n/localizeWebChildren";
+import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 import {
   DIALOG_BACKDROP_CLASS,
   DIALOG_MOBILE_SHEET_CLASS,
   DIALOG_POPUP_CLASS,
 } from "~/components/ui/dialog-styles";
-import { ControlledOpenContext, renderRetainedPopup } from "~/components/ui/dialog";
+import {
+  ControlledOpenContext,
+  DialogAction,
+  renderRetainedPopup,
+  useDialogActionInitialFocus,
+} from "~/components/ui/dialog";
 
 function AlertDialog<Payload>(props: AlertDialogPrimitive.Root.Props<Payload>) {
   return (
@@ -51,23 +59,31 @@ function AlertDialogPopup({
   bottomStickOnMobile?: boolean;
   portalContainer?: AlertDialogPrimitive.Portal.Props["container"];
 }) {
+  const { popupRef, initialFocus } = useDialogActionInitialFocus();
+  const popup = useRender({
+    ref: popupRef,
+    render: (
+      <AlertDialogPrimitive.Popup
+        className={cn(
+          DIALOG_POPUP_CLASS,
+          "row-start-2 max-h-full max-w-lg text-popover-foreground",
+          bottomStickOnMobile && DIALOG_MOBILE_SHEET_CLASS,
+          className,
+        )}
+        data-slot="alert-dialog-popup"
+        initialFocus={initialFocus}
+        render={renderRetainedPopup}
+        {...props}
+      />
+    ),
+  });
   return (
     <AlertDialogPortal container={portalContainer}>
       <AlertDialogBackdrop />
       <AlertDialogViewport
         className={cn(bottomStickOnMobile && "max-sm:grid-rows-[1fr_auto] max-sm:p-0 max-sm:pt-12")}
       >
-        <AlertDialogPrimitive.Popup
-          className={cn(
-            DIALOG_POPUP_CLASS,
-            "row-start-2 max-h-full max-w-lg text-popover-foreground",
-            bottomStickOnMobile && DIALOG_MOBILE_SHEET_CLASS,
-            className,
-          )}
-          data-slot="alert-dialog-popup"
-          render={renderRetainedPopup}
-          {...props}
-        />
+        {popup}
       </AlertDialogViewport>
     </AlertDialogPortal>
   );
@@ -107,17 +123,25 @@ function AlertDialogFooter({
   );
 }
 
-function AlertDialogTitle({ className, ...props }: AlertDialogPrimitive.Title.Props) {
+function AlertDialogTitle({ className, children, ...props }: AlertDialogPrimitive.Title.Props) {
+  const { locale } = useI18n();
   return (
     <AlertDialogPrimitive.Title
       className={cn("wrap-anywhere shrink-0 font-semibold text-xl leading-snug", className)}
       data-slot="alert-dialog-title"
       {...props}
-    />
+    >
+      {localizeWebChildren(locale, children)}
+    </AlertDialogPrimitive.Title>
   );
 }
 
-function AlertDialogDescription({ className, ...props }: AlertDialogPrimitive.Description.Props) {
+function AlertDialogDescription({
+  className,
+  children,
+  ...props
+}: AlertDialogPrimitive.Description.Props) {
+  const { locale } = useI18n();
   return (
     <AlertDialogPrimitive.Description
       className={cn(
@@ -126,7 +150,9 @@ function AlertDialogDescription({ className, ...props }: AlertDialogPrimitive.De
       )}
       data-slot="alert-dialog-description"
       {...props}
-    />
+    >
+      {localizeWebChildren(locale, children)}
+    </AlertDialogPrimitive.Description>
   );
 }
 
@@ -146,5 +172,6 @@ export {
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogClose,
+  DialogAction as AlertDialogAction,
   AlertDialogViewport,
 };

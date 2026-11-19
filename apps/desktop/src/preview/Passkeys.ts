@@ -8,6 +8,11 @@ import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 
 import * as DesktopEnvironment from "../app/DesktopEnvironment.ts";
+import {
+  isZhCn,
+  makeDesktopLocaleResolver,
+  type ResolvedAppLocale,
+} from "../i18n/DesktopLocale.ts";
 import { PASSKEY_CREATE_CHANNEL, PASSKEY_GET_CHANNEL } from "./GuestProtocol.ts";
 import type { PasskeyBackend, PasskeyCeremonyContext } from "./PasskeyBackend.ts";
 import { macPasskeyBackend } from "./PasskeyBackendMac.ts";
@@ -50,10 +55,12 @@ export class PreviewPasskeys extends Context.Service<
 
 const notAllowed: PasskeyCeremonyResult = { success: false, error: "NotAllowedError" };
 
-const accountLabel = (account: Electron.WebAuthnAccount) =>
+const accountLabel = (account: Electron.WebAuthnAccount, locale: ResolvedAppLocale) =>
   account.displayName && account.name && account.displayName !== account.name
     ? `${account.displayName} (${account.name})`
-    : (account.name ?? account.displayName ?? "Unnamed passkey");
+    : (account.name ??
+      account.displayName ??
+      (isZhCn(locale) ? "未命名通行密钥" : "Unnamed passkey"));
 
 const ownerWindow = (frame: WebFrameMain | null) => {
   const contents = frame ? electronWebContents.fromFrame(frame) : undefined;
@@ -61,15 +68,21 @@ const ownerWindow = (frame: WebFrameMain | null) => {
   return owner ? BrowserWindow.fromWebContents(owner) : null;
 };
 
-const chooseAccount = async (details: Electron.SelectWebauthnAccountDetails) => {
+const chooseAccount = async (
+  details: Electron.SelectWebauthnAccountDetails,
+  locale: ResolvedAppLocale,
+) => {
   const [onlyAccount] = details.accounts;
   // The Touch ID prompt that follows already asks the user to confirm.
   if (details.accounts.length === 1) return onlyAccount?.credentialId;
   const options: Electron.MessageBoxOptions = {
     type: "none",
-    message: "Choose a passkey",
+    message: isZhCn(locale) ? "选择要使用的通行密钥" : "Choose a passkey",
     detail: details.relyingPartyId,
-    buttons: [...details.accounts.map(accountLabel), "Cancel"],
+    buttons: [
+      ...details.accounts.map((account) => accountLabel(account, locale)),
+      isZhCn(locale) ? "取消" : "Cancel",
+    ],
     cancelId: details.accounts.length,
     defaultId: 0,
     noLink: true,
@@ -116,6 +129,8 @@ const backendFor = (platform: NodeJS.Platform): PasskeyBackend | undefined =>
 const make = Effect.gen(function* () {
   const environment = yield* DesktopEnvironment.DesktopEnvironment;
   const fileSystem = yield* FileSystem.FileSystem;
+  const resolveLocale = yield* makeDesktopLocaleResolver;
+  const runPromise = Effect.runPromiseWith(yield* Effect.context<never>());
 
   const metadata =
     environment.platform === "darwin" && environment.isPackaged
@@ -146,10 +161,12 @@ const make = Effect.gen(function* () {
       sessionsWithHandlers.add(session);
       session.on("select-webauthn-account", (_event, details, callback) => {
         // The request stays pending until the callback runs, so it must run once.
-        void chooseAccount(details).then(
-          (credentialId) => callback(credentialId),
-          () => callback(),
-        );
+        void runPromise(resolveLocale)
+          .then((locale) => chooseAccount(details, locale))
+          .then(
+            (credentialId) => callback(credentialId),
+            () => callback(),
+          );
       });
     },
     attachGuest: (guest) => {

@@ -53,7 +53,7 @@ export function LocalEnvironmentSetting() {
             checked={enabled}
             disabled={isUpdating}
             onCheckedChange={() => setConfirmOpen(true)}
-            aria-label="Local environment"
+            aria-label={translateWebSource(translationLocale, "Local environment")}
           />
         }
       />

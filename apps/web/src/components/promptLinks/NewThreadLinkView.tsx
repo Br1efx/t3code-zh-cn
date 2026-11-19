@@ -349,10 +349,10 @@ export function NewThreadLinkView({ link }: { readonly link: NewThreadLink }) {
 
   switch (state.status) {
     case "opening":
-      return <LinkPage title="Opening the link..." />;
+      return <LinkPage title={translateWebSource(translationLocale, "Opening the link...")} />;
     case "opened":
       return (
-        <LinkPage title="This link is open">
+        <LinkPage title={translateWebSource(translationLocale, "This link is open")}>
           <Button
             size="sm"
             variant="outline"

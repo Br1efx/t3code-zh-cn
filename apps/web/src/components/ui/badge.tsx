@@ -2,6 +2,8 @@ import { mergeProps } from "@base-ui/react/merge-props";
 import { useRender } from "@base-ui/react/use-render";
 import { cva, type VariantProps } from "class-variance-authority";
 
+import { localizeWebChildren } from "~/i18n/localizeWebChildren";
+import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 
 const badgeVariants = cva(
@@ -43,7 +45,8 @@ interface BadgeProps extends useRender.ComponentProps<"span"> {
   size?: VariantProps<typeof badgeVariants>["size"];
 }
 
-function Badge({ className, variant, size, render, ...props }: BadgeProps) {
+function Badge({ className, variant, size, render, children, ...props }: BadgeProps) {
+  const { locale } = useI18n();
   const defaultProps = {
     className: cn(badgeVariants({ className, size, variant })),
     "data-slot": "badge",
@@ -51,7 +54,10 @@ function Badge({ className, variant, size, render, ...props }: BadgeProps) {
 
   return useRender({
     defaultTagName: "span",
-    props: mergeProps<"span">(defaultProps, props),
+    props: mergeProps<"span">(defaultProps, {
+      ...props,
+      children: localizeWebChildren(locale, children),
+    }),
     render,
   });
 }

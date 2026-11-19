@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "../../i18n/messages";
 import { useI18n } from "../../i18n/WebI18nContext";
 import { useAtomValue } from "@effect/atom-react";
@@ -193,7 +194,7 @@ function TelemetryExportForm() {
               sourceLocale,
               "This connection lacks permission to change settings on",
             )}{" "}
-            {environment?.label ?? "the selected environment"}.
+            {environment?.label ?? translateWebSource(sourceLocale, "the selected environment")}.
           </p>
         )}
         {SIGNALS.map((descriptor) => {
@@ -256,11 +257,13 @@ function TelemetryExportForm() {
               </div>
               {(saved[key] !== (running?.[key] ?? "") || override?.variable) && (
                 <p className="break-all text-xs text-muted-foreground">
-                  {translateWebSource(sourceLocale, "Running:")} {running?.[key] || "Disabled"}
+                  {translateWebSource(sourceLocale, "Running:")}{" "}
+                  {running?.[key] || translateWebSource(sourceLocale, "Disabled")}
                   {override?.variable && (
                     <>
                       {" "}
-                      from <code className="font-mono">{override.variable}</code>
+                      {localizeWebString(sourceLocale, "from ")}
+                      <code className="font-mono">{override.variable}</code>
                     </>
                   )}
                 </p>

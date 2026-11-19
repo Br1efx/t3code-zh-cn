@@ -322,7 +322,9 @@ function PullRequestAuthorChoices({
               <span className="min-w-0 flex-1 truncate">{option.actor.login}</span>
               {option.mergedCount > 0 ? (
                 <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                  {t("pullRequests.filter.mergesLoaded", { count: option.mergedCount })}
+                  {option.mergedCount === 1 && translationLocale === "en"
+                    ? "1 merge loaded"
+                    : t("pullRequests.filter.mergesLoaded", { count: option.mergedCount })}
                 </span>
               ) : null}
             </span>

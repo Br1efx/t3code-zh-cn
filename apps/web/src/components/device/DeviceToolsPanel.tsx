@@ -99,12 +99,12 @@ export function DeviceToolsPanel(props: {
       className={cn("flex min-h-0 flex-col border-border bg-background text-sm", props.className)}
     >
       <div className="flex h-9 shrink-0 items-center gap-2 border-b px-3">
-        <span className="font-medium">Tools</span>
+        <span className="font-medium">{translateWebSource(translationLocale, "Tools")}</span>
         {pending ? <Spinner size="sm" /> : null}
         <Button
           size="icon-xs"
           variant="ghost-muted"
-          aria-label="Close tools"
+          aria-label={translateWebSource(translationLocale, "Close tools")}
           className="ml-auto"
           onClick={props.onClose}
         >
@@ -117,12 +117,13 @@ export function DeviceToolsPanel(props: {
         ) : null}
         {detail === null && !error ? (
           <div className="flex items-center gap-2 px-3 py-3 text-xs text-muted-foreground">
-            <Spinner size="sm" /> Reading device settings…
+            <Spinner size="sm" />{" "}
+            {translateWebSource(translationLocale, "Reading device settings…")}
           </div>
         ) : null}
 
         {props.hostDiagnostics ? (
-          <Section title="Host diagnostics">
+          <Section title={translateWebSource(translationLocale, "Host diagnostics")}>
             <p className="whitespace-pre-line text-xs text-muted-foreground">
               {props.hostDiagnostics}
             </p>
@@ -130,7 +131,7 @@ export function DeviceToolsPanel(props: {
         ) : null}
 
         <Section title={translateWebSource(translationLocale, "App")}>
-          <Row label="Foreground">
+          <Row label={translateWebSource(translationLocale, "Foreground")}>
             <span className="truncate font-mono text-xs">{foregroundApp?.id ?? "-"}</span>
           </Row>
           {foregroundApp ? (
@@ -141,7 +142,7 @@ export function DeviceToolsPanel(props: {
                 disabled={disabled}
                 onClick={() => void act({ type: "terminateApp", appId: foregroundApp.id })}
               >
-                Terminate
+                {translateWebSource(translationLocale, "Terminate")}
               </Button>
               <Button
                 size="xs"
@@ -149,25 +150,28 @@ export function DeviceToolsPanel(props: {
                 disabled={disabled}
                 onClick={() => void act({ type: "launchApp", appId: foregroundApp.id })}
               >
-                Relaunch
+                {translateWebSource(translationLocale, "Relaunch")}
               </Button>
             </div>
           ) : null}
           <SubmitRow
-            placeholder="https://… or myapp://"
-            action="Open"
+            placeholder={translateWebSource(translationLocale, "https://… or myapp://")}
+            action={translateWebSource(translationLocale, "Open")}
             disabled={disabled}
             onSubmit={(url) => act({ type: "openUrl", url })}
           />
           <SubmitRow
-            placeholder={isIos ? "Bundle ID to launch" : "Package name to launch"}
-            action="Launch"
+            placeholder={translateWebSource(
+              translationLocale,
+              isIos ? "Bundle ID to launch" : "Package name to launch",
+            )}
+            action={translateWebSource(translationLocale, "Launch")}
             disabled={disabled}
             onSubmit={(appId) => act({ type: "launchApp", appId })}
           />
         </Section>
 
-        <Section title={isIos ? "Simulator" : "Emulator"}>
+        <Section title={translateWebSource(translationLocale, isIos ? "Simulator" : "Emulator")}>
           <Row label={translateWebSource(translationLocale, "Appearance")}>
             <ToggleGroup
               aria-label={translateWebSource(translationLocale, "Appearance")}
@@ -183,9 +187,9 @@ export function DeviceToolsPanel(props: {
               <Toggle value="dark">{translateWebSource(translationLocale, "Dark")}</Toggle>
             </ToggleGroup>
           </Row>
-          <Row label="Text size">
+          <Row label={translateWebSource(translationLocale, "Text size")}>
             <ChoiceSelect
-              ariaLabel="Text size"
+              ariaLabel={translateWebSource(translationLocale, "Text size")}
               value={settings?.textSize ?? null}
               options={TEXT_SIZES}
               disabled={disabled}
@@ -194,9 +198,9 @@ export function DeviceToolsPanel(props: {
           </Row>
           {isIos ? (
             <>
-              <Row label="Liquid Glass">
+              <Row label={translateWebSource(translationLocale, "Liquid Glass")}>
                 <ToggleGroup
-                  aria-label="Liquid Glass"
+                  aria-label={translateWebSource(translationLocale, "Liquid Glass")}
                   value={settings?.liquidGlass ? [settings.liquidGlass] : []}
                   disabled={disabled || settings?.liquidGlass === undefined}
                   onValueChange={(value) => {
@@ -207,12 +211,12 @@ export function DeviceToolsPanel(props: {
                   }}
                 >
                   <Toggle value="clear">{translateWebSource(translationLocale, "Clear")}</Toggle>
-                  <Toggle value="tinted">Tinted</Toggle>
+                  <Toggle value="tinted">{translateWebSource(translationLocale, "Tinted")}</Toggle>
                 </ToggleGroup>
               </Row>
-              <Row label="Color filter">
+              <Row label={translateWebSource(translationLocale, "Color filter")}>
                 <ChoiceSelect
-                  ariaLabel="Color filter"
+                  ariaLabel={translateWebSource(translationLocale, "Color filter")}
                   value={settings?.colorFilter ?? null}
                   options={COLOR_FILTERS}
                   disabled={disabled}
@@ -221,11 +225,11 @@ export function DeviceToolsPanel(props: {
               </Row>
             </>
           ) : (
-            <Row label="Orientation">
+            <Row label={translateWebSource(translationLocale, "Orientation")}>
               <ChoiceSelect
-                ariaLabel="Orientation"
+                ariaLabel={translateWebSource(translationLocale, "Orientation")}
                 value={null}
-                placeholder="Rotate to…"
+                placeholder={translateWebSource(translationLocale, "Rotate to…")}
                 options={ORIENTATIONS}
                 disabled={disabled}
                 onChange={(value) => act({ type: "setOrientation", value })}
@@ -233,7 +237,7 @@ export function DeviceToolsPanel(props: {
             </Row>
           )}
           <SwitchRow
-            label="Reduce Motion"
+            label={translateWebSource(translationLocale, "Reduce Motion")}
             checked={settings?.reduceMotion}
             disabled={disabled}
             onChange={(value) => act({ type: "setToggle", setting: "reduceMotion", value })}
@@ -241,13 +245,13 @@ export function DeviceToolsPanel(props: {
           {isIos ? (
             <>
               <SwitchRow
-                label="Increase Contrast"
+                label={translateWebSource(translationLocale, "Increase Contrast")}
                 checked={settings?.increaseContrast}
                 disabled={disabled}
                 onChange={(value) => act({ type: "setToggle", setting: "increaseContrast", value })}
               />
               <SwitchRow
-                label="Reduce Transparency"
+                label={translateWebSource(translationLocale, "Reduce Transparency")}
                 checked={settings?.reduceTransparency}
                 disabled={disabled}
                 onChange={(value) =>
@@ -255,13 +259,13 @@ export function DeviceToolsPanel(props: {
                 }
               />
               <SwitchRow
-                label="Show Borders"
+                label={translateWebSource(translationLocale, "Show Borders")}
                 checked={settings?.showBorders}
                 disabled={disabled}
                 onChange={(value) => act({ type: "setToggle", setting: "showBorders", value })}
               />
               <SwitchRow
-                label="VoiceOver"
+                label={translateWebSource(translationLocale, "VoiceOver")}
                 checked={settings?.voiceOver}
                 disabled={disabled}
                 onChange={(value) => act({ type: "setToggle", setting: "voiceOver", value })}
@@ -269,7 +273,7 @@ export function DeviceToolsPanel(props: {
             </>
           ) : (
             <SwitchRow
-              label="Network"
+              label={translateWebSource(translationLocale, "Network")}
               checked={settings?.networkEnabled}
               disabled={disabled}
               onChange={(value) => act({ type: "setToggle", setting: "networkEnabled", value })}
@@ -277,9 +281,9 @@ export function DeviceToolsPanel(props: {
           )}
         </Section>
 
-        <Section title="Accessibility">
+        <Section title={translateWebSource(translationLocale, "Accessibility")}>
           <SwitchRow
-            label="Overlay element frames"
+            label={translateWebSource(translationLocale, "Overlay element frames")}
             checked={props.axOverlay}
             disabled={props.access === null}
             onChange={(value) => {
@@ -307,10 +311,10 @@ export function DeviceToolsPanel(props: {
         />
 
         {isIos ? (
-          <Section title="Push notification">
+          <Section title={translateWebSource(translationLocale, "Push notification")}>
             <SubmitRow
-              placeholder="Alert text"
-              action="Send"
+              placeholder={translateWebSource(translationLocale, "Alert text")}
+              action={translateWebSource(translationLocale, "Send")}
               disabled={disabled || !foregroundApp}
               onSubmit={(payload) =>
                 foregroundApp
@@ -319,7 +323,9 @@ export function DeviceToolsPanel(props: {
               }
             />
             {!foregroundApp ? (
-              <p className="text-xs text-muted-foreground">Open an app first.</p>
+              <p className="text-xs text-muted-foreground">
+                {translateWebSource(translationLocale, "Open an app first.")}
+              </p>
             ) : null}
           </Section>
         ) : null}
@@ -375,6 +381,7 @@ function ChoiceSelect<V extends string>(props: {
   readonly placeholder?: string;
   readonly onChange: (value: V) => Promise<unknown>;
 }) {
+  const { locale: translationLocale } = useI18n();
   const current = props.options.find((option) => option.value === props.value);
   return (
     <Select
@@ -387,16 +394,18 @@ function ChoiceSelect<V extends string>(props: {
       <SelectTrigger size="xs" className="w-40" aria-label={props.ariaLabel}>
         <SelectValue>
           {current ? (
-            current.label
+            translateWebSource(translationLocale, current.label)
           ) : (
-            <span className="text-muted-foreground">{props.placeholder ?? "Unknown"}</span>
+            <span className="text-muted-foreground">
+              {props.placeholder ?? translateWebSource(translationLocale, "Unknown")}
+            </span>
           )}
         </SelectValue>
       </SelectTrigger>
       <SelectPopup align="end" alignItemWithTrigger={false}>
         {props.options.map((option) => (
           <SelectItem key={option.value} value={option.value}>
-            {option.label}
+            {translateWebSource(translationLocale, option.label)}
           </SelectItem>
         ))}
       </SelectPopup>
@@ -463,13 +472,13 @@ function LocationSection(props: {
     Math.abs(parsed.latitude) <= 90 &&
     Math.abs(parsed.longitude) <= 180;
   return (
-    <Section title="Location">
+    <Section title={translateWebSource(translationLocale, "Location")}>
       <div className="flex gap-1.5">
         <Input
           size="compact"
           font="mono"
           className="min-w-0 flex-1"
-          placeholder="Latitude"
+          placeholder={translateWebSource(translationLocale, "Latitude")}
           inputMode="decimal"
           value={latitude}
           disabled={props.disabled}
@@ -479,7 +488,7 @@ function LocationSection(props: {
           size="compact"
           font="mono"
           className="min-w-0 flex-1"
-          placeholder="Longitude"
+          placeholder={translateWebSource(translationLocale, "Longitude")}
           inputMode="decimal"
           value={longitude}
           disabled={props.disabled}
@@ -498,15 +507,21 @@ function LocationSection(props: {
             void props.onSet(preset.latitude, preset.longitude);
           }}
         >
-          <SelectTrigger size="xs" className="w-32" aria-label="Location preset">
+          <SelectTrigger
+            size="xs"
+            className="w-32"
+            aria-label={translateWebSource(translationLocale, "Location preset")}
+          >
             <SelectValue>
-              <span className="text-muted-foreground">Preset…</span>
+              <span className="text-muted-foreground">
+                {translateWebSource(translationLocale, "Preset…")}
+              </span>
             </SelectValue>
           </SelectTrigger>
           <SelectPopup align="start" alignItemWithTrigger={false}>
             {LOCATION_PRESETS.map((preset) => (
               <SelectItem key={preset.label} value={preset.label}>
-                {preset.label}
+                {translateWebSource(translationLocale, preset.label)}
               </SelectItem>
             ))}
           </SelectPopup>
@@ -517,7 +532,7 @@ function LocationSection(props: {
           disabled={props.disabled || !valid}
           onClick={() => void props.onSet(parsed.latitude, parsed.longitude)}
         >
-          Set
+          {translateWebSource(translationLocale, "Set")}
         </Button>
         {props.canClear ? (
           <Button
@@ -560,14 +575,14 @@ function PermissionsSection(props: {
       <Input
         size="compact"
         font="mono"
-        placeholder={props.defaultAppId || "App ID"}
+        placeholder={props.defaultAppId || translateWebSource(translationLocale, "App ID")}
         value={appId}
         disabled={props.disabled}
         onChange={(event) => setAppId(event.target.value)}
       />
       <div className="flex flex-wrap items-center gap-1.5">
         <ChoiceSelect
-          ariaLabel="Permission"
+          ariaLabel={translateWebSource(translationLocale, "Permission")}
           value={permission}
           options={props.permissions}
           disabled={props.disabled}
@@ -582,7 +597,7 @@ function PermissionsSection(props: {
           disabled={props.disabled || !resolvedAppId}
           onClick={() => decide("grant")}
         >
-          Grant
+          {translateWebSource(translationLocale, "Grant")}
         </Button>
         <Button
           size="xs"
@@ -599,7 +614,7 @@ function PermissionsSection(props: {
             disabled={props.disabled || !resolvedAppId}
             onClick={() => decide("reset")}
           >
-            Reset
+            {translateWebSource(translationLocale, "Reset")}
           </Button>
         ) : null}
       </div>
@@ -611,12 +626,13 @@ function EventLogSection(props: {
   readonly access: DeviceHubAccess;
   readonly device: DeviceSummary;
 }) {
+  const { locale: translationLocale } = useI18n();
   const [open, setOpen] = useState(false);
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger className="flex w-full items-center gap-1.5 border-b px-3 py-2.5 text-left text-xs font-medium text-muted-foreground">
-        Event log
+        {translateWebSource(translationLocale, "Event log")}
         <ChevronDown
           className={cn("ml-auto size-3.5 transition-transform", open && "rotate-180")}
         />
@@ -633,6 +649,7 @@ function EventLogEntries(props: {
   readonly access: DeviceHubAccess;
   readonly device: DeviceSummary;
 }) {
+  const { locale: translationLocale } = useI18n();
   const entries = useAtomValue(
     deviceEventLogAtom({
       access: props.access,
@@ -643,7 +660,9 @@ function EventLogEntries(props: {
   return (
     <ol className="max-h-64 overflow-y-auto px-3 py-2 font-mono text-2xs leading-relaxed">
       {entries.length === 0 ? (
-        <li className="text-muted-foreground">No events yet.</li>
+        <li className="text-muted-foreground">
+          {translateWebSource(translationLocale, "No events yet.")}
+        </li>
       ) : (
         entries.map((entry) => (
           <li key={entry.id} className="flex gap-2">

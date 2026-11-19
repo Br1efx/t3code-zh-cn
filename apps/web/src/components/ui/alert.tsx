@@ -2,6 +2,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { Children, isValidElement } from "react";
 import type * as React from "react";
 
+import { localizeWebChildren } from "~/i18n/localizeWebChildren";
+import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 
 const alertVariants = cva("relative rounded-xl border px-3.5 py-3 text-card-foreground text-sm", {
@@ -124,17 +126,25 @@ function Alert({
   );
 }
 
-function AlertTitle({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("font-medium", className)} data-slot="alert-title" {...props} />;
+function AlertTitle({ className, children, ...props }: React.ComponentProps<"div">) {
+  const { locale } = useI18n();
+  return (
+    <div className={cn("font-medium", className)} data-slot="alert-title" {...props}>
+      {localizeWebChildren(locale, children)}
+    </div>
+  );
 }
 
-function AlertDescription({ className, ...props }: React.ComponentProps<"div">) {
+function AlertDescription({ className, children, ...props }: React.ComponentProps<"div">) {
+  const { locale } = useI18n();
   return (
     <div
       className={cn("flex flex-col gap-2.5 text-muted-foreground", className)}
       data-slot="alert-description"
       {...props}
-    />
+    >
+      {localizeWebChildren(locale, children)}
+    </div>
   );
 }
 

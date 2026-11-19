@@ -112,7 +112,7 @@ export function PullRequestComposer({
         <div className="mb-3 flex items-center justify-between gap-2">
           {canComment && verdicts.length > 0 ? (
             <ToggleGroup
-              aria-label="Composer mode"
+              aria-label={translateWebSource(translationLocale, "Composer mode")}
               variant="segmented"
               value={[mode]}
               onValueChange={(next) => {
@@ -145,7 +145,7 @@ export function PullRequestComposer({
             ) : null}
             <PopoverClose
               render={<Button size="icon-xs" variant="ghost" />}
-              aria-label="Close composer"
+              aria-label={translateWebSource(translationLocale, "Close composer")}
             >
               <XIcon className="size-3.5" />
             </PopoverClose>

@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useAtomRefresh, useAtomValue } from "@effect/atom-react";
@@ -101,6 +102,7 @@ function ModelPicker({
   /** The grant's model, flagged when the catalog no longer lists it. */
   current: string | undefined;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const { contains } = useComboboxFilter();
   const selected = models.find((model) => model.id === value) ?? null;
   const delisted = current !== undefined && !models.some((model) => model.id === current);
@@ -120,13 +122,15 @@ function ModelPicker({
       >
         <ComboboxInput
           id="voice-cloud-model"
-          aria-label="OpenRouter model"
-          placeholder="Search transcription models"
+          aria-label={translateWebSource(i18nLocale, "OpenRouter model")}
+          placeholder={translateWebSource(i18nLocale, "Search transcription models")}
           autoFocus
           size="sm"
         />
         <ComboboxPopup>
-          <ComboboxEmpty>No transcription model matches.</ComboboxEmpty>
+          <ComboboxEmpty>
+            {translateWebSource(i18nLocale, "No transcription model matches.")}
+          </ComboboxEmpty>
           <ComboboxList className="max-h-64">
             {(model: CloudSpeechModel) => (
               <ComboboxItem key={model.id} value={model}>
@@ -141,7 +145,9 @@ function ModelPicker({
       </Combobox>
       {delisted ? (
         <p className="text-sm text-destructive" role="alert">
-          OpenRouter no longer lists {current}. Dictation stays off until you choose another model.
+          {localizeWebString(i18nLocale, "OpenRouter no longer lists ")}
+          {current}
+          {translateWebSource(i18nLocale, ". Dictation stays off until you choose another model.")}
         </p>
       ) : selected ? (
         <p className="truncate text-xs text-muted-foreground">{selected.id}</p>
@@ -290,7 +296,7 @@ export function CloudVoiceConfiguration({
               name="key"
               aria-label={`${company} API key`}
               autoFocus={!routed}
-              placeholder="Enter API key"
+              placeholder={translateWebSource(translationLocale, "Enter API key")}
               value={draft}
               configured={saved === true}
               disabled={busy}
@@ -304,9 +310,9 @@ export function CloudVoiceConfiguration({
         {draft.trim() && !credential
           ? (source?.invalidReferenceMessage ?? "Enter an API key, not a URL or secret reference.")
           : active && !routed
-            ? "Updating the key keeps dictation enabled."
+            ? translateWebSource(translationLocale, "Updating the key keeps dictation enabled.")
             : routed && saved
-              ? "Leave blank to keep the saved key."
+              ? translateWebSource(translationLocale, "Leave blank to keep the saved key.")
               : `Anyone with dictation access to ${environment.label} can bill this key.`}
       </p>
     </>
@@ -341,7 +347,11 @@ export function CloudVoiceConfiguration({
         {!remove && (
           <DialogPanel>
             {!connected ? (
-              <p>Connect to {environment.label} with dictation access to continue.</p>
+              <p>
+                {localizeWebString(translationLocale, "Connect to ")}
+                {environment.label}
+                {localizeWebString(translationLocale, " with dictation access to continue.")}
+              </p>
             ) : AsyncResult.isFailure(presence) && saved === undefined ? (
               <Button size="sm" variant="outline" onClick={refresh}>
                 Retry loading API key
@@ -351,11 +361,13 @@ export function CloudVoiceConfiguration({
               presence.value &&
               saved === undefined ? (
               <p>
-                {translateWebSource(translationLocale, "Update")} {environment.label} to use
-                OpenRouter dictation.
+                {translateWebSource(translationLocale, "Update")} {environment.label}
+                {localizeWebString(translationLocale, " to use OpenRouter dictation.")}
               </p>
             ) : saved === undefined ? (
-              <p role="status">Checking for an API key…</p>
+              <p role="status">
+                {translateWebSource(translationLocale, "Checking for an API key…")}
+              </p>
             ) : routed ? (
               <form
                 id={formId}
@@ -383,18 +395,26 @@ export function CloudVoiceConfiguration({
                     </Button>
                   ) : (
                     <p role="status" className="text-sm text-muted-foreground">
-                      Loading transcription models…
+                      {translateWebSource(translationLocale, "Loading transcription models…")}
                     </p>
                   )}
                 </div>
                 {editingKey ? (
                   <div className="grid gap-2">{keyField}</div>
                 ) : !saved ? (
-                  <p>Ask an administrator on {environment.label} to add an API key.</p>
+                  <p>
+                    {localizeWebString(translationLocale, "Ask an administrator on ")}
+                    {environment.label}
+                    {localizeWebString(translationLocale, " to add an API key.")}
+                  </p>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    Uses the API key saved on {environment.label}. This choice applies only to this
-                    device.
+                    {localizeWebString(translationLocale, "Uses the API key saved on ")}
+                    {environment.label}
+                    {translateWebSource(
+                      translationLocale,
+                      ". This choice applies only to this device.",
+                    )}
                   </p>
                 )}
               </form>
@@ -410,10 +430,17 @@ export function CloudVoiceConfiguration({
                 {keyField}
               </form>
             ) : !saved ? (
-              <p>Ask an administrator on {environment.label} to add an API key.</p>
+              <p>
+                {localizeWebString(translationLocale, "Ask an administrator on ")}
+                {environment.label}
+                {localizeWebString(translationLocale, " to add an API key.")}
+              </p>
             ) : (
               <p className="text-sm text-muted-foreground">
-                This choice applies only to this device. Choose Off to stop sharing.
+                {translateWebSource(
+                  translationLocale,
+                  "This choice applies only to this device. Choose Off to stop sharing.",
+                )}
               </p>
             )}
           </DialogPanel>

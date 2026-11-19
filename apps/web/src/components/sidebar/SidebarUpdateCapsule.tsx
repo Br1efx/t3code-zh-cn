@@ -133,14 +133,14 @@ export function SidebarUpdateCapsule({
         <div className="flex flex-col gap-1 text-xs">
           {run.localVersion !== null ? (
             <div className="flex items-center justify-between gap-3">
-              <span>This app</span>
+              <span>{translateWebSource(translationLocale, "This app")}</span>
               <span className="text-muted-foreground tabular-nums">
                 {localStatusLabel(run, local, now)}
               </span>
             </div>
           ) : onRestart ? (
             <div className="flex items-center justify-between gap-3">
-              <span>This app</span>
+              <span>{translateWebSource(translationLocale, "This app")}</span>
               <Button size="xs" variant="outline" onClick={() => void onRestart()}>
                 Restart to update
               </Button>

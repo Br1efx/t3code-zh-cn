@@ -1,3 +1,5 @@
+import { useI18n } from "~/i18n/WebI18nContext";
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import type { EnvironmentId, ThreadId, TurnItemId } from "@t3tools/contracts";
 import {
   makeMcpAppHost,
@@ -88,6 +90,7 @@ export function McpAppFrame(props: {
   readonly awaitingUser?: boolean;
   readonly onFullscreenChange?: (fullscreen: boolean) => void;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const { app } = props;
   const theme = useHtmlRenderTheme();
   const frameRef = useRef<HTMLIFrameElement>(null);
@@ -380,7 +383,10 @@ export function McpAppFrame(props: {
           setDisplayMode("inline");
           return;
         }
-        void host.teardown().then(() => setClosed(true));
+        // A replacement document may have mounted while this one wound down.
+        void host.teardown().then(() => {
+          if (hostRef.current === host) setClosed(true);
+        });
       },
       onSizeChanged: (size) => {
         // Ignore fullscreen height when restoring inline sizing.
@@ -416,7 +422,11 @@ export function McpAppFrame(props: {
   if (closed) {
     return (
       <div className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 text-muted-foreground text-xs">
-        <span>The {app.server} app was closed</span>
+        <span>
+          {localizeWebString(i18nLocale, "The ")}
+          {app.server}
+          {localizeWebString(i18nLocale, " app was closed")}
+        </span>
         <Button
           size="xs"
           variant="ghost"
@@ -469,7 +479,9 @@ export function McpAppFrame(props: {
         ) : null}
         {navigatedAway ? (
           <p className="flex size-full items-center justify-center text-muted-foreground text-xs">
-            The {app.server} app left its page and was stopped
+            {localizeWebString(i18nLocale, "The ")}
+            {app.server}
+            {localizeWebString(i18nLocale, " app left its page and was stopped")}
           </p>
         ) : src !== null ? (
           <iframe
@@ -485,7 +497,9 @@ export function McpAppFrame(props: {
           />
         ) : asset._tag === "Failure" ? (
           <p className="flex size-full items-center justify-center text-muted-foreground text-xs">
-            Unable to load the {app.server} app
+            {localizeWebString(i18nLocale, "Unable to load the ")}
+            {app.server}
+            {localizeWebString(i18nLocale, " app")}
           </p>
         ) : null}
       </div>

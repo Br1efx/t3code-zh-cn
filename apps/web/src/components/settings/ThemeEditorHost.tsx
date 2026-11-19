@@ -46,19 +46,6 @@ export function ThemeEditorHost() {
         );
         return false;
       }
-      toastManager.add(
-        stackedThreadToast({
-          type: "success",
-          title: t("appearance.themeEditor.toast.updated", { theme: savedTheme.label }),
-          description: t("appearance.themeEditor.toast.paletteAdded", {
-            appearance: t(
-              mergedAppearance === "light"
-                ? "appearance.themeEditor.light"
-                : "appearance.themeEditor.dark",
-            ),
-          }),
-        }),
-      );
       return true;
     }
     if (!created) {
@@ -68,17 +55,6 @@ export function ThemeEditorHost() {
         themeHalves?.light === savedTheme.id ||
         themeHalves?.dark === savedTheme.id;
       if (wasActive) refreshTheme();
-      toastManager.add(
-        stackedThreadToast({
-          type: "success",
-          title: t("appearance.themeEditor.toast.saved", { theme: savedTheme.label }),
-          description: t(
-            wasActive
-              ? "appearance.themeEditor.toast.changesActive"
-              : "appearance.themeEditor.toast.changesSaved",
-          ),
-        }),
-      );
       return true;
     }
 
@@ -92,13 +68,6 @@ export function ThemeEditorHost() {
       );
       return false;
     }
-    toastManager.add(
-      stackedThreadToast({
-        type: "success",
-        title: t("appearance.themeEditor.toast.created", { theme: savedTheme.label }),
-        description: t("appearance.themeEditor.toast.nowActive"),
-      }),
-    );
     return true;
   };
 

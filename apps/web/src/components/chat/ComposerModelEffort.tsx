@@ -494,8 +494,11 @@ function OptionSwitchRow(props: {
 }
 
 function NoEffortRow() {
+  const { locale: i18nLocale } = useI18n();
   return (
-    <div className="flex h-8 items-center px-2 text-muted-foreground text-sm">No effort levels</div>
+    <div className="flex h-8 items-center px-2 text-muted-foreground text-sm">
+      {translateWebSource(i18nLocale, "No effort levels")}
+    </div>
   );
 }
 

@@ -1,3 +1,4 @@
+import { localizeWebString } from "~/i18n/localizeWebChildren";
 import type { WebTranslate } from "~/i18n/WebI18nContext";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
@@ -447,7 +448,12 @@ export function AddProviderInstanceDialog({
       <WizardPopup size="wide">
         <WizardHeader
           title={t("providers.add.title")}
-          description={<>Add an account or configure a provider on {environmentLabel}.</>}
+          description={
+            <>
+              {localizeWebString(translationLocale, "Add an account or configure a provider on ")}
+              {environmentLabel}.
+            </>
+          }
         >
           {isAcpRegistry ? (
             <AddProviderInstanceWizardSteps
@@ -499,7 +505,9 @@ export function AddProviderInstanceDialog({
                 <Collapsible open={showMoreProviders} onOpenChange={setShowMoreProviders}>
                   <div className="flex pt-2">
                     <CollapsibleTrigger render={<Button variant="ghost-muted" size="xs" />}>
-                      {showMoreProviders ? "Show less" : "Show more"}
+                      {showMoreProviders
+                        ? translateWebSource(translationLocale, "Show less")
+                        : translateWebSource(translationLocale, "Show more")}
                       <ChevronDownIcon
                         aria-hidden
                         className={cn("transition-transform", showMoreProviders && "rotate-180")}
@@ -514,12 +522,14 @@ export function AddProviderInstanceDialog({
                         value={driver}
                         disabled={isPreparingRegistryAgent}
                         onValueChange={selectDriver}
-                        aria-label="More providers"
+                        aria-label={translateWebSource(translationLocale, "More providers")}
                       />
                       {!acpRegistryAllowed ? null : (
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           <div aria-hidden className="flex-1 border-t border-border/70" />
-                          <span>Or choose from ACP Registry</span>
+                          <span>
+                            {translateWebSource(translationLocale, "Or choose from ACP Registry")}
+                          </span>
                           <div aria-hidden className="flex-1 border-t border-border/70" />
                         </div>
                       )}
@@ -528,12 +538,17 @@ export function AddProviderInstanceDialog({
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <h3 className="text-sm font-medium text-foreground">
-                                {isLocalAcp ? "Local ACP command" : "Enter manually"}
+                                {isLocalAcp
+                                  ? translateWebSource(translationLocale, "Local ACP command")
+                                  : translateWebSource(translationLocale, "Enter manually")}
                               </h3>
                               <p className="mt-0.5 text-xs text-muted-foreground">
                                 {isLocalAcp
                                   ? `Run an installed ACP executable on ${environmentLabel}.`
-                                  : "Enter an official registry ID and any local executable or auth override."}
+                                  : translateWebSource(
+                                      translationLocale,
+                                      "Enter an official registry ID and any local executable or auth override.",
+                                    )}
                               </p>
                             </div>
                             <Button
@@ -561,6 +576,7 @@ export function AddProviderInstanceDialog({
                                 environment={localEnvironment}
                                 onChange={setLocalEnvironment}
                                 secretSources={secretSources}
+                                environmentId={environmentId}
                               />
                             ) : null}
                           </SettingsGroup>
@@ -636,7 +652,9 @@ export function AddProviderInstanceDialog({
                     </label>
                   }
                   description={
-                    <span id="add-provider-label-description">Shown in the provider list.</span>
+                    <span id="add-provider-label-description">
+                      {translateWebSource(translationLocale, "Shown in the provider list.")}
+                    </span>
                   }
                   control={
                     <Input
@@ -658,7 +676,7 @@ export function AddProviderInstanceDialog({
                   }
                   description={
                     <span id="add-provider-instance-id-description">
-                      Letters, digits, '-', or '_'.
+                      {translateWebSource(translationLocale, "Letters, digits, '-', or '_'.")}
                     </span>
                   }
                   status={

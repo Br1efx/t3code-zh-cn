@@ -33,6 +33,7 @@ export function LabsSettingsPanel() {
 }
 
 function BoringSidebarRow() {
+  const { locale: i18nLocale } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   return (
@@ -43,7 +44,7 @@ function BoringSidebarRow() {
         <Switch
           checked={settings.boringSidebarEnabled}
           onCheckedChange={(checked) => updateSettings({ boringSidebarEnabled: Boolean(checked) })}
-          aria-label="Boring sidebar (group by project)"
+          aria-label={translateWebSource(i18nLocale, "Boring sidebar (group by project)")}
         />
       }
     >
@@ -57,6 +58,7 @@ function BoringSidebarRow() {
 }
 
 function BoringSidebarMultilineRow() {
+  const { locale: i18nLocale } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   return (
@@ -70,7 +72,7 @@ function BoringSidebarMultilineRow() {
           onCheckedChange={(checked) =>
             updateSettings({ boringSidebarMultilineRows: Boolean(checked) })
           }
-          aria-label="Two-line folder rows"
+          aria-label={translateWebSource(i18nLocale, "Two-line folder rows")}
         />
       }
     />
@@ -98,6 +100,7 @@ function GuestLinksRowWithSignIn() {
 }
 
 function GuestLinksRow() {
+  const { locale: i18nLocale } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   const scope = useOptionalSettingsScope();
@@ -118,12 +121,14 @@ function GuestLinksRow() {
       managed={settings.guestSharingEnabled ? undefined : connectDenial}
       description={
         <>
-          Share a thread with a guest who watches it live in a browser and sends messages you
-          approve. Needs T3 Connect: sign in and link this machine in{" "}
+          {translateWebSource(
+            i18nLocale,
+            "Share a thread with a guest who watches it live in a browser and sends messages you approve. Needs T3 Connect: sign in and link this machine in",
+          )}{" "}
           <Link to="/settings/access" className="underline underline-offset-2">
-            Sharing & access
+            {translateWebSource(i18nLocale, "Sharing & access")}
           </Link>
-          . Turning it off stops every guest link.
+          {translateWebSource(i18nLocale, ". Turning it off stops every guest link.")}
         </>
       }
       control={
@@ -131,7 +136,7 @@ function GuestLinksRow() {
           settingKeys={["guestSharingEnabled"]}
           checked={settings.guestSharingEnabled}
           onCheckedChange={(checked) => updateSettings({ guestSharingEnabled: Boolean(checked) })}
-          aria-label="Guest links"
+          aria-label={translateWebSource(i18nLocale, "Guest links")}
         />
       }
     />
@@ -149,12 +154,17 @@ function LinkedEnvironmentsRow() {
       settingKeys={["linkedEnvironmentsEnabled"]}
       description={
         <>
-          Let agents here work on your other machines, and theirs here. Turn it on for each machine,
-          then link them in{" "}
+          {translateWebSource(
+            translationLocale,
+            "Let agents here work on your other machines, and theirs here. Turn it on for each machine, then link them in",
+          )}{" "}
           <Link to="/settings/connections" className="underline underline-offset-2">
             {translateWebSource(translationLocale, "Connections")}
           </Link>
-          . While off, nothing new starts over a link; running tasks finish.
+          {translateWebSource(
+            translationLocale,
+            ". While off, nothing new starts over a link; running tasks finish.",
+          )}
         </>
       }
       control={
@@ -164,7 +174,7 @@ function LinkedEnvironmentsRow() {
           onCheckedChange={(checked) =>
             updateSettings({ linkedEnvironmentsEnabled: Boolean(checked) })
           }
-          aria-label="Linked environments"
+          aria-label={translateWebSource(translationLocale, "Linked environments")}
         />
       }
     />
@@ -172,6 +182,7 @@ function LinkedEnvironmentsRow() {
 }
 
 function PromptSuggestionsRow() {
+  const { locale: i18nLocale } = useI18n();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
   return (
@@ -187,7 +198,7 @@ function PromptSuggestionsRow() {
           onCheckedChange={(checked) =>
             updateSettings({ promptSuggestionsEnabled: Boolean(checked) })
           }
-          aria-label="Suggest next prompt"
+          aria-label={translateWebSource(i18nLocale, "Suggest next prompt")}
         />
       }
     />
@@ -205,7 +216,10 @@ function SimlockHostsRow() {
       settingKeys={["simlockDeviceHostsEnabled"]}
       description={
         <>
-          Let the Device panel lease simulators and emulators from your own{" "}
+          {translateWebSource(
+            translationLocale,
+            "Let the Device panel lease simulators and emulators from your own",
+          )}{" "}
           <a
             href="https://incubator.callstack.com/simlock/"
             target="_blank"
@@ -214,11 +228,14 @@ function SimlockHostsRow() {
           >
             Simlock
           </a>{" "}
-          pool, added in{" "}
+          {translateWebSource(translationLocale, "pool, added in")}{" "}
           <Link to="/settings/devices" className="underline underline-offset-2">
             {translateWebSource(translationLocale, "Devices")}
           </Link>
-          . An alpha that may change or break. T3 Code never installs Simlock.
+          {translateWebSource(
+            translationLocale,
+            ". An alpha that may change or break. T3 Code never installs Simlock.",
+          )}
         </>
       }
       control={
@@ -228,7 +245,7 @@ function SimlockHostsRow() {
           onCheckedChange={(checked) =>
             updateSettings({ simlockDeviceHostsEnabled: Boolean(checked) })
           }
-          aria-label="Simlock device hosts"
+          aria-label={translateWebSource(translationLocale, "Simlock device hosts")}
         />
       }
     />
@@ -237,6 +254,7 @@ function SimlockHostsRow() {
 
 /** Shows only when every machine in scope is a Mac, since only macOS servers honor it. */
 function FastWorktreeCheckoutRow() {
+  const { locale: i18nLocale } = useI18n();
   const { scope, connectedEnvironments } = useSettingsScope();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
@@ -261,7 +279,7 @@ function FastWorktreeCheckoutRow() {
           settingKeys={["fastWorktreeCheckout"]}
           checked={settings.fastWorktreeCheckout}
           onCheckedChange={(checked) => updateSettings({ fastWorktreeCheckout: Boolean(checked) })}
-          aria-label="Fast worktree checkout"
+          aria-label={translateWebSource(i18nLocale, "Fast worktree checkout")}
         />
       }
     />
