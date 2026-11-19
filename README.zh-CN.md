@@ -27,7 +27,15 @@
 </p>
 
 <p align="center">
-  <strong>简体中文</strong> · <a href="./README.md">English</a> &nbsp;|&nbsp;
+  <strong>简体中文</strong> ·
+  <a href="./README.en.md">English</a> ·
+  <a href="./README.ja.md">日本語</a> ·
+  <a href="./README.ko.md">한국어</a> ·
+  <a href="./README.es.md">Español</a> ·
+  <a href="./README.ru.md">Русский</a>
+</p>
+
+<p align="center">
   <a href="https://github.com/Br1efx/t3code-zh-cn/releases/download/v0.1.11-preview.1/T3-Code-0.1.11-preview.1-x64.exe"><strong>直接下载 Windows x64 安装包</strong></a> ·
   <a href="https://github.com/Br1efx/t3code-zh-cn/releases/tag/v0.1.11-preview.1">发布说明</a> ·
   <a href="https://github.com/Br1efx/t3code-zh-cn/actions/workflows/client-release.yml">公开构建记录</a> ·
@@ -50,15 +58,15 @@
 
 在官方原生 14,500+ 词条多语言底座之上逐项润色，消除翻译腔与晦涩的 Git / 开发术语，让不熟悉英文和命令行的新手也能一眼看懂每个按钮：
 
-| 常见生硬译法 / 术语         | 本版精校表达                     | 润色目的                           |
-| --------------------------- | -------------------------------- | ---------------------------------- |
-| `工作树`（Worktree）        | **独立目录**                     | 直观表达隔离开发目录，不再劝退新手 |
-| `智能体提供方`              | **供应商**                       | 简短自然，贴合中文日常习惯         |
-| `已收尾 / 收尾会话`         | **已完成 / 标记完成**            | 符合常见任务状态表达               |
-| `issue`                     | **议题**                         | 统一全端界面术语                   |
-| 移动端混用「代理 / 智能体」 | **全端统一用词与亲切「你」称呼** | 消除称呼割裂与生硬敬语             |
+| 常见生硬译法 / 术语         | 本版精校表达                       | 润色目的                               |
+| --------------------------- | ---------------------------------- | -------------------------------------- |
+| `工作树`（Worktree）        | **独立目录**                       | 直观表达隔离开发目录，不再劝退新手     |
+| `智能体提供方`              | **供应商**                         | 简短自然，贴合中文日常习惯             |
+| `已收尾 / 收尾会话`         | **已完成 / 标记完成 / 移回进行中** | 符合常见任务状态表达，不与「归档」混淆 |
+| `issue`                     | **议题**                           | 统一全端界面术语                       |
+| 移动端混用「代理 / 智能体」 | **全端统一用词与亲切「你」称呼**   | 消除称呼割裂与生硬敬语                 |
 
-同时保留 `T3 Code` / `T3 Connect` 品牌原名，避免过度翻译，并优化了设置页侧栏的视觉分组，方便快速定位配置项。
+同时保留 `T3 Code` / `T3 Connect` 品牌原名，避免过度翻译，并优化了设置页侧栏的视觉分组分割线，方便快速定位配置项。
 
 ### 2. 开箱即用完整 T3 Connect（免编译直连手机端）
 
@@ -95,7 +103,7 @@
    由于本版为**未签名的开源社区预览构建**，首次运行安装程序时 Windows Defender SmartScreen 会弹出保护提示。点击 **「更多信息（More info）」→「仍要运行（Run anyway）」** 即可继续安装。
 
 3. **启动并开始使用**
-   桌面应用名称沿用上游的 **T3 Code (Beta)**。启动后在中文系统下自动显示简体中文，登录你已有的 AI 工具（如 Antigravity、Claude Code、Codex、Cursor 等）即可开始对话；如需手机远程控制，在设置中登录 **T3 Connect** 并与官方手机端 App 配对即可。
+   桌面应用名称沿用上游的 **T3 Code (Beta)**。启动后在中文系统下自动显示简体中文，登录你已有的 AI 工具（如 Antigravity、Claude Code、Codex、Cursor 等）即可开始对话；如需手机远程控制，在 **设置 → 共享与访问权限** 中登录 **T3 Connect** 并与官方手机端 App 配对即可。
 
 > [!NOTE]
 > **发行说明与透明提示**
@@ -142,7 +150,7 @@ Windows SmartScreen 会对所有**未购买商业代码签名证书**的新发�
 <summary><strong>3. 怎么把电脑上的 T3 Code 连接到手机端？</strong></summary>
 
 1. 在手机上安装官方 T3 Code App（[App Store](https://apps.apple.com/us/app/t3-code-remote-claude-more/id6787819824) / [Google Play](https://play.google.com/store/apps/details?id=com.t3tools.t3code)）。
-2. 在本版桌面端中打开 **设置 → 连接（或 T3 Connect）** 并登录你的账号。
+2. 在本版桌面端中打开 **设置 → 共享与访问权限**，登录 **T3 Connect** 账号。
 3. 使用手机 App 登录同一账号或扫描配对二维码，即可在手机上实时查看进度、审批命令并继续对话。
 
 </details>
@@ -150,7 +158,7 @@ Windows SmartScreen 会对所有**未购买商业代码签名证书**的新发�
 <details>
 <summary><strong>4. 如何切换界面语言？</strong></summary>
 
-在桌面端或网页端打开 **设置 → 常规 → 语言**，即可在 `简体中文`、`English` 与 `跟随系统` 之间自由切换。
+在桌面端或网页端打开 **设置 → 常规 → 语言**，即可在 `简体中文`、`English` 与 `跟随系统` 等多语言之间自由切换。
 
 </details>
 
