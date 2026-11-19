@@ -326,9 +326,13 @@ export function ReviewThreadCard({
           onClick={() => setExpanded((current) => !current)}
         >
           {thread.isResolved ? t("pullRequests.comments.resolved") : t("pullRequests.state.open")} ·{" "}
-          {t("pullRequests.comments.countMany", {
-            count: commentCount,
-          })}
+          {commentCount === 1
+            ? t("pullRequests.comments.countOne", {
+                count: commentCount,
+              })
+            : t("pullRequests.comments.countMany", {
+                count: commentCount,
+              })}
         </button>
         {thread.isOutdated ? <span>{translateWebSource(uiLocale, "outdated")}</span> : null}
         {onFix ? (

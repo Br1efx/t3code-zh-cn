@@ -9,7 +9,7 @@ const localizeChinese = (value: string) => localizeMobileString(value, "zh-CN");
 describe("localizeTextChildren", () => {
   it("localizes interpolated text as one complete message", () => {
     expect(localizeTextChildren(["Show more (", 3, " settled hidden)"], localizeChinese)).toBe(
-      "显示更多（已隐藏 3 个已收起任务）",
+      "展开更多（已折叠 3 条已办结对话）",
     );
   });
 
@@ -19,7 +19,7 @@ describe("localizeTextChildren", () => {
         [2, " queued message", "s", " will send automatically."],
         localizeChinese,
       ),
-    ).toBe("2 条排队消息将在恢复连接后自动发送。");
+    ).toBe("2 条待发消息将在恢复连接后自动发出。");
   });
 
   it("falls back to localized fragments when the complete text has no catalog entry", () => {
