@@ -98,7 +98,10 @@ jobs:
           }
           skipped_jobs = set()
           if targets == 'windows':
-              skipped_jobs = {'Android arm64 unsigned candidate (NOT installable)'}
+              skipped_jobs = {
+                  'Mobile native static analysis',
+                  'Android arm64 unsigned candidate (NOT installable)',
+              }
               required_jobs -= skipped_jobs | {'Desktop mac arm64 (unsigned)', 'Desktop mac x64 (unsigned)'}
           assert jobs['total_count'] == len(required_jobs | skipped_jobs) == len(jobs['jobs']), 'Missing or unexpected candidate jobs'
           assert {j['name'] for j in jobs['jobs']} == required_jobs | skipped_jobs

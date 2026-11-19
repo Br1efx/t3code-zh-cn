@@ -142,6 +142,7 @@ jobs:
       - run: vp run typecheck
 
   mobile_static:
+    if: inputs.client_targets != 'windows'
     name: Mobile native static analysis
     needs: source
     runs-on: macos-15
@@ -242,7 +243,14 @@ jobs:
   bundle:
     name: Build validated desktop bundle
     needs: [source, quality, mobile_static, tests]
-    if: github.event_name == 'workflow_dispatch' && inputs.build_clients
+    if: >-
+      always() &&
+      github.event_name == 'workflow_dispatch' &&
+      inputs.build_clients &&
+      needs.source.result == 'success' &&
+      needs.quality.result == 'success' &&
+      needs.tests.result == 'success' &&
+      (needs.mobile_static.result == 'success' || (inputs.client_targets == 'windows' && needs.mobile_static.result == 'skipped'))
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
