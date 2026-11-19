@@ -1,5 +1,7 @@
 import * as DateTime from "effect/DateTime";
 
+import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
+import { translateWebSource } from "~/i18n/messages";
 import { resolveDesktopPairingUrl, resolveHostedPairingUrl } from "./pairingUrls";
 import { getPairingTokenFromUrl, setPairingTokenOnUrl } from "@t3tools/shared/remote";
 import { readHostedPairingRequest } from "../../hostedPairing";
@@ -65,10 +67,14 @@ export function isQrShareableEndpoint(endpoint: AdvertisedEndpoint): boolean {
  * means unchecked. */
 export function missingTailscaleEndpointDescription(
   state: Pick<DesktopServerExposureState, "mode" | "tailscaleServeEnabled"> | null,
+  locale: ResolvedAppLocale = "en",
 ): string {
-  return state && state.mode !== "network-accessible" && !state.tailscaleServeEnabled
-    ? "Turn on Network access to detect Tailscale."
-    : "Start Tailscale to set up HTTPS access through MagicDNS.";
+  return translateWebSource(
+    locale,
+    state && state.mode !== "network-accessible" && !state.tailscaleServeEnabled
+      ? "Turn on Network access to detect Tailscale."
+      : "Start Tailscale to set up HTTPS access through MagicDNS.",
+  );
 }
 
 export function resolveTailscaleServeBaseUrl(
@@ -99,9 +105,15 @@ export function isWslSettingsRowVisible(input: {
  * Once client/server versions match, this passive Version label follows the sidebar update action,
  * including retryable failures. Rechecks retain downloaded-update labels; `state` is null outside desktop.
  */
-export function resolveLocalVersionStatusLabel(state: DesktopUpdateState | null): string {
-  if (!state) return "Up to date";
+export function resolveLocalVersionStatusLabel(
+  state: DesktopUpdateState | null,
+  locale: ResolvedAppLocale = "en",
+): string {
+  if (!state) return translateWebSource(locale, "Up to date");
   if (state.status === "downloading") {
+    if (locale === "zh-CN") {
+      return state.availableVersion ? `正在下载更新 ${state.availableVersion}` : "正在下载更新";
+    }
     return state.availableVersion
       ? `Downloading update ${state.availableVersion}`
       : "Downloading update";
@@ -113,14 +125,20 @@ export function resolveLocalVersionStatusLabel(state: DesktopUpdateState | null)
     (state.status === "checking" && state.downloadedVersion !== null)
   ) {
     const version = getDesktopUpdateDownloadedVersion(state);
+    if (locale === "zh-CN") {
+      return version ? `更新 ${version} 已下载` : "更新已下载";
+    }
     return version ? `Update ${version} downloaded` : "Update downloaded";
   }
   if (action === "download") {
+    if (locale === "zh-CN") {
+      return state.availableVersion ? `有可用更新 ${state.availableVersion}` : "有可用更新";
+    }
     return state.availableVersion
       ? `Update ${state.availableVersion} available`
       : "Update available";
   }
-  return "Up to date";
+  return translateWebSource(locale, "Up to date");
 }
 
 export type QrEndpointOption = {
@@ -167,12 +185,19 @@ const accessTimestampFormatter = new Intl.DateTimeFormat(undefined, {
   timeStyle: "short",
 });
 
-export function formatAccessTimestamp(value: string): string {
+const zhCnAccessTimestampFormatter = new Intl.DateTimeFormat("zh-CN", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
+export function formatAccessTimestamp(value: string, locale: ResolvedAppLocale = "en"): string {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
     return value;
   }
-  return accessTimestampFormatter.format(parsed);
+  return (locale === "zh-CN" ? zhCnAccessTimestampFormatter : accessTimestampFormatter).format(
+    parsed,
+  );
 }
 
 export function parseManualDesktopSshTarget(input: {
@@ -305,7 +330,15 @@ export function sortDesktopPairingLinks(links: ReadonlyArray<ServerPairingLinkRe
 export function summarizeAuthorizedClients(
   sessions: ReadonlyArray<ServerClientSessionRecord>,
   links: ReadonlyArray<ServerPairingLinkRecord>,
+  locale: ResolvedAppLocale = "en",
 ): string {
+  if (locale === "zh-CN") {
+    const parts = [
+      `${sessions.length} 个客户端`,
+      links.length > 0 ? `${links.length} 个配对链接` : null,
+    ];
+    return parts.filter((part): part is string => part !== null).join(" · ");
+  }
   const parts = [
     `${sessions.length} ${sessions.length === 1 ? "client" : "clients"}`,
     links.length > 0
@@ -434,19 +467,23 @@ export function isHostedAppPairingUrl(value: string): boolean {
   }
 }
 
-export function endpointShareHint(endpoint: AdvertisedEndpoint, url: string): string {
+export function endpointShareHint(
+  endpoint: AdvertisedEndpoint,
+  url: string,
+  locale: ResolvedAppLocale = "en",
+): string {
   if (isHostedAppPairingUrl(url)) {
-    return "Opens the hosted app, no install needed";
+    return translateWebSource(locale, "Opens the hosted app, no install needed");
   }
   switch (endpoint.reachability) {
     case "lan":
-      return "Devices on the same network";
+      return translateWebSource(locale, "Devices on the same network");
     case "private-network":
-      return "Devices on your private network";
+      return translateWebSource(locale, "Devices on your private network");
     case "public":
-      return "Reachable from anywhere";
+      return translateWebSource(locale, "Reachable from anywhere");
     case "loopback":
-      return "Clients on this machine";
+      return translateWebSource(locale, "Clients on this machine");
   }
 }
 
@@ -470,22 +507,32 @@ export function resolveAccessEnvironmentId(input: {
 }
 
 /** A short name for a T3 Connect device: its label, or what it runs on. */
-export function connectDeviceName({
-  client,
-}: {
-  readonly client?: AuthClientMetadata | undefined;
-}): string {
-  return client?.label ?? client?.os ?? client?.browser ?? "this device";
+export function connectDeviceName(
+  {
+    client,
+  }: {
+    readonly client?: AuthClientMetadata | undefined;
+  },
+  locale: ResolvedAppLocale = "en",
+): string {
+  return (
+    client?.label ?? client?.os ?? client?.browser ?? translateWebSource(locale, "this device")
+  );
 }
 
 /** How a T3 Connect device describes itself. It can say anything, so the code is what to trust. */
-export function describeConnectDeviceClient({
-  client,
-}: {
-  readonly client?: AuthClientMetadata | undefined;
-}): string {
+export function describeConnectDeviceClient(
+  {
+    client,
+  }: {
+    readonly client?: AuthClientMetadata | undefined;
+  },
+  locale: ResolvedAppLocale = "en",
+): string {
   const bits = [client?.label, client?.os, client?.browser, client?.ipAddress].filter(
     (value): value is string => typeof value === "string" && value.length > 0,
   );
-  return bits.length > 0 ? [...new Set(bits)].join(" · ") : "Unknown device";
+  return bits.length > 0
+    ? [...new Set(bits)].join(" · ")
+    : translateWebSource(locale, "Unknown device");
 }

@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useManagedTunnelUsage } from "../../cloud/managedRelayState";
+import { localizeRelayErrorMessage } from "../../cloud/relayFailureReason";
 import { T3CHAT_SUBSCRIPTION_URL, TunnelUsageMeter } from "../cloud/TunnelUsage";
 import { Button } from "../ui/button";
 import {
@@ -86,7 +87,9 @@ export function T3ChatUserProfilePage() {
           <p className="font-medium text-destructive-foreground">
             {translateWebSource(translationLocale, "Could not load T3 Chat link")}
           </p>
-          <p className="mt-0.5 text-muted-foreground">{linkState.error}</p>
+          <p className="mt-0.5 text-muted-foreground">
+            {localizeRelayErrorMessage(translationLocale, linkState.error)}
+          </p>
         </div>
       ) : data === null ? null : !data.available ? (
         <p className="border-t py-4 text-xs text-muted-foreground">

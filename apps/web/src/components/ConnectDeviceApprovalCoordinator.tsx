@@ -8,6 +8,10 @@ import { AuthAccessWriteScope, type EnvironmentId } from "@t3tools/contracts";
 import * as DateTime from "effect/DateTime";
 import { useEffect, useRef, useState } from "react";
 
+import { localizeRelayErrorMessage } from "../cloud/relayFailureReason";
+import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
+import { translateWebSource } from "../i18n/messages";
+import { useI18n } from "../i18n/WebI18nContext";
 import { authEnvironment } from "../state/auth";
 import { useEnvironments } from "../state/environments";
 import { useEnvironmentQuery } from "../state/query";
@@ -42,6 +46,7 @@ function EnvironmentConnectDeviceRequests(props: {
 
 /** Reports a failed command and says whether it failed, so its request can be offered again. */
 async function reportFailure(
+  locale: ResolvedAppLocale,
   title: string,
   action: () => Promise<AtomCommandResult<unknown, unknown>>,
 ): Promise<boolean> {
@@ -52,8 +57,11 @@ async function reportFailure(
     toastManager.add(
       stackedThreadToast({
         type: "error",
-        title,
-        description: error instanceof Error ? error.message : "An error occurred.",
+        title: translateWebSource(locale, title),
+        description:
+          error instanceof Error
+            ? localizeRelayErrorMessage(locale, error.message)
+            : translateWebSource(locale, "An error occurred."),
       }),
     );
   }
@@ -67,6 +75,7 @@ function ConnectDeviceRequestToasts({
   readonly environmentId: EnvironmentId;
   readonly environmentLabel: string;
 }) {
+  const { locale } = useI18n();
   const navigate = useNavigate();
   const access = useEnvironmentQuery(authEnvironment.accessChanges({ environmentId, input: null }));
   const approve = useAtomCommand(authEnvironment.approveConnectDevice, { reportFailure: false });
@@ -105,8 +114,8 @@ function ConnectDeviceRequestToasts({
       toasts.current.delete(id);
     }
     for (const { id, request, remainingMs } of live) {
-      const device = describeConnectDeviceClient(request);
-      const renderedKey = `${request.verificationCode}:${device}`;
+      const device = describeConnectDeviceClient(request, locale);
+      const renderedKey = `${locale}:${request.verificationCode}:${device}`;
       const tracked = toasts.current.get(id);
       if (tracked?.renderedKey === renderedKey) continue;
       const close = () => {
@@ -115,16 +124,22 @@ function ConnectDeviceRequestToasts({
       };
       const options = stackedThreadToast({
         type: "info",
-        title: `A device wants to connect to ${environmentLabel}`,
-        description: `${device}. Approve only if it shows code ${request.verificationCode}.`,
+        title:
+          locale === "zh-CN"
+            ? `有新设备请求连接到 ${environmentLabel}`
+            : `A device wants to connect to ${environmentLabel}`,
+        description:
+          locale === "zh-CN"
+            ? `${device}。仅在对方显示验证码 ${request.verificationCode} 时再批准。`
+            : `${device}. Approve only if it shows code ${request.verificationCode}.`,
         timeout: remainingMs,
         actionProps: {
-          children: "Approve",
+          children: translateWebSource(locale, "Approve"),
           onClick: () => {
             close();
             void settle(
               id,
-              reportFailure("Could not approve the device", () =>
+              reportFailure(locale, "Could not approve the device", () =>
                 approve({ environmentId, input: { pairingLinkId: id } }),
               ),
             );
@@ -133,12 +148,12 @@ function ConnectDeviceRequestToasts({
         data: {
           hideCopyButton: true,
           secondaryActionProps: {
-            children: "Deny",
+            children: translateWebSource(locale, "Deny"),
             onClick: () => {
               close();
               void settle(
                 id,
-                reportFailure("Could not deny the device", () =>
+                reportFailure(locale, "Could not deny the device", () =>
                   deny({ environmentId, input: { id } }),
                 ),
               );
@@ -148,7 +163,7 @@ function ConnectDeviceRequestToasts({
             {
               id: "review",
               props: {
-                children: "Review",
+                children: translateWebSource(locale, "Review"),
                 onClick: () =>
                   void navigate({ to: "/settings/access", search: { machine: environmentId } }),
               },

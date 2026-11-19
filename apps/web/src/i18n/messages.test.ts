@@ -89,7 +89,7 @@ describe("translateWebMessage", () => {
 describe("upstream UI localization", () => {
   it("localizes registry, account, permission and scheduled-task settings", () => {
     expect(translateWebSource("zh-CN", "Search ACP Registry")).toBe("搜索 ACP 注册表");
-    expect(translateWebSource("zh-CN", "Provider sign-in terminal")).toBe("AI 服务登录终端");
+    expect(translateWebSource("zh-CN", "Provider sign-in terminal")).toBe("供应商登录终端");
     expect(translateWebSource("zh-CN", "Scheduled tasks")).toBe("定时任务");
     expect(translateWebSource("zh-CN", "Require signature")).toBe("要求签名");
     expect(translateWebSource("zh-CN", "Not granted")).toBe("未授予");

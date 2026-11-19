@@ -1,4 +1,4 @@
-import { localizeWebString } from "~/i18n/localizeWebChildren";
+import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import { translateWebSource } from "../../i18n/messages";
 import { useI18n } from "../../i18n/WebI18nContext";
 import type {
@@ -53,6 +53,7 @@ import {
 import { settingsScopeEnvironmentLabel } from "./settingsScopeAxis";
 
 export function WorktreesDirectoryRow() {
+  const { locale: translationLocale } = useI18n();
   const { connectedEnvironments, targets } = useSettingsScope();
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
@@ -87,10 +88,14 @@ export function WorktreesDirectoryRow() {
       control={
         <Input
           key={`${scopeKey}:${mixed}:${settings.worktreesDirectory}`}
-          aria-label="Worktree location"
+          aria-label={translateWebSource(translationLocale, "Worktree location")}
           autoCapitalize="none"
           spellCheck={false}
-          placeholder={mixed ? "Mixed" : "Default"}
+          placeholder={
+            mixed
+              ? translateWebSource(translationLocale, "Mixed")
+              : translateWebSource(translationLocale, "Default")
+          }
           defaultValue={mixed ? "" : settings.worktreesDirectory}
           onFocus={(event) => {
             draft.current = event.target.value;
@@ -126,6 +131,8 @@ function RetentionControl({
   minimum?: number;
 }) {
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
+  const localizedLabel = translateWebSource(translationLocale, label);
   const [draft, setDraft] = useState(value);
   const [savedValue, setSavedValue] = useState(value);
   // Saving an age can start a cleanup sweep, so turning a rule on only opens a draft.
@@ -208,9 +215,11 @@ function RetentionControl({
           }}
         >
           <NumberFieldGroup>
-            <NumberFieldDecrement aria-label={`Decrease ${label}`} />
+            <NumberFieldDecrement
+              aria-label={isZh ? `减少${localizedLabel}` : `Decrease ${label}`}
+            />
             <NumberFieldInput
-              aria-label={`${label} in days`}
+              aria-label={isZh ? `${localizedLabel}（天）` : `${label} in days`}
               autoFocus={value === null}
               size={5}
               className="w-auto grow-0 text-right"
@@ -241,7 +250,9 @@ function RetentionControl({
             <span aria-hidden="true" className="self-center pr-2 text-xs">
               {translateWebSource(translationLocale, "days")}
             </span>
-            <NumberFieldIncrement aria-label={`Increase ${label}`} />
+            <NumberFieldIncrement
+              aria-label={isZh ? `增加${localizedLabel}` : `Increase ${label}`}
+            />
           </NumberFieldGroup>
         </NumberField>
       ) : (
@@ -250,7 +261,7 @@ function RetentionControl({
         </span>
       )}
       <Switch
-        aria-label={label}
+        aria-label={localizedLabel}
         checked={on}
         // Keeps focus in the age field, so switching off never commits an edited age first.
         onMouseDown={(event) => event.preventDefault()}
@@ -274,12 +285,13 @@ const KEEP_WHEN_LABELS = {
 function lastRunSummary(
   entries: readonly { readonly label: string; readonly counts: string }[],
   machineCount: number,
+  locale: ResolvedAppLocale = "en",
 ) {
   const first = entries[0];
   if (!first) return "";
   if (machineCount <= 1) return first.counts;
   if (entries.length === machineCount && entries.every((entry) => entry.counts === first.counts)) {
-    return `${first.counts} on every machine`;
+    return locale === "zh-CN" ? `所有设备均：${first.counts}` : `${first.counts} on every machine`;
   }
   return entries.map((entry) => `${entry.label}: ${entry.counts}`).join(" · ");
 }
@@ -292,6 +304,7 @@ function CleanupResults({
   environmentLabel: string;
 }) {
   const { locale: sourceLocale } = useI18n();
+  const isZh = sourceLocale === "zh-CN";
   return (
     <>
       {report.entries.map((entry, index) => {
@@ -299,10 +312,11 @@ function CleanupResults({
           entry.kind === "worktree"
             ? ((entry.threadId === null
                 ? entry.path
-                : entry.path?.split(/[\\/]/).findLast(Boolean)) ?? "Worktrees")
+                : entry.path?.split(/[\\/]/).findLast(Boolean)) ??
+              translateWebSource(sourceLocale, "Worktrees"))
             : entry.kind === "logs"
-              ? "Rotated logs"
-              : "Browser artifacts";
+              ? translateWebSource(sourceLocale, "Rotated logs")
+              : translateWebSource(sourceLocale, "Browser artifacts");
         return (
           <SettingsRow
             key={`${entry.path ?? entry.kind}:${entry.threadId ?? index}`}
@@ -342,7 +356,9 @@ function CleanupResults({
                 <span className="text-xs text-muted-foreground">
                   {[
                     entry.kind !== "worktree" && entry.files !== null
-                      ? `${entry.files.toLocaleString()} ${entry.files === 1 ? "file" : "files"}`
+                      ? isZh
+                        ? `${entry.files.toLocaleString()} 个文件`
+                        : `${entry.files.toLocaleString()} ${entry.files === 1 ? "file" : "files"}`
                       : null,
                     entry.bytes !== null ? formatBytes(entry.bytes) : null,
                   ]
@@ -356,14 +372,16 @@ function CleanupResults({
       })}
       {report.omittedCount > 0 && (
         <p className="px-3 py-2.5 text-xs text-muted-foreground sm:px-4">
-          {environmentLabel}: {report.omittedCount.toLocaleString()}
-          {localizeWebString(sourceLocale, " more results.")}
+          {isZh
+            ? `${environmentLabel}：另有 ${report.omittedCount.toLocaleString()} 条结果。`
+            : `${environmentLabel}: ${report.omittedCount.toLocaleString()} more results.`}
         </p>
       )}
       {report.entries.length === 0 && report.omittedCount === 0 && (
         <p className="px-3 py-2.5 text-xs text-muted-foreground sm:px-4">
-          {environmentLabel}
-          {translateWebSource(sourceLocale, ": Nothing needed cleanup.")}
+          {isZh
+            ? `${environmentLabel}：无需清理。`
+            : `${environmentLabel}: Nothing needed cleanup.`}
         </p>
       )}
     </>
@@ -381,6 +399,7 @@ const storageCleanupPermissionsAtom = environmentAtomList(
 
 function CleanupSection() {
   const { locale: i18nLocale } = useI18n();
+  const isZh = i18nLocale === "zh-CN";
   const nowMinute = useNowMinute();
   const nowMs = Date.parse(`${nowMinute}:00.000Z`);
   const { connectedEnvironments } = useSettingsScope();
@@ -430,15 +449,19 @@ function CleanupSection() {
       report,
       label: settingsScopeEnvironmentLabel(environment, connectedEnvironments),
       counts: report
-        ? `${report.counts.removed} removed, ${report.counts.kept} kept${report.counts.failed > 0 ? `, ${report.counts.failed} failed` : ""}`
+        ? isZh
+          ? `已删除 ${report.counts.removed} 项，保留 ${report.counts.kept} 项${report.counts.failed > 0 ? `，失败 ${report.counts.failed} 项` : ""}`
+          : `${report.counts.removed} removed, ${report.counts.kept} kept${report.counts.failed > 0 ? `, ${report.counts.failed} failed` : ""}`
         : "",
       description: report
-        ? `Last run ${formatRelativeTimeLabel(report.finishedAt, nowMs)}. ${formatBytes(report.bytesFreed)} recovered.${report.counts.failed > 0 ? ` ${report.counts.failed} ${report.counts.failed === 1 ? "item" : "items"} couldn't be removed.` : ""}`
+        ? isZh
+          ? `上次运行于 ${formatRelativeTimeLabel(report.finishedAt, nowMs)}，已回收 ${formatBytes(report.bytesFreed)}。${report.counts.failed > 0 ? ` 有 ${report.counts.failed} 项无法删除。` : ""}`
+          : `Last run ${formatRelativeTimeLabel(report.finishedAt, nowMs)}. ${formatBytes(report.bytesFreed)} recovered.${report.counts.failed > 0 ? ` ${report.counts.failed} ${report.counts.failed === 1 ? "item" : "items"} couldn't be removed.` : ""}`
         : query?.failed
-          ? "Could not load the last run."
+          ? translateWebSource(i18nLocale, "Could not load the last run.")
           : query?.loading
-            ? "Loading last run…"
-            : "Cleanup hasn't run yet.",
+            ? translateWebSource(i18nLocale, "Loading last run…")
+            : translateWebSource(i18nLocale, "Cleanup hasn't run yet."),
     };
   });
   const deleteNow = async () => {
@@ -456,13 +479,17 @@ function CleanupSection() {
             if (failures.length > 0)
               toastManager.add({
                 type: "error",
-                title: `Cleanup failed on ${environment.label}`,
+                title: isZh
+                  ? `${environment.label} 上的清理失败`
+                  : `Cleanup failed on ${environment.label}`,
                 description: failures[0]!.reason,
               });
           } else if (!isAtomCommandInterrupted(result)) {
             toastManager.add({
               type: "error",
-              title: `Could not run cleanup on ${environment.label}`,
+              title: isZh
+                ? `无法在 ${environment.label} 上运行清理`
+                : `Could not run cleanup on ${environment.label}`,
               description: String(squashAtomCommandFailure(result)),
             });
           }
@@ -493,7 +520,9 @@ function CleanupSection() {
               disabled={pending || !hasRules || !state.some((entry) => entry.allowed)}
               onClick={() => void deleteNow()}
             >
-              {pending ? "Deleting…" : "Delete now"}
+              {pending
+                ? translateWebSource(i18nLocale, "Deleting…")
+                : translateWebSource(i18nLocale, "Delete now")}
             </Button>
           }
         />
@@ -506,6 +535,7 @@ function CleanupSection() {
           summary={lastRunSummary(
             summaries.filter(({ report }) => report !== null),
             connectedEnvironments.length,
+            i18nLocale,
           )}
         >
           {summaries.map(
@@ -583,7 +613,7 @@ export function WorktreeCleanupSection() {
           key
         ] !== settings[key],
     )
-      ? "Mixed across selected machines"
+      ? translateWebSource(translationLocale, "Mixed across selected machines")
       : undefined;
   // A policy locks these through worktreeCleanup, which also reaches each project's own rules.
   const lockablePath = (key: keyof WorktreeCleanupRules) =>
@@ -653,16 +683,18 @@ export function WorktreeCleanupSection() {
                 >
                   <SelectValue>
                     {mixedModes
-                      ? "Mixed"
+                      ? translateWebSource(translationLocale, "Mixed")
                       : mode === "inherit"
-                        ? "Inherit"
+                        ? translateWebSource(translationLocale, "Inherit")
                         : mode === "off"
-                          ? "Off"
-                          : "Custom"}
+                          ? translateWebSource(translationLocale, "Off")
+                          : translateWebSource(translationLocale, "Custom")}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectPopup align="end" alignItemWithTrigger={false}>
-                  <SelectItem value="inherit">Inherit</SelectItem>
+                  <SelectItem value="inherit">
+                    {translateWebSource(translationLocale, "Inherit")}
+                  </SelectItem>
                   <SelectItem value="off">
                     {translateWebSource(translationLocale, "Off")}
                   </SelectItem>
@@ -739,11 +771,14 @@ export function WorktreeCleanupSection() {
                     status={[
                       ruleStatus("worktreeSettledAfterDays"),
                       environments.length > connectedEnvironments.length
-                        ? "Offline machines will not get this setting"
+                        ? translateWebSource(
+                            translationLocale,
+                            "Offline machines will not get this setting",
+                          )
                         : undefined,
                     ]
                       .filter(Boolean)
-                      .join(". ")}
+                      .join(translationLocale === "zh-CN" ? "。" : ". ")}
                     description="Remove worktrees this many days after their thread settles. Set 0 days to remove them at the next cleanup. Branches and thread history are kept."
                     serverScoped={!isProjectScope}
                     control={

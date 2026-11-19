@@ -4,7 +4,12 @@ import { type ReactNode, useEffect, useState } from "react";
 
 import { useClientSettings, updateClientSettings } from "../hooks/useSettings";
 import { translateWebMessage } from "./messages";
-import { WebI18nContext, type WebI18nContextValue, type WebTranslate } from "./WebI18nContext";
+import {
+  setActiveWebLocale,
+  WebI18nContext,
+  type WebI18nContextValue,
+  type WebTranslate,
+} from "./WebI18nContext";
 
 export { type WebI18nContextValue, type WebTranslate } from "./WebI18nContext";
 
@@ -39,6 +44,7 @@ export function WebI18nProvider({ children }: { readonly children: ReactNode }) 
 
   // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- keeps the document language aligned with the selected UI locale
   useEffect(() => {
+    setActiveWebLocale(locale);
     if (typeof document !== "undefined") {
       document.documentElement.lang = locale;
     }

@@ -105,6 +105,7 @@ function localizeInstallHint(hint: string, t: ReturnType<typeof useI18n>["t"]): 
 function authPresentation(
   auth: SourceControlProviderAuth,
   t: ReturnType<typeof useI18n>["t"],
+  locale: ReturnType<typeof useI18n>["locale"],
 ): {
   readonly label: string;
   readonly badge: "secondary" | null;
@@ -113,7 +114,7 @@ function authPresentation(
     return { label: t("sourceControl.status.authenticated"), badge: null };
   }
   if (auth.status === "unauthenticated") {
-    return { label: "Not authenticated", badge: "secondary" };
+    return { label: translateWebSource(locale, "Not authenticated"), badge: "secondary" };
   }
   return { label: t("sourceControl.status.unknown"), badge: null };
 }
@@ -182,12 +183,15 @@ function itemSummary({
   auth,
   authAccount,
   t,
+  locale,
 }: {
   readonly item: VcsDiscoveryItem | SourceControlProviderDiscoveryItem;
   readonly auth: SourceControlProviderAuth | null;
   readonly authAccount: string | null;
   readonly t: ReturnType<typeof useI18n>["t"];
+  readonly locale: ReturnType<typeof useI18n>["locale"];
 }) {
+  const isZh = locale === "zh-CN";
   if (isVcsNotReady(item)) {
     return <span>{t("sourceControl.summary.comingSoon", { provider: item.label })}</span>;
   }
@@ -219,11 +223,19 @@ function itemSummary({
     }
 
     if (!item.executable && auth.status === "unauthenticated") {
-      return <span>Available. {item.installHint}</span>;
+      const localizedHint = localizeInstallHint(item.installHint, t);
+      return <span>{isZh ? `可用。${localizedHint}` : `Available. ${localizedHint}`}</span>;
     }
 
     if (auth.status === "unauthenticated" && auth.accounts?.some((entry) => entry.authenticated)) {
-      return <span>{optionLabel(auth.detail) ?? `Every ${item.label} host is turned off.`}</span>;
+      return (
+        <span>
+          {optionLabel(auth.detail) ??
+            (isZh
+              ? `所有 ${item.label} 托管站点均已关闭。`
+              : `Every ${item.label} host is turned off.`)}
+        </span>
+      );
     }
 
     if (auth.status === "unauthenticated") {
@@ -270,9 +282,10 @@ function DiscoveryItemRow({
   readonly children?: ReactNode;
 }) {
   const { locale, t } = useI18n();
+  const isZh = locale === "zh-CN";
   const version = optionLabel(item.version);
   const auth = isProviderDiscoveryItem(item) ? item.auth : null;
-  const authStatus = auth ? authPresentation(auth, t) : null;
+  const authStatus = auth ? authPresentation(auth, t, locale) : null;
   const authAccount = auth ? optionLabel(auth.account) : null;
   const [isExpanded, setIsExpanded] = useState(false);
   const hasDetails = children !== undefined;
@@ -310,7 +323,7 @@ function DiscoveryItemRow({
               ) : null}
             </div>
             <p className="flex min-w-0 flex-wrap items-center gap-x-1 text-xs leading-normal text-muted-foreground/80">
-              {itemSummary({ item, auth, authAccount, t })}
+              {itemSummary({ item, auth, authAccount, t, locale })}
             </p>
           </div>
           <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto sm:justify-end">
@@ -335,7 +348,11 @@ function DiscoveryItemRow({
                       checked={offered.checked}
                       disabled={offered.disabled}
                       onCheckedChange={offered.onChange}
-                      aria-label={`Offer ${item.label} when adding or publishing a project`}
+                      aria-label={
+                        isZh
+                          ? `添加或发布项目时提供 ${item.label}`
+                          : `Offer ${item.label} when adding or publishing a project`
+                      }
                     />
                   }
                 />
@@ -412,8 +429,7 @@ function EmptySourceControlDiscovery({
   readonly isPending: boolean;
   readonly onScan: () => void;
 }) {
-  const { locale: translationLocale } = useI18n();
-  const { t } = useI18n();
+  const { locale: translationLocale, t } = useI18n();
   const hasError = error !== null;
 
   return (
@@ -445,8 +461,7 @@ function EmptySourceControlDiscovery({
 }
 
 export function SourceControlSettingsPanel() {
-  const { locale: translationLocale } = useI18n();
-  const { t } = useI18n();
+  const { locale: translationLocale, t } = useI18n();
   const { scope, environment, connectedEnvironments } = useSettingsScope();
 
   const environmentId =
@@ -581,7 +596,7 @@ export function SourceControlSettingsPanel() {
       ) : isInitialScanPending ? (
         <>
           <SourceControlSectionSkeleton
-            title={`Version Control${environmentSuffix}`}
+            title={`${translateWebSource(translationLocale, "Version Control")}${environmentSuffix}`}
             headerAction={scanButton}
           />
           <SourceControlSectionSkeleton
@@ -593,7 +608,7 @@ export function SourceControlSettingsPanel() {
           {hasVersionControlSystems ? (
             <SettingsSection
               id={searchableSetting("source-control").id}
-              title={`Version Control${environmentSuffix}`}
+              title={`${translateWebSource(translationLocale, "Version Control")}${environmentSuffix}`}
               headerAction={scanButton}
             >
               {result.versionControlSystems.map((item) => (
@@ -607,8 +622,8 @@ export function SourceControlSettingsPanel() {
               id={hasVersionControlSystems ? undefined : searchableSetting("source-control").id}
               title={
                 hasVersionControlSystems
-                  ? "Source control providers"
-                  : `Source control providers${environmentSuffix}`
+                  ? translateWebSource(translationLocale, "Source control providers")
+                  : `${translateWebSource(translationLocale, "Source control providers")}${environmentSuffix}`
               }
               headerAction={hasVersionControlSystems ? null : scanButton}
             >

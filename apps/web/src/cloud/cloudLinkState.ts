@@ -8,11 +8,13 @@ import * as Cause from "effect/Cause";
 import { AsyncResult, Atom } from "effect/reactivity";
 
 import { connectionAtomRuntime } from "../connection/runtime";
+import { useI18n } from "../i18n/WebI18nContext";
 import { usePrimaryEnvironmentId } from "../state/environments";
 import { appAtomRegistry } from "../rpc/atomRegistry";
 import { readEnvironmentScope, useEnvironmentScope } from "../state/session";
 import { readCloudLinkState, type CloudLinkTarget } from "./linkEnvironment";
 import { hasCloudPublicConfig } from "./publicConfig";
+import { localizeRelayErrorMessage } from "./relayFailureReason";
 
 const cloudLinkStateAtom = Atom.family((environmentId: EnvironmentId) =>
   connectionAtomRuntime
@@ -41,6 +43,7 @@ export function readCachedCloudLinkState(target: CloudLinkTarget) {
 }
 
 export function useCloudLinkState(environmentId: EnvironmentId | null) {
+  const { locale } = useI18n();
   const canReadRelay = useEnvironmentScope(environmentId, AuthRelayReadScope);
   const target: CloudLinkTarget | null = environmentId === null ? null : { environmentId };
   const atom =
@@ -54,7 +57,9 @@ export function useCloudLinkState(environmentId: EnvironmentId | null) {
   let error: string | null = null;
   if (result._tag === "Failure") {
     const cause = Cause.squash(result.cause);
-    error = cause instanceof Error ? cause.message : "Could not read T3 Connect link state.";
+    const rawError =
+      cause instanceof Error ? cause.message : "Could not read T3 Connect link state.";
+    error = localizeRelayErrorMessage(locale, rawError);
   }
 
   return {

@@ -1,4 +1,3 @@
-import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "../../i18n/messages";
 import { useI18n } from "../../i18n/WebI18nContext";
 import type { EnvironmentId, SourceControlProviderAuth } from "@t3tools/contracts";
@@ -55,8 +54,8 @@ export function SourceControlAccountSettings({
   readonly auth: SourceControlProviderAuth;
   readonly onSaved: () => void;
 }) {
-  const { locale: sourceLocale } = useI18n();
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const { hosts } = useEnvironmentSettings(environmentId, (settings) =>
     readHostCredentialSettings(settings, definition.kind),
   );
@@ -91,11 +90,18 @@ export function SourceControlAccountSettings({
   if (groups.length === 0) {
     return (
       <p className="text-xs text-muted-foreground">
-        {translateWebSource(translationLocale, "Sign in with")}{" "}
-        <code className="rounded bg-muted px-1 py-px text-2xs">{credentials.loginCommand}</code>
-        {localizeWebString(
-          sourceLocale,
-          " on the server host, then rescan to choose accounts here.",
+        {isZh ? (
+          <>
+            在服务器主机上运行{" "}
+            <code className="rounded bg-muted px-1 py-px text-2xs">{credentials.loginCommand}</code>{" "}
+            登录，然后重新扫描即可在此处选择账号。
+          </>
+        ) : (
+          <>
+            Sign in with{" "}
+            <code className="rounded bg-muted px-1 py-px text-2xs">{credentials.loginCommand}</code>{" "}
+            on the server host, then rescan to choose accounts here.
+          </>
         )}
       </p>
     );
@@ -105,16 +111,32 @@ export function SourceControlAccountSettings({
     <div className="grid gap-4">
       <div className="flex items-center justify-between gap-3">
         <p className="max-w-2xl text-xs leading-relaxed text-muted-foreground">
-          {translateWebSource(translationLocale, "Choose which")}{" "}
-          <code className="rounded bg-muted px-1 py-px text-2xs">{cliName}</code>
-          {localizeWebString(sourceLocale, " login each ")}
-          {label} {translateWebSource(sourceLocale, "host uses, or turn a host off.")}
+          {isZh ? (
+            <>
+              选择每个 {label} 托管站点要使用的{" "}
+              <code className="rounded bg-muted px-1 py-px text-2xs">{cliName}</code>{" "}
+              登录账号，或关闭某个站点。
+            </>
+          ) : (
+            <>
+              Choose which <code className="rounded bg-muted px-1 py-px text-2xs">{cliName}</code>{" "}
+              login each {label} host uses, or turn a host off.
+            </>
+          )}
         </p>
         <Button
           size="icon-xs"
           variant="ghost-muted"
           onClick={() => setRevealed((current) => !current)}
-          aria-label={revealed ? `Hide ${label} accounts` : `Reveal ${label} accounts`}
+          aria-label={
+            isZh
+              ? revealed
+                ? `隐藏 ${label} 账号`
+                : `显示 ${label} 账号`
+              : revealed
+                ? `Hide ${label} accounts`
+                : `Reveal ${label} accounts`
+          }
           aria-pressed={revealed}
         >
           {revealed ? <EyeOffIcon /> : <EyeIcon />}
@@ -133,7 +155,7 @@ export function SourceControlAccountSettings({
                 <span className="text-xs font-medium text-foreground">{group.host}</span>
                 {group.selectable.length === 1 && group.selectable[0] !== undefined ? (
                   <p className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
-                    <span>{translateWebSource(sourceLocale, "Signed in as")}</span>
+                    <span>{translateWebSource(translationLocale, "Signed in as")}</span>
                     <RedactedLogin revealed={revealed} account={group.selectable[0]} />
                   </p>
                 ) : null}
@@ -141,14 +163,16 @@ export function SourceControlAccountSettings({
               <Switch
                 checked={enabled}
                 disabled={saving}
-                aria-label={`Use ${label} on ${group.host}`}
+                aria-label={
+                  isZh ? `在 ${group.host} 上使用 ${label}` : `Use ${label} on ${group.host}`
+                }
                 onCheckedChange={(checked) => void save(group.host, { enabled: checked })}
               />
             </div>
             {group.selectable.length > 1 ? (
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs text-muted-foreground">
-                  {translateWebSource(sourceLocale, "Account")}
+                  {translateWebSource(translationLocale, "Account")}
                 </span>
                 <div className="w-64 max-w-full">
                   <Select
@@ -161,12 +185,21 @@ export function SourceControlAccountSettings({
                       });
                     }}
                   >
-                    <SelectTrigger size="sm" aria-label={`${label} account for ${group.host}`}>
+                    <SelectTrigger
+                      size="sm"
+                      aria-label={
+                        isZh
+                          ? `${group.host} 的 ${label} 账号`
+                          : `${label} account for ${group.host}`
+                      }
+                    >
                       <SelectValue>
                         {(value: string) =>
                           value === ACTIVE_ACCOUNT ? (
                             <span className="flex min-w-0 items-center gap-1">
-                              {translateWebSource(translationLocale, "Active")} {cliName} account
+                              {translationLocale === "zh-CN"
+                                ? `当前 ${cliName} 账号`
+                                : `Active ${cliName} account`}
                               {group.activeAccount ? (
                                 <>
                                   (
@@ -187,7 +220,9 @@ export function SourceControlAccountSettings({
                     <SelectPopup align="end" alignItemWithTrigger={false}>
                       <SelectItem value={ACTIVE_ACCOUNT}>
                         <span className="flex min-w-0 items-center gap-1">
-                          {translateWebSource(translationLocale, "Active")} {cliName} account
+                          {translationLocale === "zh-CN"
+                            ? `当前 ${cliName} 账号`
+                            : `Active ${cliName} account`}
                           {group.activeAccount ? (
                             <>
                               (<RedactedLogin revealed={revealed} account={group.activeAccount} />)
@@ -200,7 +235,7 @@ export function SourceControlAccountSettings({
                           <RedactedLogin
                             revealed={revealed}
                             account={account}
-                            label={`Account ${index + 1}`}
+                            label={isZh ? `账号 ${index + 1}` : `Account ${index + 1}`}
                           />
                         </SelectItem>
                       ))}
@@ -212,12 +247,9 @@ export function SourceControlAccountSettings({
             {stalePin ? (
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-warning">
-                  {localizeWebString(
-                    sourceLocale,
-                    "The chosen login is no longer signed in, so the active ",
-                  )}
-                  {cliName}
-                  {localizeWebString(sourceLocale, " login is used.")}
+                  {isZh
+                    ? `所选登录账号已退出登录，因此正在使用当前活跃的 ${cliName} 登录账号。`
+                    : `The chosen login is no longer signed in, so the active ${cliName} login is used.`}
                 </p>
                 <Button
                   size="xs"
@@ -225,7 +257,7 @@ export function SourceControlAccountSettings({
                   disabled={saving}
                   onClick={() => void save(group.host, { account: null })}
                 >
-                  {translateWebSource(sourceLocale, "Use active login")}
+                  {translateWebSource(translationLocale, "Use active login")}
                 </Button>
               </div>
             ) : null}
@@ -236,18 +268,17 @@ export function SourceControlAccountSettings({
               >
                 <RedactedLogin revealed={revealed} account={entry.account} />
                 <span>
-                  {localizeWebString(sourceLocale, "can't be used: ")}
-                  {entry.error ?? `${cliName} reports this login as invalid.`}
+                  {isZh
+                    ? `无法使用：${entry.error ?? `${cliName} 报告此登录凭据无效。`}`
+                    : `can't be used: ${entry.error ?? `${cliName} reports this login as invalid.`}`}
                 </span>
               </p>
             ))}
             {group.environmentVariable ? (
               <p className="text-xs text-warning">
-                {group.environmentVariable}{" "}
-                {translateWebSource(
-                  sourceLocale,
-                  "is set on the server, so it overrides the account chosen here until it is unset.",
-                )}
+                {isZh
+                  ? `服务器上已设置 ${group.environmentVariable}，因此在取消设置前将覆盖此处选择的账号。`
+                  : `${group.environmentVariable} is set on the server, so it overrides the account chosen here until it is unset.`}
               </p>
             ) : null}
           </div>

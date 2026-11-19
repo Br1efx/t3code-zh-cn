@@ -26,7 +26,7 @@ on:
 permissions: {}
 
 concurrency:
-  group: publish-community-client-v0.1.10-zh.1
+  group: publish-community-client-v0.1.10-zh.2
   cancel-in-progress: false
 
 jobs:
@@ -113,7 +113,7 @@ jobs:
               assert matches[0]['head_sha'] == sha and matches[0]['run_id'] == int(run_id)
           assert api('/commits/' + sha)['sha'] == sha
           assert api('/git/ref/heads/' + branch)['object']['sha'] == sha, 'Maintenance branch moved; review again'
-          prefix = 'T3-Code-0.1.10-zh.1-'
+          prefix = 'T3-Code-0.1.10-zh.2-'
           specifications = {
               'client-linux-x64': ({prefix + 'x86_64.AppImage'}, {prefix + 'amd64.deb'}),
               'client-win-x64': ({prefix + 'x64.exe'}, set()),
@@ -176,7 +176,7 @@ jobs:
           assert run_snapshot() == run, 'Candidate was rerun or changed during verification'
           assert artifacts_snapshot() == artifacts, 'Candidate artifacts changed during verification'
           asset_records.sort(key=lambda a: a['name'])
-          manifest = {'repository': repo, 'version': '0.1.10-zh.1', 'source_sha': sha, 'client_targets': targets,
+          manifest = {'repository': repo, 'version': '0.1.10-zh.2', 'source_sha': sha, 'client_targets': targets,
                       'run_url': f'https://github.com/{repo}/actions/runs/{run_id}/attempts/{run["run_attempt"]}',
                       'run': run, 'artifacts': artifacts, 'assets': asset_records}
           manifest_path = output / 'BUILD-PROVENANCE.json'
@@ -227,23 +227,23 @@ jobs:
             const hash = data => crypto.createHash('sha256').update(data).digest('hex');
             const repo = {owner: 'Br1efx', repo: 't3code-zh-cn'};
             const branch = 'main';
-            const tag = 'v0.1.10-zh.1';
+            const tag = 'v0.1.10-zh.2';
             assert.equal(context.repo.owner, repo.owner);
             assert.equal(context.repo.repo, repo.repo);
             const manifestBytes = fs.readFileSync('assets/BUILD-PROVENANCE.json');
             assert.equal(hash(manifestBytes), process.env.MANIFEST_SHA256);
             const m = JSON.parse(manifestBytes);
             assert.equal(m.repository, 'Br1efx/t3code-zh-cn');
-            assert.equal(m.version, '0.1.10-zh.1');
+            assert.equal(m.version, '0.1.10-zh.2');
             assert.equal(m.source_sha, process.env.EXPECTED_SHA);
             assert.equal(String(m.run.id), process.env.CANDIDATE_RUN_ID);
             assert.match(m.source_sha, /^[0-9a-f]{40}$/);
             assert.equal(m.client_targets, process.env.CLIENT_TARGETS);
             const windowsOnly = m.client_targets === 'windows';
-            const mandatory = windowsOnly ? ['T3-Code-0.1.10-zh.1-x64.exe'] : ['T3-Code-0.1.10-zh.1-x86_64.AppImage', 'T3-Code-0.1.10-zh.1-x64.exe',
-              'T3-Code-0.1.10-zh.1-arm64.dmg', 'T3-Code-0.1.10-zh.1-x64.dmg'];
-            const allowed = new Set(windowsOnly ? mandatory : [...mandatory, 'T3-Code-0.1.10-zh.1-amd64.deb',
-              'T3-Code-0.1.10-zh.1-arm64.zip', 'T3-Code-0.1.10-zh.1-x64.zip']);
+            const mandatory = windowsOnly ? ['T3-Code-0.1.10-zh.2-x64.exe'] : ['T3-Code-0.1.10-zh.2-x86_64.AppImage', 'T3-Code-0.1.10-zh.2-x64.exe',
+              'T3-Code-0.1.10-zh.2-arm64.dmg', 'T3-Code-0.1.10-zh.2-x64.dmg'];
+            const allowed = new Set(windowsOnly ? mandatory : [...mandatory, 'T3-Code-0.1.10-zh.2-amd64.deb',
+              'T3-Code-0.1.10-zh.2-arm64.zip', 'T3-Code-0.1.10-zh.2-x64.zip']);
             const names = m.assets.map(a => a.name);
             assert.equal(new Set(names).size, names.length);
             assert(mandatory.every(n => names.includes(n)) && names.every(n => allowed.has(n)));

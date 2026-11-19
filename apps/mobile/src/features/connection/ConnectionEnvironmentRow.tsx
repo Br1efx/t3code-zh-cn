@@ -97,11 +97,11 @@ export function ConnectionEnvironmentRow(props: {
         <Pressable
           className="min-w-0 flex-1 gap-0.5 active:opacity-70"
           accessibilityRole="button"
-          accessibilityLabel={
+          accessibilityLabel={localizeMobileString(
             props.opensDetails
               ? `Manage ${props.environment.environmentLabel}`
-              : `${props.expanded ? "Collapse" : "Expand"} details for ${props.environment.environmentLabel}`
-          }
+              : `${props.expanded ? "Collapse" : "Expand"} details for ${props.environment.environmentLabel}`,
+          )}
           onPress={props.onToggle}
         >
           <View className="flex-row items-center gap-1.5">
@@ -175,11 +175,11 @@ export function ConnectionEnvironmentRow(props: {
         />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={
+          accessibilityLabel={localizeMobileString(
             props.opensDetails
               ? `Manage ${props.environment.environmentLabel}`
-              : `${props.expanded ? "Collapse" : "Expand"} details for ${props.environment.environmentLabel}`
-          }
+              : `${props.expanded ? "Collapse" : "Expand"} details for ${props.environment.environmentLabel}`,
+          )}
           onPress={props.onToggle}
           style={{
             minWidth: 44,
@@ -286,7 +286,7 @@ export function ConnectionEnvironmentRow(props: {
 
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Reconnect environment"
+                accessibilityLabel={localizeMobileString("Reconnect environment")}
                 accessibilityState={{ disabled: !enabled }}
                 className="h-[42px] w-[42px] items-center justify-center rounded-[14px] border border-input-border bg-input active:opacity-70 disabled:opacity-40"
                 disabled={!enabled}
@@ -302,7 +302,7 @@ export function ConnectionEnvironmentRow(props: {
 
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Remove environment"
+                accessibilityLabel={localizeMobileString("Remove environment")}
                 className="h-[42px] w-[42px] items-center justify-center rounded-[14px] border border-danger-border bg-danger active:opacity-70"
                 onPress={() => props.onRemove(props.environment.environmentId)}
               >

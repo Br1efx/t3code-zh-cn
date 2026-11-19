@@ -1513,8 +1513,14 @@ export function PullRequestsPage() {
     void writeTextToClipboard(url, `${singular} link`).then(undefined, (error) => {
       toastManager.add({
         type: "error",
-        title: `Failed to copy ${shortLabel} link`,
-        description: error instanceof Error ? error.message : "An error occurred.",
+        title:
+          translationLocale === "zh-CN"
+            ? `复制 ${shortLabel} 链接失败`
+            : `Failed to copy ${shortLabel} link`,
+        description:
+          error instanceof Error
+            ? error.message
+            : translateWebSource(translationLocale, "An error occurred."),
       });
     });
   });

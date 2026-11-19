@@ -1,5 +1,5 @@
 import { useI18n } from "~/i18n/WebI18nContext";
-import { localizeWebString } from "~/i18n/localizeWebChildren";
+import { translateWebSource } from "~/i18n/messages";
 import { ChevronDownIcon } from "lucide-react";
 
 import { updateClientSettings, useClientSettings } from "../../hooks/useSettings";
@@ -19,6 +19,13 @@ export function ThreadDetailsItemsRow() {
   const { locale: i18nLocale } = useI18n();
   const visibility = useClientSettings(resolveThreadDetailsVisibility);
   const enabled = THREAD_DETAILS_ITEMS.filter((item) => visibility[item.id]).length;
+  const total = THREAD_DETAILS_ITEMS.length;
+  const summary =
+    i18nLocale === "zh-CN" ? `${enabled} / ${total} 已开启` : `${enabled} of ${total} on`;
+  const ariaLabel =
+    i18nLocale === "zh-CN"
+      ? `${translateWebSource(i18nLocale, "Thread details")}：${summary}`
+      : `Thread details: ${summary}`;
   return (
     <SettingsRow
       {...searchableSetting("thread-details-items")}
@@ -39,14 +46,11 @@ export function ThreadDetailsItemsRow() {
                 variant="outline"
                 size="sm"
                 className="w-full justify-between sm:w-40"
-                aria-label={`Thread details: ${enabled} of ${THREAD_DETAILS_ITEMS.length} on`}
+                aria-label={ariaLabel}
               />
             }
           >
-            {enabled}
-            {localizeWebString(i18nLocale, " of ")}
-            {THREAD_DETAILS_ITEMS.length}
-            {localizeWebString(i18nLocale, " on")}
+            {summary}
             <ChevronDownIcon aria-hidden />
           </MenuTrigger>
           <MenuPopup align="end">

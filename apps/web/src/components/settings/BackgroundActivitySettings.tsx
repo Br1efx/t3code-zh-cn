@@ -320,29 +320,32 @@ function BackgroundActivityAdvancedDialog({
             </div>
 
             <div className="grid gap-0 border-t sm:grid-cols-2">
-              {BACKGROUND_ACTIVITY_BOOLEAN_OVERRIDES.map(({ key, label }) => (
-                <label
-                  key={key}
-                  className="flex items-center justify-between gap-3 border-b px-4 py-3 last:border-b-0 sm:border-r sm:even:border-r-0"
-                >
-                  <span className="text-sm font-medium">{label}</span>
-                  <Switch
-                    checked={resolvedBackgroundActivity[key]}
-                    onCheckedChange={(checked) =>
-                      updateSettings(
-                        backgroundActivityOverrideSettings(
-                          settings.backgroundActivity,
-                          resolvedBackgroundActivity,
-                          {
-                            [key]: Boolean(checked),
-                          },
-                        ),
-                      )
-                    }
-                    aria-label={label}
-                  />
-                </label>
-              ))}
+              {BACKGROUND_ACTIVITY_BOOLEAN_OVERRIDES.map(({ key, label }) => {
+                const localizedLabel = translateWebSource(translationLocale, label);
+                return (
+                  <label
+                    key={key}
+                    className="flex items-center justify-between gap-3 border-b px-4 py-3 last:border-b-0 sm:border-r sm:even:border-r-0"
+                  >
+                    <span className="text-sm font-medium">{localizedLabel}</span>
+                    <Switch
+                      checked={resolvedBackgroundActivity[key]}
+                      onCheckedChange={(checked) =>
+                        updateSettings(
+                          backgroundActivityOverrideSettings(
+                            settings.backgroundActivity,
+                            resolvedBackgroundActivity,
+                            {
+                              [key]: Boolean(checked),
+                            },
+                          ),
+                        )
+                      }
+                      aria-label={localizedLabel}
+                    />
+                  </label>
+                );
+              })}
             </div>
           </fieldset>
         </DialogPanel>
@@ -377,9 +380,14 @@ export function BackgroundActivitySettingsRow() {
   const backgroundActivityProfileOption = resolveBackgroundActivityProfileOption(settings);
   const backgroundActivityDescription =
     backgroundActivityProfileOption === "advanced"
-      ? `${ADVANCED_BACKGROUND_ACTIVITY_DESCRIPTION} Shared policy: ${
-          BACKGROUND_ACTIVITY_PROFILE_LABELS[activeBackgroundActivityProfile]
-        }.`
+      ? translationLocale === "zh-CN"
+        ? `${translateWebSource(translationLocale, ADVANCED_BACKGROUND_ACTIVITY_DESCRIPTION)} 共享策略：${translateWebSource(
+            translationLocale,
+            BACKGROUND_ACTIVITY_PROFILE_LABELS[activeBackgroundActivityProfile],
+          )}。`
+        : `${ADVANCED_BACKGROUND_ACTIVITY_DESCRIPTION} Shared policy: ${
+            BACKGROUND_ACTIVITY_PROFILE_LABELS[activeBackgroundActivityProfile]
+          }.`
       : BACKGROUND_ACTIVITY_PROFILE_DESCRIPTIONS[resolvedBackgroundActivity.profile];
   const canResetBackgroundActivity = !Equal.equals(
     settings.backgroundActivity,

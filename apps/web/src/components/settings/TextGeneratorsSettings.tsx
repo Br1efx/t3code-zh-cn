@@ -1,4 +1,3 @@
-import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import {
@@ -83,6 +82,7 @@ export function TextGeneratorsSettings({
   readonly readOnly: boolean;
 }) {
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const settings = useEnvironmentSettings(environmentId);
   const updateSettings = useUpdateEnvironmentSettings(environmentId);
   const [editing, setEditing] = useState<Editing | null>(null);
@@ -101,15 +101,18 @@ export function TextGeneratorsSettings({
           !readOnly ? (
             <Button size="xs" variant="outline" onClick={() => setEditing("new")}>
               <PlusIcon className="size-3" aria-hidden />
-              Add generator
+              {translateWebSource(translationLocale, "Add generator")}
             </Button>
           ) : null
         }
       >
         {generators.length === 0 ? (
           <SettingsRow
-            title="No text generators yet"
-            description="Add a model API to write thread titles, commit messages, and other short text without starting a coding agent."
+            title={translateWebSource(translationLocale, "No text generators yet")}
+            description={translateWebSource(
+              translationLocale,
+              "Add a model API to write thread titles, commit messages, and other short text without starting a coding agent.",
+            )}
           />
         ) : null}
         {generators.map(([id, config]) => {
@@ -130,7 +133,7 @@ export function TextGeneratorsSettings({
               description={
                 // Indented past the icon so it lines up with the name.
                 <span className="block truncate ps-7.5">
-                  {config.enabled ? "" : localizeWebString(translationLocale, "Off · ")}
+                  {config.enabled ? "" : isZh ? "已关闭 · " : "Off · "}
                   {config.baseUrl.replace(/^https?:\/\//, "")}
                 </span>
               }
@@ -143,7 +146,7 @@ export function TextGeneratorsSettings({
                           <Button
                             size="icon-sm"
                             variant="ghost-muted"
-                            aria-label={`More actions for ${name}`}
+                            aria-label={isZh ? `${name} 的更多操作` : `More actions for ${name}`}
                           />
                         }
                       >
@@ -157,7 +160,7 @@ export function TextGeneratorsSettings({
                           disabled={!config.enabled}
                           onClick={() => setViewing({ id, config })}
                         >
-                          Show models
+                          {translateWebSource(translationLocale, "Show models")}
                         </MenuItem>
                         <MenuItem variant="destructive" onClick={() => setRemoving(id)}>
                           {translateWebSource(translationLocale, "Remove")}
@@ -169,7 +172,7 @@ export function TextGeneratorsSettings({
                       onCheckedChange={(enabled) =>
                         updateSettings({ textGenerators: { [id]: { ...config, enabled } } })
                       }
-                      aria-label={`Enable ${name}`}
+                      aria-label={isZh ? `启用 ${name}` : `Enable ${name}`}
                     />
                   </div>
                 )
@@ -209,12 +212,14 @@ export function TextGeneratorsSettings({
         <AlertDialogPopup>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {translateWebSource(translationLocale, "Remove")}{" "}
-              {removingConfig ? textGeneratorDisplayName(removingConfig) : ""}?
+              {isZh
+                ? `移除 ${removingConfig ? textGeneratorDisplayName(removingConfig) : ""}？`
+                : `Remove ${removingConfig ? textGeneratorDisplayName(removingConfig) : ""}?`}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This deletes the API key stored on {environmentLabel}. Anything set to use this
-              generator falls back to the text generation model.
+              {isZh
+                ? `这会删除存储在 ${environmentLabel} 上的 API 密钥。所有设为使用此生成器的功能都会回退到文本生成模型。`
+                : `This deletes the API key stored on ${environmentLabel}. Anything set to use this generator falls back to the text generation model.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -270,6 +275,7 @@ function TextGeneratorWizard({
   readonly newId: (preset: TextGeneratorPreset) => ProviderInstanceId;
 }) {
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const existing = editing === "new" ? null : editing.config;
   const [step, setStep] = useState(0);
   const [preset, setPreset] = useState(TEXT_GENERATOR_PRESETS[0]!);
@@ -337,13 +343,18 @@ function TextGeneratorWizard({
         <WizardHeader
           title={
             existing
-              ? `Edit ${textGeneratorDisplayName(existing)}`
+              ? isZh
+                ? `编辑 ${textGeneratorDisplayName(existing)}`
+                : `Edit ${textGeneratorDisplayName(existing)}`
               : translateWebSource(translationLocale, "Add a text generator")
           }
-          description="Writes thread titles, commit messages, and other short text without starting a coding agent. Your API key is stored on this environment."
+          description={translateWebSource(
+            translationLocale,
+            "Writes thread titles, commit messages, and other short text without starting a coding agent. Your API key is stored on this environment.",
+          )}
         >
           <WizardSteps
-            steps={STEPS}
+            steps={STEPS.map((wizardStep) => translateWebSource(translationLocale, wizardStep))}
             currentStep={step}
             isStepDisabled={(index) => index > step}
             onStepChange={setStep}
@@ -408,7 +419,9 @@ function TextGeneratorWizard({
                 ) : null}
                 {showBaseUrl ? (
                   <div className="grid gap-1.5">
-                    <Label htmlFor="text-generator-url">Base URL</Label>
+                    <Label htmlFor="text-generator-url">
+                      {translateWebSource(translationLocale, "Base URL")}
+                    </Label>
                     <Input
                       id="text-generator-url"
                       placeholder="http://localhost:11434/v1"
@@ -424,7 +437,10 @@ function TextGeneratorWizard({
                 ) : null}
                 <div className="grid gap-1.5">
                   <Label htmlFor="text-generator-key">
-                    {keyRequired ? "API key" : "API key (optional)"}
+                    {translateWebSource(
+                      translationLocale,
+                      keyRequired ? "API key" : "API key (optional)",
+                    )}
                   </Label>
                   <SecretSourceInput
                     id="text-generator-key"
@@ -442,14 +458,16 @@ function TextGeneratorWizard({
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <Label htmlFor="text-generator-label">Name (optional)</Label>
+                  <Label htmlFor="text-generator-label">
+                    {translateWebSource(translationLocale, "Name (optional)")}
+                  </Label>
                   <Input
                     id="text-generator-label"
                     placeholder={
                       existing !== null
                         ? textGeneratorDisplayName(existing)
                         : preset.id === "custom"
-                          ? "e.g. My local model"
+                          ? translateWebSource(translationLocale, "e.g. My local model")
                           : preset.label
                     }
                     value={label}
@@ -466,16 +484,9 @@ function TextGeneratorWizard({
           ) : (
             <div className="grid gap-4">
               <p className="text-sm text-muted-foreground">
-                {name}
-                {localizeWebString(translationLocale, " is connected and lists ")}
-                {modelCount}{" "}
-                {modelCount === 1
-                  ? translateWebSource(translationLocale, "model")
-                  : translateWebSource(translationLocale, "models")}
-                {translateWebSource(
-                  translationLocale,
-                  ". Switch any of these to it, or keep what they use now.",
-                )}
+                {isZh
+                  ? `${name} 已连接，共列出 ${modelCount} 个模型。你可以将以下任意任务切换为它，或保留当前使用的模型。`
+                  : `${name} is connected and lists ${modelCount} ${modelCount === 1 ? "model" : "models"}. Switch any of these to it, or keep what they use now.`}
               </p>
               {/* One grid for all rows, so pickers and Test buttons line up in columns. */}
               <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-x-2 gap-y-4">
@@ -485,7 +496,7 @@ function TextGeneratorWizard({
                     environmentId={environmentId}
                     providers={providers}
                     settingKey={task.key}
-                    label={task.label}
+                    label={translateWebSource(translationLocale, task.label)}
                   />
                 ))}
               </div>
@@ -508,7 +519,10 @@ function TextGeneratorWizard({
               </Button>
               <Button onClick={() => void connect()} disabled={!canConnect || checking}>
                 {checking ? <Spinner /> : null}
-                {checking ? "Connecting" : existing ? "Save and continue" : "Connect"}
+                {translateWebSource(
+                  translationLocale,
+                  checking ? "Connecting" : existing ? "Save and continue" : "Connect",
+                )}
               </Button>
             </>
           ) : (
@@ -577,8 +591,9 @@ function TextGenerationTaskPicker({
           </span>
         ) : shown ? (
           <span role="status" className="text-xs text-muted-foreground">
-            {selection.model}
-            {localizeWebString(translationLocale, " answered. It works.")}
+            {translationLocale === "zh-CN"
+              ? `${selection.model} 已响应，可以正常使用。`
+              : `${selection.model} answered. It works.`}
           </span>
         ) : own === null ? (
           <span className="text-xs text-muted-foreground">
@@ -656,8 +671,8 @@ function TextGeneratorModelList({
       {models.length > 8 ? (
         <Input
           type="search"
-          placeholder="Search models"
-          aria-label="Search models"
+          placeholder={translateWebSource(translationLocale, "Search models")}
+          aria-label={translateWebSource(translationLocale, "Search models")}
           autoFocus
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -726,6 +741,7 @@ function TextGeneratorModelsDialog({
   readonly onClose: () => void;
 }) {
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const name = textGeneratorDisplayName(saved.config);
   const result = useTextGeneratorModels(environmentId, saved.id, saved.config);
   const [refreshing, setRefreshing] = useState(false);
@@ -736,7 +752,7 @@ function TextGeneratorModelsDialog({
     if ("error" in outcome) {
       toastManager.add({
         type: "error",
-        title: `Couldn't load ${name} models`,
+        title: isZh ? `无法加载 ${name} 的模型` : `Couldn't load ${name} models`,
         description: outcome.error,
       });
     }
@@ -752,13 +768,16 @@ function TextGeneratorModelsDialog({
     >
       <DialogPopup className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{name} models</DialogTitle>
+          <DialogTitle>{isZh ? `${name} 模型` : `${name} models`}</DialogTitle>
           <DialogDescription>
             {models === null
-              ? error
-                ? "The model list couldn't load."
-                : "Loading the model list."
-              : `${models.length} ${models.length === 1 ? "model" : "models"} available. Pick one in a text generation model picker.`}
+              ? translateWebSource(
+                  translationLocale,
+                  error ? "The model list couldn't load." : "Loading the model list.",
+                )
+              : isZh
+                ? `共有 ${models.length} 个可用模型。可在文本生成模型选择器中选用。`
+                : `${models.length} ${models.length === 1 ? "model" : "models"} available. Pick one in a text generation model picker.`}
           </DialogDescription>
         </DialogHeader>
         <DialogPanel>

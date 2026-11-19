@@ -22,6 +22,7 @@ import { AppText as Text } from "../../components/ui/AppText";
 import { ControlPill } from "../../components/ui/ControlPill";
 import { Menu } from "../../components/ui/Menu";
 import { ScreenScrollView } from "../../components/ui/ScreenScrollView";
+import { localizeMobileString } from "../../i18n/mobileStrings";
 import { environmentPresentations } from "../../state/presentation";
 import { useEnvironmentQuery } from "../../state/query";
 import { serverEnvironment } from "../../state/server";
@@ -369,7 +370,7 @@ function ProviderAccount({
     <Menu
       accessible
       accessibilityRole="button"
-      accessibilityLabel={`${name} account options`}
+      accessibilityLabel={localizeMobileString(`${name} account options`)}
       title={name}
       actions={accountActions}
       onPressAction={({ nativeEvent }) => onMenuAction(nativeEvent.event)}
@@ -380,7 +381,7 @@ function ProviderAccount({
     <Menu
       accessible
       accessibilityRole="button"
-      accessibilityLabel={`Sign in to ${name}`}
+      accessibilityLabel={localizeMobileString(`Sign in to ${name}`)}
       title="Sign in with"
       actions={[...methodActions, ...removeActions]}
       onPressAction={({ nativeEvent }) => onMenuAction(nativeEvent.event)}
@@ -417,7 +418,7 @@ function ProviderAccount({
         <View className="gap-2 px-4 pb-3">
           {interaction?.type === "deviceCode" ? (
             <Text selectable className="text-foreground">
-              Enter code {interaction.userCode} on the sign-in page.
+              {`Enter code ${interaction.userCode} on the sign-in page.`}
             </Text>
           ) : null}
           {interaction?.type === "terminal" ? (
@@ -517,13 +518,19 @@ function ProviderAccountSummary({
   readonly email: string | undefined;
 }) {
   const [revealed, setRevealed] = useState(false);
+  const localizedStatus = status ? localizeMobileString(status) : status;
   const content = (
     <>
       <Text textRole="body" className="text-foreground" numberOfLines={1}>
         {name}
       </Text>
-      <Text accessibilityLiveRegion="polite" textRole="footnote" className="text-foreground-muted">
-        {email ? `${status} · ${revealed ? email : "••••••@••••••"}` : status}
+      <Text
+        localize={false}
+        accessibilityLiveRegion="polite"
+        textRole="footnote"
+        className="text-foreground-muted"
+      >
+        {email ? `${localizedStatus} · ${revealed ? email : "••••••@••••••"}` : localizedStatus}
       </Text>
     </>
   );
@@ -531,7 +538,7 @@ function ProviderAccountSummary({
     return (
       <View
         accessible
-        accessibilityLabel={[name, status].filter(Boolean).join(", ")}
+        accessibilityLabel={[name, localizedStatus].filter(Boolean).join(", ")}
         className="min-w-0 shrink grow gap-0.5"
       >
         {content}
@@ -541,8 +548,12 @@ function ProviderAccountSummary({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={[name, status, revealed ? email : null].filter(Boolean).join(", ")}
-      accessibilityHint={revealed ? "Hides the account email" : "Reveals the account email"}
+      accessibilityLabel={[name, localizedStatus, revealed ? email : null]
+        .filter(Boolean)
+        .join(", ")}
+      accessibilityHint={localizeMobileString(
+        revealed ? "Hides the account email" : "Reveals the account email",
+      )}
       onPress={() => setRevealed((value) => !value)}
       className="min-w-0 shrink grow gap-0.5"
     >

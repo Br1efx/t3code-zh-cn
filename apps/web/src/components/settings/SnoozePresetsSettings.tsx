@@ -1,4 +1,3 @@
-import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useState } from "react";
@@ -296,7 +295,7 @@ function SnoozePresetList(props: {
                   <span className="ps-2 tabular-nums">{preview.when}</span>
                 </span>
               ) : (
-                <span className="truncate">{preview.text}</span>
+                <span className="truncate">{translateWebSource(i18nLocale, preview.text)}</span>
               )}
               <Button
                 variant="ghost-muted"
@@ -313,7 +312,9 @@ function SnoozePresetList(props: {
       <p className="text-xs text-muted-foreground">
         {menuOrder.length === 0
           ? translateWebSource(i18nLocale, "Menus offer only Custom…")
-          : `Menu now: ${menuOrder.join(" · ")}`}
+          : i18nLocale === "zh-CN"
+            ? `当前菜单：${menuOrder.join(" · ")}`
+            : `Menu now: ${menuOrder.join(" · ")}`}
       </p>
       <div>
         <Button
@@ -327,9 +328,9 @@ function SnoozePresetList(props: {
         </Button>
         {props.presets.length >= MAX_SNOOZE_PRESETS ? (
           <span className="ps-2 text-xs text-muted-foreground">
-            {localizeWebString(i18nLocale, "Up to ")}
-            {MAX_SNOOZE_PRESETS}
-            {localizeWebString(i18nLocale, " options")}
+            {i18nLocale === "zh-CN"
+              ? `最多 ${MAX_SNOOZE_PRESETS} 个选项`
+              : `Up to ${MAX_SNOOZE_PRESETS} options`}
           </span>
         ) : null}
       </div>

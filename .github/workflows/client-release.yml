@@ -30,7 +30,7 @@ concurrency:
 
 env:
   UPSTREAM_VERSION: 0.1.10
-  CLIENT_VERSION: 0.1.10-zh.1
+  CLIENT_VERSION: 0.1.10-zh.2
   T3CODE_DESKTOP_UPDATE_REPOSITORY: Br1efx/t3code-zh-cn
   CI: "true"
   CSC_IDENTITY_AUTO_DISCOVERY: "false"
@@ -469,7 +469,7 @@ jobs:
     timeout-minutes: 120
     env:
       APP_VARIANT: community
-      T3CODE_MOBILE_VERSION: 0.1.10-zh.1
+      T3CODE_MOBILE_VERSION: 0.1.10-zh.2
       # Candidate only. A publishable versionCode must exceed the installed release.
       T3CODE_MOBILE_VERSION_CODE: "11001"
       T3CODE_MOBILE_UPDATES_ENABLED: "0"

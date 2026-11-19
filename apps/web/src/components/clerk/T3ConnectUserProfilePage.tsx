@@ -17,7 +17,7 @@ import {
   useManagedRelayEnvironments,
   useManagedTunnelUsage,
 } from "../../cloud/managedRelayState";
-import { relayFailureReason } from "../../cloud/relayFailureReason";
+import { localizeRelayErrorMessage, relayFailureReason } from "../../cloud/relayFailureReason";
 import { relayEnvironmentDiscovery } from "../../state/relay";
 import { useAtomCommand } from "../../state/use-atom-command";
 import { T3CHAT_SUBSCRIPTION_URL, TunnelUsageMeter, tunnelUpgradeCopy } from "../cloud/TunnelUsage";
@@ -167,7 +167,7 @@ function T3ConnectTunnelUsage() {
             )
           ) : (
             <>
-              {tx(tunnelUpgradeCopy(usage.upgrade))}{" "}
+              {tunnelUpgradeCopy(usage.upgrade, locale)}{" "}
               {usage.upgrade === "link" ? (
                 <InlineButton disabled={t3Chat.pending !== null} onClick={() => void t3Chat.link()}>
                   {t3Chat.pending === "link" ? tx("Opening…") : tx("Link T3 Chat")}
@@ -246,7 +246,10 @@ export function T3ConnectUserProfilePage() {
     // The relay may have removed it before failing.
     environmentsState.refresh();
     const cause = squashAtomCommandFailure(result);
-    const message = cause instanceof Error ? cause.message : tx("Could not deregister the server.");
+    const message =
+      cause instanceof Error
+        ? localizeRelayErrorMessage(locale, cause.message)
+        : tx("Could not deregister the server.");
     const traceId = findErrorTraceId(cause);
     console.error("[t3-connect] Could not deregister environment", {
       environmentId: environment.environmentId,
@@ -258,7 +261,7 @@ export function T3ConnectUserProfilePage() {
       stackedThreadToast({
         type: "error",
         title: tx("Could not deregister server"),
-        description: relayFailureReason(cause) ?? message,
+        description: relayFailureReason(cause, locale) ?? message,
         ...(traceId
           ? {
               actionProps: {
@@ -307,7 +310,9 @@ export function T3ConnectUserProfilePage() {
             <p className="font-medium text-destructive-foreground">
               {tx("Could not load T3 Connect environments")}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">{environmentsState.error}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {localizeRelayErrorMessage(locale, environmentsState.error)}
+            </p>
           </div>
         ) : null}
 

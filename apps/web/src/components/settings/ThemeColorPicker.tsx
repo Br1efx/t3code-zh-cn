@@ -109,7 +109,8 @@ function ThemeColorPickerPanel({
   committer: FrameCommitter;
   onChange: (value: string) => void;
 }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const isZh = locale === "zh-CN";
   const normalizedValue = normalizeThemePickerColor(value);
   const alphaSuffix = themePickerAlphaSuffix(value);
   const [hsv, setHsv] = useState(() => hexToHsv(normalizedValue));
@@ -180,7 +181,7 @@ function ThemeColorPickerPanel({
           onInteractionEnd={committer.flush}
         />
         <ColorHueSlider
-          label={`${label} hue`}
+          label={isZh ? `${label}色相` : `${label} hue`}
           value={hsv.h}
           onChange={(h) => commitHsv({ ...hsv, h })}
           onInteractionEnd={committer.flush}
@@ -196,7 +197,7 @@ function ThemeColorPickerPanel({
                 style={{ backgroundColor: currentColor }}
               />
               <input
-                aria-label={`${label} picker hex value`}
+                aria-label={isZh ? `${label}拾色器 HEX 值` : `${label} picker hex value`}
                 className="h-8 min-w-0 flex-1 bg-transparent font-mono text-xs text-foreground outline-none"
                 onBlur={() => {
                   setIsEditingText(false);
@@ -218,7 +219,7 @@ function ThemeColorPickerPanel({
             </span>
             <span className="flex min-w-0 items-center rounded-lg border border-input bg-background px-2 focus-within:border-ring">
               <input
-                aria-label={`${label} picker RGB value`}
+                aria-label={isZh ? `${label}拾色器 RGB 值` : `${label} picker RGB value`}
                 className="h-8 min-w-0 flex-1 bg-transparent font-mono text-xs text-foreground outline-none"
                 onBlur={() => {
                   setIsEditingText(false);
@@ -340,8 +341,13 @@ export const ThemeColorField = memo(function ThemeColorField({
   selected?: boolean;
   label?: string;
 }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
+  const isZh = locale === "zh-CN";
   const label = customLabel ?? getThemeRoleLabel(role);
+  const usageLabel = t(
+    selected ? "appearance.themeEditor.color.hideUsage" : "appearance.themeEditor.color.showUsage",
+    { label },
+  );
   const isColorValue = isThemeColor(value);
   const swatchValue = isColorValue ? value : "#000000";
   const editorValue = value.trim().toLowerCase().startsWith("oklch(")
@@ -360,12 +366,7 @@ export const ThemeColorField = memo(function ThemeColorField({
         <TooltipTrigger
           render={
             <button
-              aria-label={t(
-                selected
-                  ? "appearance.themeEditor.color.hideUsage"
-                  : "appearance.themeEditor.color.showUsage",
-                { label },
-              )}
+              aria-label={usageLabel}
               aria-pressed={selected}
               className="flex min-w-0 flex-1 cursor-pointer items-center rounded-md text-left text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
               onClick={() => onToggleSelected?.(role)}
@@ -375,7 +376,7 @@ export const ThemeColorField = memo(function ThemeColorField({
             </button>
           }
         />
-        <TooltipPopup side="top">{`${selected ? "Hide" : "Show"} where ${label} is used`}</TooltipPopup>
+        <TooltipPopup side="top">{usageLabel}</TooltipPopup>
       </Tooltip>
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <ThemeColorPicker
@@ -388,7 +389,7 @@ export const ThemeColorField = memo(function ThemeColorField({
         />
         <Input
           aria-invalid={!isColorValue}
-          aria-label={`${label} hex value`}
+          aria-label={isZh ? `${label} HEX 值` : `${label} hex value`}
           className="w-28 shrink-0"
           font="mono"
           id={`${role}-hex`}

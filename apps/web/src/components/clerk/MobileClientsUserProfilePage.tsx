@@ -3,6 +3,7 @@ import type { RelayClientDeviceRecord } from "@t3tools/contracts/relay";
 import { SmartphoneIcon } from "lucide-react";
 import { useI18n } from "~/i18n/WebI18nContext";
 
+import { localizeRelayErrorMessage } from "../../cloud/relayFailureReason";
 import { useManagedRelayDevices } from "../../cloud/managedRelayState";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -31,7 +32,8 @@ function MobileClientStatusBadge({
   const { locale: translationLocale } = useI18n();
   return (
     <Badge variant={enabled ? "success" : "outline"}>
-      {translateWebSource(translationLocale, label)}:{" "}
+      {translateWebSource(translationLocale, label)}
+      {translationLocale === "zh-CN" ? "：" : ": "}
       {translateWebSource(translationLocale, enabled ? "On" : "Off")}
     </Badge>
   );
@@ -139,7 +141,9 @@ export function MobileClientsUserProfilePage() {
               <p className="font-medium text-destructive-foreground">
                 {translateWebSource(translationLocale, "Could not load mobile clients")}
               </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{devicesState.error}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {localizeRelayErrorMessage(translationLocale, devicesState.error)}
+              </p>
             </div>
             <Button size="xs" variant="outline" onClick={devicesState.refresh}>
               {translateWebSource(translationLocale, "Try again")}

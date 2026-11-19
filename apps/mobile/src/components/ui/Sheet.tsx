@@ -3,6 +3,7 @@ import { Platform, View } from "react-native";
 import { FormSheet, ScreenStack } from "react-native-screens";
 import { useResolveClassNames } from "uniwind";
 
+import { localizeMobileString } from "../../i18n/mobileStrings";
 import { nativeHeaderScrollEdgeEffects } from "../../native/StackHeader";
 import { formSheetDetents } from "../../native/sheet-surface";
 import { NativeHeader, NativeScreen } from "../../native/ThemedScreenStack";
@@ -50,7 +51,7 @@ export function Sheet(props: SheetProps) {
               tintColorClassName="accent-foreground"
               hideBackButton
               hideShadow={false}
-              title={props.title}
+              title={localizeMobileString(props.title)}
               titleColorClassName="accent-foreground"
               titleFontSize={18}
               titleFontWeight="800"
@@ -59,7 +60,7 @@ export function Sheet(props: SheetProps) {
                 {
                   type: "button",
                   icon: { name: "xmark", type: "sfSymbol" },
-                  accessibilityLabel: `Close ${props.title}`,
+                  accessibilityLabel: localizeMobileString(`Close ${props.title}`),
                   identifier: `app-sheet-close-${screenId}`,
                   disabled: props.dismissDisabled,
                   onPress: close,

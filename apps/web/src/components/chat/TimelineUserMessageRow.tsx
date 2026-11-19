@@ -129,7 +129,7 @@ function UserFileCard({
         </span>
         <span className="block text-xs text-muted-foreground tabular-nums">
           {file.downloadable === false ? (
-            "Sending…"
+            translateWebSource(translationLocale, "Sending…")
           ) : (
             <>
               {!pastedText && `${extension} · `}
@@ -148,7 +148,12 @@ function UserFileCard({
       {file.downloadable === false ? (
         <>
           <div className="flex min-w-0 flex-1 items-center gap-3">{identity}</div>
-          <Button size="icon-xs" variant="ghost-muted" disabled aria-label="Sending attachment">
+          <Button
+            size="icon-xs"
+            variant="ghost-muted"
+            disabled
+            aria-label={translateWebSource(translationLocale, "Sending attachment")}
+          >
             <DownloadIcon />
           </Button>
         </>

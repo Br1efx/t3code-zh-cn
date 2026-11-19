@@ -1815,7 +1815,11 @@ function PullRequestCodeTab({
 
   const term = sourceControlClients.get(detail.provider).changeRequest.singular;
   if (diffQuery.isPending && loadedSlices.length === 0) {
-    return withToolbar(<DiffPanelLoadingState label={`Loading ${term} diff...`} />);
+    return withToolbar(
+      <DiffPanelLoadingState
+        label={translationLocale === "zh-CN" ? "正在加载合并请求差异…" : `Loading ${term} diff...`}
+      />,
+    );
   }
 
   if (diffQuery.error && loadedSlices.length === 0) {
@@ -1837,7 +1841,9 @@ function PullRequestCodeTab({
     return withToolbar(
       <p className="px-4 py-5 text-sm text-muted-foreground">
         {commit === null
-          ? `This ${term} has no file changes.`
+          ? translationLocale === "zh-CN"
+            ? "此合并请求没有文件改动。"
+            : `This ${term} has no file changes.`
           : translateWebSource(translationLocale, "This commit has no file changes.")}
       </p>,
     );

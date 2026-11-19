@@ -366,16 +366,14 @@ function LinkRequestSheet(props: {
             />
             {target.kind === "machine" ? (
               <Text className="font-sans text-xs text-foreground-muted">
-                This app has no address for {target.label} that another machine can reach. Enter its
-                https or Tailscale address.
+                {`This app has no address for ${target.label} that another machine can reach. Enter its https or Tailscale address.`}
               </Text>
             ) : null}
           </View>
         ) : null}
         {useExisting ? (
           <Text className="font-sans text-sm leading-5 text-foreground-muted">
-            This environment is already linked to {targetName}. The agent can use that link as it
-            is; change its access in Settings → Environments.
+            {`This environment is already linked to ${targetName}. The agent can use that link as it is; change its access in Settings → Environments.`}
           </Text>
         ) : target.kind === "none" ? null : (
           <>
@@ -394,8 +392,7 @@ function LinkRequestSheet(props: {
                   spellCheck={false}
                 />
                 <Text className="font-sans text-xs text-foreground-muted">
-                  Create a link on {targetName}: Settings → Sharing & access → Authorized clients →
-                  Create link, then paste its code here.
+                  {`Create a link on ${targetName}: Settings → Sharing & access → Authorized clients → Create link, then paste its code here.`}
                 </Text>
               </View>
             )}

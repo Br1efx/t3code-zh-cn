@@ -1,5 +1,6 @@
 import { useI18n } from "~/i18n/WebI18nContext";
 import { translateWebSource } from "~/i18n/messages";
+import { localizeRelayErrorMessage } from "~/cloud/relayFailureReason";
 import { SessionPermissions } from "./SessionPermissions";
 import { useSearch } from "@tanstack/react-router";
 import { ChevronRightIcon, EllipsisIcon } from "lucide-react";
@@ -160,10 +161,11 @@ const BACKEND_VALUE_WSL_OFF = "backend:wsl-off";
 
 // Subscribes on its own so desktop download progress does not re-render the page.
 function LocalVersionStatusLabel() {
+  const { locale } = useI18n();
   const updateState = useDesktopUpdateState();
   return (
     <span className="text-xs text-muted-foreground">
-      {resolveLocalVersionStatusLabel(updateState)}
+      {resolveLocalVersionStatusLabel(updateState, locale)}
     </span>
   );
 }
@@ -265,7 +267,7 @@ function ConnectionsSettingsContent({
   readonly accessEnvironmentPicker?: ReactNode;
 }) {
   const { t, locale } = useI18n();
-  const { locale: translationLocale } = useI18n();
+  const translationLocale = locale;
   const desktopBridge = window.desktopBridge;
   const { environments } = useEnvironments();
   const primaryEnvironment = usePrimaryEnvironment();
@@ -495,13 +497,16 @@ function ConnectionsSettingsContent({
       setPendingDesktopServerExposureMode(null);
       setIsUpdatingDesktopServerExposure(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to update network exposure.";
+      const message = localizeRelayErrorMessage(
+        locale,
+        error instanceof Error ? error.message : "Failed to update network exposure.",
+      );
       setPendingDesktopServerExposureMode(null);
       setDesktopServerExposureMutationError(message);
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Could not update network access",
+          title: translateWebSource(locale, "Could not update network access"),
           description: message,
         }),
       );
@@ -535,13 +540,15 @@ function ConnectionsSettingsContent({
     });
     if (settled._tag === "Failure") {
       const error = Cause.squash(settled.cause);
-      const message =
-        error instanceof Error ? error.message : "Failed to configure Tailscale HTTPS.";
+      const message = localizeRelayErrorMessage(
+        locale,
+        error instanceof Error ? error.message : "Failed to configure Tailscale HTTPS.",
+      );
       setDesktopServerExposureMutationError(message);
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Could not set up Tailscale HTTPS",
+          title: translateWebSource(locale, "Could not set up Tailscale HTTPS"),
           description: message,
         }),
       );
@@ -575,12 +582,15 @@ function ConnectionsSettingsContent({
     });
     if (settled._tag === "Failure") {
       const error = Cause.squash(settled.cause);
-      const message = error instanceof Error ? error.message : "Failed to disable Tailscale HTTPS.";
+      const message = localizeRelayErrorMessage(
+        locale,
+        error instanceof Error ? error.message : "Failed to disable Tailscale HTTPS.",
+      );
       setDesktopServerExposureMutationError(message);
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Could not disable Tailscale HTTPS",
+          title: translateWebSource(locale, "Could not disable Tailscale HTTPS"),
           description: message,
         }),
       );
@@ -603,12 +613,15 @@ function ConnectionsSettingsContent({
     const result = await revokePairingLink({ environmentId: accessEnvironmentId, input: { id } });
     if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
       const error = squashAtomCommandFailure(result);
-      const message = error instanceof Error ? error.message : "Failed to revoke pairing link.";
+      const message = localizeRelayErrorMessage(
+        locale,
+        error instanceof Error ? error.message : "Failed to revoke pairing link.",
+      );
       setDesktopAccessManagementMutationError(message);
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Could not revoke pairing link",
+          title: translateWebSource(locale, "Could not revoke pairing link"),
           description: message,
         }),
       );
@@ -629,12 +642,15 @@ function ConnectionsSettingsContent({
     const result = await revokeClient({ environmentId: accessEnvironmentId, input: { sessionId } });
     if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
       const error = squashAtomCommandFailure(result);
-      const message = error instanceof Error ? error.message : "Failed to revoke client access.";
+      const message = localizeRelayErrorMessage(
+        locale,
+        error instanceof Error ? error.message : "Failed to revoke client access.",
+      );
       setDesktopAccessManagementMutationError(message);
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Could not revoke client access",
+          title: translateWebSource(locale, "Could not revoke client access"),
           description: message,
         }),
       );
@@ -654,17 +670,30 @@ function ConnectionsSettingsContent({
     if (result._tag === "Success") {
       toastManager.add({
         type: "success",
-        title: result.value === 1 ? "Revoked 1 other client" : `Revoked ${result.value} clients`,
-        description: "Other paired clients will need a new pairing link before reconnecting.",
+        title:
+          locale === "zh-CN"
+            ? result.value === 1
+              ? "已撤销 1 个其他客户端"
+              : `已撤销 ${result.value} 个客户端`
+            : result.value === 1
+              ? "Revoked 1 other client"
+              : `Revoked ${result.value} clients`,
+        description: translateWebSource(
+          locale,
+          "Other paired clients will need a new pairing link before reconnecting.",
+        ),
       });
     } else if (!isAtomCommandInterrupted(result)) {
       const error = squashAtomCommandFailure(result);
-      const message = error instanceof Error ? error.message : "Failed to revoke other clients.";
+      const message = localizeRelayErrorMessage(
+        locale,
+        error instanceof Error ? error.message : "Failed to revoke other clients.",
+      );
       setDesktopAccessManagementMutationError(message);
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Could not revoke other clients",
+          title: translateWebSource(locale, "Could not revoke other clients"),
           description: message,
         }),
       );
@@ -677,15 +706,21 @@ function ConnectionsSettingsContent({
     const result = await setEnvironmentEnabled({ environmentId, enabled });
     if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
       const error = squashAtomCommandFailure(result);
-      const message =
-        error instanceof Error
-          ? error.message
-          : `Failed to switch the backend ${enabled ? "on" : "off"}.`;
+      const fallbackMessage = enabled
+        ? "Failed to switch the backend on."
+        : "Failed to switch the backend off.";
+      const message = localizeRelayErrorMessage(
+        locale,
+        error instanceof Error ? error.message : fallbackMessage,
+      );
       setSavedBackendError(message);
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: `Could not switch backend ${enabled ? "on" : "off"}`,
+          title: translateWebSource(
+            locale,
+            enabled ? "Could not switch backend on" : "Could not switch backend off",
+          ),
           description: message,
         }),
       );
@@ -700,12 +735,15 @@ function ConnectionsSettingsContent({
     setRemovingSavedEnvironmentId(null);
     if (result._tag === "Failure" && !isAtomCommandInterrupted(result)) {
       const error = squashAtomCommandFailure(result);
-      const message = error instanceof Error ? error.message : "Failed to remove backend.";
+      const message = localizeRelayErrorMessage(
+        locale,
+        error instanceof Error ? error.message : "Failed to remove backend.",
+      );
       setSavedBackendError(message);
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Could not remove backend",
+          title: translateWebSource(locale, "Could not remove backend"),
           description: message,
         }),
       );
@@ -722,7 +760,9 @@ function ConnectionsSettingsContent({
       return;
     }
     const confirmed = await requestConfirmDialog(
-      `Remove ${environment.label} from this device?\nThis forgets its pairing, credentials, and cached threads here. Switch it off instead to keep it saved.`,
+      locale === "zh-CN"
+        ? `从当前设备移除 ${environment.label}？\n这会清除当前设备上的配对记录、凭据和缓存线程。如果你想保留它，请改为将其关闭。`
+        : `Remove ${environment.label} from this device?\nThis forgets its pairing, credentials, and cached threads here. Switch it off instead to keep it saved.`,
       { variant: "destructive" },
     );
     if (confirmed === true) await removeSavedBackend(environment);
@@ -761,8 +801,10 @@ function ConnectionsSettingsContent({
   const requestRevokeClientSession = (sessionId: ServerClientSessionRecord["sessionId"]) => {
     const session = desktopClientSessions.find((candidate) => candidate.sessionId === sessionId);
     if (session?.subject === CLOUD_CONNECT_SESSION_SUBJECT) {
-      requestConnectRevoke(`Revoke ${connectDeviceName(session)}?`, () =>
-        handleRevokeDesktopClientSession(sessionId),
+      const deviceName = connectDeviceName(session, locale);
+      requestConnectRevoke(
+        locale === "zh-CN" ? `撤销 ${deviceName} 的访问权限？` : `Revoke ${deviceName}?`,
+        () => handleRevokeDesktopClientSession(sessionId),
       );
     } else {
       void handleRevokeDesktopClientSession(sessionId);
@@ -849,12 +891,15 @@ function ConnectionsSettingsContent({
     });
     if (settled._tag === "Failure") {
       const error = Cause.squash(settled.cause);
-      const message = error instanceof Error ? error.message : "Failed to update WSL backend.";
+      const message = localizeRelayErrorMessage(
+        locale,
+        error instanceof Error ? error.message : "Failed to update WSL backend.",
+      );
       setDesktopWslMutationError(message);
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Could not change WSL backend",
+          title: translateWebSource(locale, "Could not change WSL backend"),
           description: message,
         }),
       );
@@ -1086,7 +1131,7 @@ function ConnectionsSettingsContent({
           ? tailscaleHttpsEndpoint.status === "available"
             ? tailscaleHttpsEndpoint.httpBaseUrl
             : "Use Tailscale Serve to expose this backend through a MagicDNS HTTPS URL."
-          : missingTailscaleEndpointDescription(desktopServerExposureState)
+          : missingTailscaleEndpointDescription(desktopServerExposureState, locale)
       }
       control={
         tailscaleHttpsEndpoint ? (
@@ -1135,7 +1180,9 @@ function ConnectionsSettingsContent({
     <>
       {desktopAccessManagementError ? (
         <div className={ITEM_ROW_CLASSNAME}>
-          <p className="text-xs text-destructive">{desktopAccessManagementError}</p>
+          <p className="text-xs text-destructive">
+            {localizeRelayErrorMessage(locale, desktopAccessManagementError)}
+          </p>
         </div>
       ) : null}
       {renderPairingClientsList(visibleDesktopPairingLinks, desktopClientSessions)}
@@ -1169,7 +1216,9 @@ function ConnectionsSettingsContent({
       }
       status={
         desktopServerExposureError ? (
-          <span className="block text-destructive">{desktopServerExposureError}</span>
+          <span className="block text-destructive">
+            {localizeRelayErrorMessage(locale, desktopServerExposureError)}
+          </span>
         ) : null
       }
       control={renderNetworkAccessToggle()}
@@ -1245,7 +1294,7 @@ function ConnectionsSettingsContent({
                         type="button"
                         variant="ghost-muted"
                         size="icon-xs"
-                        aria-label="More actions for this machine"
+                        aria-label={translateWebSource(locale, "More actions for this machine")}
                       />
                     }
                   >
@@ -1289,7 +1338,11 @@ function ConnectionsSettingsContent({
                       size="sm"
                       environmentId={primaryEnvironmentId}
                       serverLabel={
-                        primaryEnvironment ? `${primaryEnvironment.label} server` : "server"
+                        primaryEnvironment
+                          ? locale === "zh-CN"
+                            ? `${primaryEnvironment.label} 服务端`
+                            : `${primaryEnvironment.label} server`
+                          : translateWebSource(locale, "server")
                       }
                       selfUpdate={resolveServerSelfUpdateCapability(primaryServerConfig)}
                       installation={
@@ -1299,8 +1352,10 @@ function ConnectionsSettingsContent({
                       targetVersion={primaryVersionMismatch.clientVersion}
                       label={
                         primaryServerUpdateState.status === "failed"
-                          ? "Retry update"
-                          : `Update to ${primaryVersionMismatch.clientVersion}`
+                          ? translateWebSource(locale, "Retry update")
+                          : locale === "zh-CN"
+                            ? `更新到 ${primaryVersionMismatch.clientVersion}`
+                            : `Update to ${primaryVersionMismatch.clientVersion}`
                       }
                     />
                   ) : primaryServerUpdateState.status === "idle" && primaryServerConfig ? (
@@ -1363,6 +1418,7 @@ function ConnectionsSettingsContent({
               summary={summarizeAuthorizedClients(
                 desktopClientSessions,
                 visibleDesktopPairingLinks,
+                locale,
               )}
               control={
                 canWriteAccess ? (
@@ -1457,7 +1513,7 @@ function ConnectionsSettingsContent({
                   {isUpdatingDesktopServerExposure && <Spinner size="sm" />}
                   <span className="[text-box:trim-both_cap_alphabetic]">
                     {isUpdatingDesktopServerExposure
-                      ? "Restarting…"
+                      ? translateWebSource(locale, "Restarting…")
                       : pendingDesktopServerExposureMode === "network-accessible"
                         ? t("connections.networkAccess.restartEnable")
                         : t("connections.networkAccess.restartDisable")}
@@ -1519,7 +1575,7 @@ function ConnectionsSettingsContent({
                       {isUpdatingWslBackend ? (
                         <>
                           <Spinner size="sm" />
-                          Applying…
+                          {translateWebSource(locale, "Applying…")}
                         </>
                       ) : (
                         t("connections.wsl.confirm.onlyAction")
@@ -1533,7 +1589,7 @@ function ConnectionsSettingsContent({
                       {isUpdatingWslBackend ? (
                         <>
                           <Spinner size="sm" />
-                          Applying…
+                          {translateWebSource(locale, "Applying…")}
                         </>
                       ) : (
                         t("connections.wsl.confirm.bothAction")
@@ -1554,7 +1610,7 @@ function ConnectionsSettingsContent({
                     {isUpdatingWslBackend ? (
                       <>
                         <Spinner size="sm" />
-                        Applying…
+                        {translateWebSource(locale, "Applying…")}
                       </>
                     ) : pendingWslChange?.kind === "disable" ? (
                       pendingWslChange.wasWslOnly ? (

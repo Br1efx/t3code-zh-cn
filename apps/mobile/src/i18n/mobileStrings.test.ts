@@ -76,7 +76,7 @@ describe("mobile strings", () => {
 
   it("translates incremental usage progress and preserves environment names and errors", () => {
     expect(localizeMobileString("Updating Codex…", "zh-CN")).toBe("正在更新 Codex…");
-    expect(localizeMobileString("Updating 2 providers…", "zh-CN")).toBe("正在更新 2 个 AI 服务…");
+    expect(localizeMobileString("Updating 2 providers…", "zh-CN")).toBe("正在更新 2 个供应商…");
     expect(localizeMobileString("Updating 3 environments…", "zh-CN")).toBe(
       "正在更新 3 台运行设备…",
     );
@@ -85,6 +85,101 @@ describe("mobile strings", () => {
       "EACCES: /private/usage. 正在显示上次保存的汇总。",
     );
     expect(localizeMobileString("Updating 2 providers…", "en")).toBe("Updating 2 providers…");
+  });
+
+  it("uses standardized 供应商 terminology and preserves T3 Code / T3 Connect brand names", () => {
+    const providerTerms = {
+      Provider: "供应商",
+      Providers: "供应商",
+      "Add provider": "添加供应商",
+      "Custom provider": "自定义供应商",
+      "All providers": "全部供应商",
+      "Provider accounts": "供应商账号",
+      "Refresh providers": "刷新供应商",
+    };
+    for (const [source, translated] of Object.entries(providerTerms)) {
+      const result = localizeMobileString(source, "zh-CN");
+      expect(result).toBe(translated);
+      expect(result).not.toContain("AI 服务");
+    }
+
+    expect(
+      localizeMobileString(
+        "This removes T3's managed install from Work Mac. Providers that use it will need it installed again. Google credentials and threads stay.",
+        "zh-CN",
+      ),
+    ).toBe(
+      "将从 Work Mac 卸载 T3 内置安装的程序。使用它的供应商需重新安装后才能运行；Google 登录凭证和历史对话都会保留。",
+    );
+
+    expect(localizeMobileString("Could not load T3 Connect environments", "zh-CN")).toBe(
+      "未能加载 T3 Connect 设备",
+    );
+    expect(localizeMobileString("Set up T3 Connect", "zh-CN")).toBe("设置 T3 Connect");
+    expect(localizeMobileString("Sign in to T3 Connect", "zh-CN")).toBe("登录 T3 Connect");
+    expect(
+      localizeMobileString("Open system Settings to disable notifications for T3 Code.", "zh-CN"),
+    ).toContain("T3 Code");
+    expect(
+      localizeMobileString("Open system Settings to disable notifications for T3 Code.", "zh-CN"),
+    ).not.toMatch(/T3\s*代码/);
+    expect(localizeMobileString("Sign in to T3 Connect", "zh-CN")).not.toContain("T3 云端互联");
+  });
+
+  it("localizes T3 Connect profile, onboarding, device approval, and link requests", () => {
+    expect(localizeMobileString("Registered servers", "zh-CN")).toBe("已绑定的设备");
+    expect(localizeMobileString("Linked Apr 1, 2026", "zh-CN")).toBe("关联于 Apr 1, 2026");
+    expect(localizeMobileString("Linked Mac mini · Read only", "zh-CN")).toBe(
+      "已关联 Mac mini · 只读",
+    );
+    expect(localizeMobileString("Actions for Work Mac", "zh-CN")).toBe("Work Mac 的操作");
+    expect(localizeMobileString("Link Work Mac to this environment", "zh-CN")).toBe(
+      "将 Work Mac 关联到此运行设备",
+    );
+    expect(localizeMobileString("Close Link a machine", "zh-CN")).toBe("关闭关联设备");
+    expect(localizeMobileString("Could not link: the other environment refused", "zh-CN")).toBe(
+      "未能完成关联：目标运行设备拒绝了请求",
+    );
+    expect(
+      localizeMobileString(
+        "Safari on macOS wants to connect to Work Mac through T3 Connect. It shows code 123456. Approve it only if that code matches.",
+        "zh-CN",
+      ),
+    ).toBe(
+      "macOS 上的 Safari 请求通过 T3 Connect 连接到 Work Mac，屏幕上显示的验证码为 123456。请仅在验证码一致时点击批准。",
+    );
+  });
+
+  it("localizes connection diagnosis, freeze notices, relay errors, routes, and widget strings", () => {
+    expect(localizeMobileString("Work Mac's tunnel is offline", "zh-CN")).toBe(
+      "Work Mac 的连接隧道当前离线",
+    );
+    expect(localizeMobileString("T3 Code on Work Mac", "zh-CN")).toBe("Work Mac 上的 T3 Code");
+    expect(
+      localizeMobileString(
+        "Work Mac froze for 12s. Its CPU is overloaded (load 8 on 4 cores).",
+        "zh-CN",
+      ),
+    ).toBe("Work Mac 曾无响应 12 秒。CPU 负载过高（4 核负载 8）。");
+    expect(
+      localizeMobileString(
+        "Relay rejected the DPoP proof. Hint: Check that automatic date and time is enabled on both devices, then try again.",
+        "zh-CN",
+      ),
+    ).toBe(
+      "中转服务拒绝了 DPoP 凭据验证。 提示：请确认两端设备均已开启“自动设置日期与时间”，然后再重试。",
+    );
+    expect(
+      localizeMobileString("Could not deregister the server.\n\nTrace ID: trace-1", "zh-CN"),
+    ).toBe("未能解除绑定该设备。\n\n调用链编号：trace-1");
+    expect(localizeMobileString("Route 1 of 2", "zh-CN")).toBe("第 1 / 2 条路由");
+    expect(localizeMobileString("Signed in", "zh-CN")).toBe("已登录");
+    expect(localizeMobileString("Sign in to T3 Connect to see agents", "zh-CN")).toBe(
+      "登录 T3 Connect 以查看智能体",
+    );
+    expect(localizeMobileString("Out of date", "zh-CN")).toBe("状态已过期");
+    expect(localizeMobileString("Manage Work Mac", "zh-CN")).toBe("管理 Work Mac");
+    expect(localizeMobileString("Scan QR code", "zh-CN")).toBe("扫码配对");
   });
 
   it("localizes new-task alerts and preserves machine names", () => {

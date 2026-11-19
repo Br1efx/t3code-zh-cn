@@ -1,4 +1,3 @@
-import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import {
@@ -206,6 +205,7 @@ function ModelBadge(props: { icon: ReactNode; label: string; tooltip: string }) 
 
 function ModelCard(props: ModelCardProps) {
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const { model } = props;
   const downloading = model.state === "downloading" || model.state === "verifying";
   const progress = model.downloaded === undefined ? 0 : (model.downloaded / model.size) * 100;
@@ -224,7 +224,7 @@ function ModelCard(props: ModelCardProps) {
             {model.recommended ? (
               <ModelBadge
                 icon={<StarIcon className="mr-1 size-3" />}
-                label="Recommended"
+                label={translateWebSource(translationLocale, "Recommended")}
                 tooltip={translateWebSource(
                   translationLocale,
                   "A good default pick for the languages it covers.",
@@ -234,7 +234,7 @@ function ModelCard(props: ModelCardProps) {
             {model.supportsStreaming ? (
               <ModelBadge
                 icon={<AudioLinesIcon className="mr-1 size-3" />}
-                label="Live preview"
+                label={translateWebSource(translationLocale, "Live preview")}
                 tooltip={translateWebSource(
                   translationLocale,
                   "Shows words in your draft as you speak, before the recording finishes.",
@@ -244,7 +244,7 @@ function ModelCard(props: ModelCardProps) {
             {model.supportsTranslation ? (
               <ModelBadge
                 icon={<LanguagesIcon className="mr-1 size-3" />}
-                label="Translate"
+                label={translateWebSource(translationLocale, "Translate")}
                 tooltip={translateWebSource(
                   translationLocale,
                   "Can write English text from speech in another language. Turn on Translate to English to use it.",
@@ -259,8 +259,9 @@ function ModelCard(props: ModelCardProps) {
           ) : null}
           {model.linkedFrom ? (
             <p className="mt-0.5 break-all text-2xs text-muted-foreground">
-              {localizeWebString(translationLocale, "Using your file at ")}
-              {model.linkedFrom}
+              {isZh
+                ? `正在使用你的本地文件：${model.linkedFrom}`
+                : `Using your file at ${model.linkedFrom}`}
             </p>
           ) : null}
           <ModelBenchmarks
@@ -269,10 +270,14 @@ function ModelCard(props: ModelCardProps) {
             tier={props.benchmarkTier}
             facts={[
               ...(model.languages.length > 1
-                ? [`${model.languages.length} languages`]
+                ? [
+                    isZh
+                      ? `${model.languages.length} 种语言`
+                      : `${model.languages.length} languages`,
+                  ]
                 : model.benchmark
                   ? []
-                  : [languageLabel(model.languages[0] ?? "")]),
+                  : [languageLabel(model.languages[0] ?? "", translationLocale)]),
               formatSize(model.size),
             ]}
           />
@@ -280,7 +285,7 @@ function ModelCard(props: ModelCardProps) {
             <div className="mt-2">
               <div
                 role="progressbar"
-                aria-label={`${model.name} download progress`}
+                aria-label={isZh ? `${model.name} 下载进度` : `${model.name} download progress`}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={Math.round(progress)}
@@ -294,7 +299,9 @@ function ModelCard(props: ModelCardProps) {
               <p className="mt-1 text-2xs text-muted-foreground">
                 {model.state === "verifying"
                   ? translateWebSource(translationLocale, "Verifying download…")
-                  : `${Math.round(progress)}% downloaded`}
+                  : isZh
+                    ? `已下载 ${Math.round(progress)}%`
+                    : `${Math.round(progress)}% downloaded`}
               </p>
             </div>
           ) : null}
@@ -305,7 +312,7 @@ function ModelCard(props: ModelCardProps) {
             <Button
               size="icon-sm"
               variant="outline"
-              aria-label={`Cancel ${model.name} download`}
+              aria-label={isZh ? `取消下载 ${model.name}` : `Cancel ${model.name} download`}
               disabled={!props.canCancel}
               onClick={props.onCancel}
             >
@@ -333,8 +340,12 @@ function ModelCard(props: ModelCardProps) {
               disabled={props.busy}
               aria-label={
                 model.linkedFrom
-                  ? `Stop using your ${model.name} file; the file stays on disk`
-                  : `Delete ${model.name}`
+                  ? isZh
+                    ? `停止使用你的 ${model.name} 文件（磁盘上的文件会保留）`
+                    : `Stop using your ${model.name} file; the file stays on disk`
+                  : isZh
+                    ? `删除 ${model.name}`
+                    : `Delete ${model.name}`
               }
               onClick={props.onDelete}
             >
@@ -355,6 +366,7 @@ function DictionaryEditor(props: {
   readonly onChange: (words: SpeechCustomWords) => void;
 }) {
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const { words, label, disabled = false, onChange } = props;
   const [termDraft, setTermDraft] = useState("");
   const [aliasDraft, setAliasDraft] = useState<{ term: string; value: string } | null>(null);
@@ -403,7 +415,7 @@ function DictionaryEditor(props: {
             maxLength={5_100}
             disabled={disabled}
             placeholder={translateWebSource(translationLocale, "Add words, separated by commas")}
-            aria-label={`Add a word or phrase to the ${label}`}
+            aria-label={isZh ? `向${label}添加词语或短语` : `Add a word or phrase to the ${label}`}
             onChange={(event) => setTermDraft(event.target.value)}
             onKeyDown={(event) => {
               if (event.nativeEvent.isComposing || event.keyCode === 229) return;
@@ -420,7 +432,7 @@ function DictionaryEditor(props: {
       </div>
       {words.length > 0 ? (
         <ul
-          aria-label={`${label} entries`}
+          aria-label={isZh ? `${label}条目` : `${label} entries`}
           className="mt-2.5 flex flex-col gap-1.5 @min-[32rem]/settings-row:flex-row @min-[32rem]/settings-row:flex-wrap"
         >
           {words.map(({ term, aliases }) => (
@@ -437,8 +449,8 @@ function DictionaryEditor(props: {
                   autoFocus
                   value={aliasDraft.value}
                   maxLength={50}
-                  aria-label={`Alias for ${term}`}
-                  placeholder="Misspelling"
+                  aria-label={isZh ? `${term} 的别名` : `Alias for ${term}`}
+                  placeholder={translateWebSource(translationLocale, "Misspelling")}
                   className="ms-auto w-32"
                   onChange={(event) => setAliasDraft({ term, value: event.target.value })}
                   onBlur={() => setAliasDraft(null)}
@@ -457,10 +469,10 @@ function DictionaryEditor(props: {
                   variant="ghost-muted"
                   className="ms-auto"
                   disabled={disabled || aliases.length >= 8}
-                  aria-label={`Add an alias for ${term}`}
+                  aria-label={isZh ? `为 ${term} 添加别名` : `Add an alias for ${term}`}
                   onClick={() => setAliasDraft({ term, value: "" })}
                 >
-                  Alias
+                  {translateWebSource(translationLocale, "Alias")}
                 </Button>
               )}
               <Button
@@ -468,7 +480,7 @@ function DictionaryEditor(props: {
                 size="icon-xs"
                 variant="ghost-muted"
                 disabled={disabled}
-                aria-label={`Remove ${term}`}
+                aria-label={isZh ? `移除 ${term}` : `Remove ${term}`}
                 onClick={() => onChange(words.filter((entry) => entry.term !== term))}
               >
                 <XIcon />
@@ -483,6 +495,8 @@ function DictionaryEditor(props: {
 
 /** Vocabulary stored on the environment with the project, read by everyone who dictates there. */
 function ProjectDictionaryRow() {
+  const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const scope = useOptionalSettingsScope();
   const words = useScopedSettings((settings) => settings.speechProjectCustomWords);
   const updateScopedSettings = useUpdateScopedSettings();
@@ -496,13 +510,23 @@ function ProjectDictionaryRow() {
       title={isProjectScope ? "Project dictionary" : "Shared dictionary"}
       description={
         isProjectScope
-          ? `Used by everyone who dictates in ${scope.scope.label}.`
+          ? isZh
+            ? `供所有在 ${scope.scope.label} 中使用语音输入的成员共享。`
+            : `Used by everyone who dictates in ${scope.scope.label}.`
           : "Used by everyone who dictates on this environment."
       }
     >
       <div className="mt-3 pb-2">
         <DictionaryEditor
-          label={isProjectScope ? "project dictionary" : "shared dictionary"}
+          label={
+            isProjectScope
+              ? isZh
+                ? "项目词典"
+                : "project dictionary"
+              : isZh
+                ? "共享词典"
+                : "shared dictionary"
+          }
           words={words}
           disabled={scope.connectedEnvironments.length === 0}
           onChange={(next) => updateScopedSettings({ speechProjectCustomWords: next })}
@@ -558,7 +582,11 @@ function CleanupModelRow() {
   const setModel = (next: ReturnType<typeof createModelSelection>) => {
     const reason = modelDisabledReason(next.instanceId, next.model);
     if (reason) {
-      toastManager.add({ type: "error", title: "Cleanup model not saved", description: reason });
+      toastManager.add({
+        type: "error",
+        title: translateWebSource(translationLocale, "Cleanup model not saved"),
+        description: reason,
+      });
       return;
     }
     updateSettings({ speechPostProcessingModelSelection: next });
@@ -634,6 +662,7 @@ function CleanupModelRow() {
 }
 
 function useVoiceModels(prepared: PreparedConnection | null) {
+  const { locale: translationLocale } = useI18n();
   const canManage = useEnvironmentScope(prepared?.environmentId ?? null, AuthSettingsWriteScope);
   const [models, setModels] = useState<readonly EnvironmentSpeechModel[]>([]);
   const [status, setStatus] = useState<EnvironmentSpeechStatus | null>(null);
@@ -673,7 +702,7 @@ function useVoiceModels(prepared: PreparedConnection | null) {
         if (current !== epoch.current || revision !== refreshRevision.current) return;
         toastManager.add({
           type: "error",
-          title: "Could not load transcription models",
+          title: translateWebSource(translationLocale, "Could not load transcription models"),
           description: error instanceof Error ? error.message : String(error),
         });
       }
@@ -717,7 +746,7 @@ function useVoiceModels(prepared: PreparedConnection | null) {
       if (current === epoch.current)
         toastManager.add({
           type: "error",
-          title: label,
+          title: translateWebSource(translationLocale, label),
           description: error instanceof Error ? error.message : String(error),
         });
     }
@@ -799,12 +828,12 @@ function AdvancedSpeechSettings({
             >
               <SelectValue>
                 {supported.acceleration === "auto"
-                  ? "Auto"
+                  ? translateWebSource(translationLocale, "Auto")
                   : supported.acceleration === "cpu"
-                    ? "CPU"
+                    ? translateWebSource(translationLocale, "CPU")
                     : (supported.gpuDevices.find(
                         (device) => `gpu:${device.id}` === supported.acceleration,
-                      )?.name ?? "Selected GPU")}
+                      )?.name ?? translateWebSource(translationLocale, "Selected GPU"))}
               </SelectValue>
             </SelectTrigger>
             <SelectPopup align="end" alignItemWithTrigger={false}>
@@ -843,12 +872,14 @@ function AdvancedSpeechSettings({
               aria-label={translateWebSource(translationLocale, "Unload model")}
               className="max-w-72"
             >
-              <SelectValue>{UNLOAD_LABELS[supported.modelUnloadTimeout]}</SelectValue>
+              <SelectValue>
+                {translateWebSource(translationLocale, UNLOAD_LABELS[supported.modelUnloadTimeout])}
+              </SelectValue>
             </SelectTrigger>
             <SelectPopup align="end" alignItemWithTrigger={false}>
               {(Object.keys(UNLOAD_LABELS) as SpeechModelUnloadTimeout[]).map((timeout) => (
                 <SelectItem key={timeout} value={timeout}>
-                  {UNLOAD_LABELS[timeout]}
+                  {translateWebSource(translationLocale, UNLOAD_LABELS[timeout])}
                 </SelectItem>
               ))}
             </SelectPopup>
@@ -867,6 +898,7 @@ function SpeechModelBrowser(props: {
   projectName: string | null;
 }) {
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const {
     prepared,
     catalog: { status, models, run, controlsDisabled, canCancel, requestedDownload },
@@ -886,7 +918,10 @@ function SpeechModelBrowser(props: {
   const needle = languageSearch.trim().toLocaleLowerCase();
   const visibleLanguages = languages.filter(
     (code) =>
-      !needle || code.includes(needle) || languageLabel(code).toLocaleLowerCase().includes(needle),
+      !needle ||
+      code.includes(needle) ||
+      languageLabel(code).toLocaleLowerCase().includes(needle) ||
+      languageLabel(code, translationLocale).toLocaleLowerCase().includes(needle),
   );
   const accuracyLanguage = selectedLanguages[0] ?? "en";
   const sortLabels: Record<SpeechModelSort, string> = {
@@ -898,7 +933,9 @@ function SpeechModelBrowser(props: {
   const languagesLabel =
     selectedLanguages.length === 0
       ? translateWebSource(translationLocale, "All languages")
-      : selectedLanguages.map(languageLabel).join(", ");
+      : selectedLanguages
+          .map((code) => languageLabel(code, translationLocale))
+          .join(isZh ? "、" : ", ");
   const sortedModels = filterSpeechModels(models, {
     search,
     languages: selectedLanguages,
@@ -919,14 +956,22 @@ function SpeechModelBrowser(props: {
       <SettingsRow
         {...searchableSetting("speech-models")}
         title="Models"
-        description={`This environment can’t transcribe audio: ${status.reason}.`}
+        description={
+          isZh
+            ? `此环境无法转写音频：${status.reason}。`
+            : `This environment can’t transcribe audio: ${status.reason}.`
+        }
       />
     );
   return (
     <SettingsRow
       {...searchableSetting("speech-models")}
       title="Models"
-      description={`Grades are error rates and speed is seconds per 30 s of audio, from Handy’s benchmark ${status.benchmarkTier === "cpu" ? "CPU" : "GPU"}.`}
+      description={
+        isZh
+          ? `评分代表错误率，速度代表每 30 秒音频的耗时，数据来自 Handy 的 ${status.benchmarkTier === "cpu" ? "CPU" : "GPU"} 基准测试。`
+          : `Grades are error rates and speed is seconds per 30 s of audio, from Handy’s benchmark ${status.benchmarkTier === "cpu" ? "CPU" : "GPU"}.`
+      }
       className="@container/voice-models"
     >
       <div className="mt-3 flex min-w-0 gap-2">
@@ -945,7 +990,9 @@ function SpeechModelBrowser(props: {
         <Menu>
           <MenuTrigger
             render={<Button variant="outline" className="max-w-56" />}
-            aria-label={`Filter by language: ${languagesLabel}`}
+            aria-label={
+              isZh ? `按语言筛选：${languagesLabel}` : `Filter by language: ${languagesLabel}`
+            }
           >
             <LanguagesIcon />
             <span className="hidden truncate @min-[34rem]/voice-models:inline">
@@ -985,7 +1032,7 @@ function SpeechModelBrowser(props: {
                     )
                   }
                 >
-                  {languageLabel(code)}
+                  {languageLabel(code, translationLocale)}
                 </MenuCheckboxItem>
               ))}
               {visibleLanguages.length === 0 && (
@@ -999,7 +1046,11 @@ function SpeechModelBrowser(props: {
         <Menu>
           <MenuTrigger
             render={<Button variant="outline" />}
-            aria-label={`Sort and filter models: ${sortLabels[sort]}${downloadedOnly ? ", downloaded only" : ""}`}
+            aria-label={
+              isZh
+                ? `排序和筛选模型：${sortLabels[sort]}${downloadedOnly ? "，仅已下载" : ""}`
+                : `Sort and filter models: ${sortLabels[sort]}${downloadedOnly ? ", downloaded only" : ""}`
+            }
           >
             <ArrowDownUpIcon />
             <span className="hidden @min-[34rem]/voice-models:inline">{sortLabels[sort]}</span>
@@ -1015,7 +1066,9 @@ function SpeechModelBrowser(props: {
                   <MenuRadioItem key={value} value={value} closeOnClick>
                     <span className="flex items-center justify-between gap-3">
                       {value === "accuracy"
-                        ? `Most accurate in ${languageLabel(accuracyLanguage)}`
+                        ? translationLocale === "zh-CN"
+                          ? `${languageLabel(accuracyLanguage, translationLocale)}识别最准确`
+                          : `Most accurate in ${languageLabel(accuracyLanguage, translationLocale)}`
                         : sortLabels[value]}
                       <MenuRadioItemIndicator />
                     </span>
@@ -1098,8 +1151,14 @@ function SpeechModelBrowser(props: {
           <div className="w-full min-w-0 flex-1">
             <Input
               size="compact"
-              aria-label="Path to a model file or folder already on this environment"
-              placeholder="Already downloaded elsewhere? Paste the model file or folder path"
+              aria-label={translateWebSource(
+                translationLocale,
+                "Path to a model file or folder already on this environment",
+              )}
+              placeholder={translateWebSource(
+                translationLocale,
+                "Already downloaded elsewhere? Paste the model file or folder path",
+              )}
               value={existingPath}
               onChange={(e) => setExistingPath(e.target.value)}
             />
@@ -1110,7 +1169,7 @@ function SpeechModelBrowser(props: {
             variant="outline"
             disabled={controlsDisabled || !existingPath.trim()}
           >
-            Use existing
+            {translateWebSource(translationLocale, "Use existing")}
           </Button>
         </form>
       ) : null}
@@ -1173,7 +1232,7 @@ function TranscriptionTest(props: {
                   }}
                 >
                   <MicIcon />
-                  Test model
+                  {translateWebSource(i18nLocale, "Test model")}
                 </Button>
               ) : null
             ) : (
@@ -1209,7 +1268,7 @@ function TranscriptionTest(props: {
                       <span className="text-muted-foreground">{speech.preview.tentative}</span>
                     </>
                   ) : (
-                    transcript || "No speech recognized. Try again."
+                    transcript || translateWebSource(i18nLocale, "No speech recognized. Try again.")
                   )}
                 </p>
               ) : null}
@@ -1217,7 +1276,7 @@ function TranscriptionTest(props: {
             <Button
               size="icon-sm"
               variant="ghost-muted"
-              aria-label="Close model test"
+              aria-label={translateWebSource(i18nLocale, "Close model test")}
               onClick={() => {
                 speech.cancel();
                 setShowTranscript(false);
@@ -1249,6 +1308,7 @@ function TranscriptionTest(props: {
 
 export function VoiceSettingsPanel() {
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const cleanupEnabled = useCleanupGrant() !== null;
   const settings = useClientSettings();
   const settingsScope = useOptionalSettingsScope();
@@ -1318,8 +1378,10 @@ export function VoiceSettingsPanel() {
     (env) => env.environmentId === pendingCloud?.environmentId,
   );
   // OpenRouter users without settings access still manage their own model choice.
-  const manageLabel =
-    destination.cloudProvider === "openrouter" ? "Manage OpenRouter" : "Manage key";
+  const manageLabel = translateWebSource(
+    translationLocale,
+    destination.cloudProvider === "openrouter" ? "Manage OpenRouter" : "Manage key",
+  );
   const chosenEnvironment = environments.find(
     (environment) => environment.environmentId === destination.environmentId,
   );
@@ -1385,7 +1447,11 @@ export function VoiceSettingsPanel() {
         <SettingsRow
           {...searchableSetting("dictation-shortcut-mode")}
           title="Dictation shortcut"
-          description={`${SHORTCUT_MODES[settings.voiceShortcutMode].hint}.`}
+          description={
+            isZh
+              ? `${translateWebSource(translationLocale, SHORTCUT_MODES[settings.voiceShortcutMode].hint)}。`
+              : `${SHORTCUT_MODES[settings.voiceShortcutMode].hint}.`
+          }
           control={
             <Select
               value={settings.voiceShortcutMode}
@@ -1398,15 +1464,25 @@ export function VoiceSettingsPanel() {
                 size="sm"
                 aria-label={translateWebSource(translationLocale, "Dictation shortcut mode")}
               >
-                <SelectValue>{SHORTCUT_MODES[settings.voiceShortcutMode].label}</SelectValue>
+                <SelectValue>
+                  {translationLocale === "zh-CN" && settings.voiceShortcutMode === "hold"
+                    ? "按住说话"
+                    : translationLocale === "zh-CN" && settings.voiceShortcutMode === "toggle"
+                      ? "点按切换"
+                      : SHORTCUT_MODES[settings.voiceShortcutMode].label}
+                </SelectValue>
               </SelectTrigger>
               <SelectPopup align="end" alignItemWithTrigger={false}>
                 {(Object.keys(SHORTCUT_MODES) as VoiceShortcutMode[]).map((mode) => (
                   <SelectItem key={mode} value={mode}>
                     <span className="flex flex-col">
-                      {SHORTCUT_MODES[mode].label}
+                      {translationLocale === "zh-CN" && mode === "hold"
+                        ? "按住说话"
+                        : translationLocale === "zh-CN" && mode === "toggle"
+                          ? "点按切换"
+                          : translateWebSource(translationLocale, SHORTCUT_MODES[mode].label)}
                       <span className="text-xs text-muted-foreground">
-                        {SHORTCUT_MODES[mode].hint}
+                        {translateWebSource(translationLocale, SHORTCUT_MODES[mode].hint)}
                       </span>
                     </span>
                   </SelectItem>
@@ -1423,7 +1499,9 @@ export function VoiceSettingsPanel() {
           title="Transcribe with"
           description={
             destination.environmentId && chosenUnsupported
-              ? `${chosenEnvironment.label} can’t transcribe audio locally. Choose another destination.`
+              ? isZh
+                ? `${chosenEnvironment.label} 无法在本地转写音频，请选择其他转写目标。`
+                : `${chosenEnvironment.label} can’t transcribe audio locally. Choose another destination.`
               : "Where your speech is turned into text."
           }
           control={
@@ -1468,12 +1546,17 @@ export function VoiceSettingsPanel() {
                         {destination.cloudProvider
                           ? CLOUD_SPEECH_LABELS[destination.cloudProvider]
                           : destination.environmentId
-                            ? (chosenEnvironment?.label ?? "Chosen environment (unavailable)")
-                            : "Off"}
+                            ? (chosenEnvironment?.label ??
+                              translateWebSource(
+                                translationLocale,
+                                "Chosen environment (unavailable)",
+                              ))
+                            : translateWebSource(translationLocale, "Off")}
                         {destination.cloudProvider && (
                           <span className="text-muted-foreground">
-                            {" via "}
-                            {chosenEnvironment?.label ?? "unavailable environment"}
+                            {translationLocale === "zh-CN"
+                              ? `（经由 ${chosenEnvironment?.label ?? translateWebSource(translationLocale, "unavailable environment")}）`
+                              : ` via ${chosenEnvironment?.label ?? "unavailable environment"}`}
                           </span>
                         )}
                       </span>
@@ -1489,7 +1572,9 @@ export function VoiceSettingsPanel() {
                   </SelectItem>
                   {environmentChoices.length > 0 && (
                     <SelectGroup>
-                      <SelectGroupLabel>On an environment</SelectGroupLabel>
+                      <SelectGroupLabel>
+                        {translateWebSource(translationLocale, "On an environment")}
+                      </SelectGroupLabel>
                       {environmentChoices.map(({ environment, value }) => (
                         <SelectItem key={value} value={value}>
                           <span className="flex items-center gap-2">
@@ -1502,12 +1587,20 @@ export function VoiceSettingsPanel() {
                   )}
                   {cloudGroups.map(({ environment, choices }) => (
                     <SelectGroup key={environment.environmentId}>
-                      <SelectGroupLabel>Cloud via {environment.label}</SelectGroupLabel>
+                      <SelectGroupLabel>
+                        {translationLocale === "zh-CN"
+                          ? `经由 ${environment.label} 的云端`
+                          : `Cloud via ${environment.label}`}
+                      </SelectGroupLabel>
                       {choices.map(({ value, provider }) => (
                         <SelectItem
                           key={value}
                           value={value}
-                          aria-label={`${CLOUD_SPEECH_LABELS[provider]} via ${environment.label}`}
+                          aria-label={
+                            isZh
+                              ? `经由 ${environment.label} 的 ${CLOUD_SPEECH_LABELS[provider]}`
+                              : `${CLOUD_SPEECH_LABELS[provider]} via ${environment.label}`
+                          }
                         >
                           <span className="flex items-center gap-2">
                             <CloudSpeechLogo provider={provider} />
@@ -1522,7 +1615,7 @@ export function VoiceSettingsPanel() {
                     (destination.cloudProvider &&
                       !cloudChoices.some((option) => option.value === destinationValue))) ? (
                     <SelectItem value={destinationValue}>
-                      Chosen environment (unavailable)
+                      {translateWebSource(translationLocale, "Chosen environment (unavailable)")}
                     </SelectItem>
                   ) : null}
                 </SelectPopup>
@@ -1574,10 +1667,17 @@ export function VoiceSettingsPanel() {
             title={translateWebSource(translationLocale, "Language")}
             description={
               destination.cloudProvider
-                ? "The provider detects your language automatically."
+                ? translateWebSource(
+                    translationLocale,
+                    "The provider detects your language automatically.",
+                  )
                 : model?.supportsLanguageDetection
-                  ? `${model.model} detects the language automatically.`
-                  : `${model?.model ?? "This model"} uses one fixed language.`
+                  ? isZh
+                    ? `${model.model} 会自动检测语言。`
+                    : `${model.model} detects the language automatically.`
+                  : isZh
+                    ? `${model?.model ?? "此模型"}仅支持单一固定语言。`
+                    : `${model?.model ?? "This model"} uses one fixed language.`
             }
             control={
               <SpeechLanguageSelect
@@ -1657,7 +1757,7 @@ export function VoiceSettingsPanel() {
         >
           <div className="mt-3 pb-2">
             <DictionaryEditor
-              label="dictionary"
+              label={isZh ? "词典" : "dictionary"}
               words={settings.speechCustomWords}
               onChange={(words) => void updateClientSettings({ speechCustomWords: words })}
             />
@@ -1708,11 +1808,16 @@ export function VoiceSettingsPanel() {
                   aria-label={translateWebSource(translationLocale, "Cleanup instructions")}
                 >
                   <SelectValue>
-                    {settings.speechPostProcessingPrompt.mode === "custom" ? "Custom" : "Built-in"}
+                    {translateWebSource(
+                      translationLocale,
+                      settings.speechPostProcessingPrompt.mode === "custom" ? "Custom" : "Built-in",
+                    )}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectPopup align="end" alignItemWithTrigger={false}>
-                  <SelectItem value="default">Built-in</SelectItem>
+                  <SelectItem value="default">
+                    {translateWebSource(translationLocale, "Built-in")}
+                  </SelectItem>
                   <SelectItem value="custom">
                     {translateWebSource(translationLocale, "Custom")}
                   </SelectItem>
@@ -1723,7 +1828,7 @@ export function VoiceSettingsPanel() {
             {settings.speechPostProcessingPrompt.mode === "custom" ? (
               <div className="mt-3 pb-2">
                 <Textarea
-                  aria-label="Custom cleanup instructions"
+                  aria-label={translateWebSource(translationLocale, "Custom cleanup instructions")}
                   maxLength={10_000}
                   value={settings.speechPostProcessingPrompt.customInstructions}
                   onChange={(event) =>
@@ -1750,8 +1855,8 @@ export function VoiceSettingsPanel() {
                 key={settings.speechCorrectionWord}
                 defaultValue={settings.speechCorrectionWord}
                 maxLength={50}
-                placeholder="sorry"
-                aria-label="Correction cue"
+                placeholder={translateWebSource(translationLocale, "sorry")}
+                aria-label={translateWebSource(translationLocale, "Correction cue")}
                 className="@min-[32rem]/settings-row:w-40"
                 onBlur={(event) => {
                   const next = event.target.value.trim();

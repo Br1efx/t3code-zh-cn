@@ -5,8 +5,19 @@ import { effectiveSpeechLanguage } from "@t3tools/shared/speech";
 import { updateClientSettings, useClientSettings } from "../../hooks/useSettings";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
 
-const languageNames = new Intl.DisplayNames(["en"], { type: "language" });
-export const languageLabel = (code: string) => languageNames.of(code) ?? code;
+const languageNamesByLocale = new Map<string, Intl.DisplayNames>();
+
+function getLanguageDisplayNames(locale: string): Intl.DisplayNames {
+  let names = languageNamesByLocale.get(locale);
+  if (!names) {
+    names = new Intl.DisplayNames([locale], { type: "language" });
+    languageNamesByLocale.set(locale, names);
+  }
+  return names;
+}
+
+export const languageLabel = (code: string, locale = "en") =>
+  getLanguageDisplayNames(locale).of(code) ?? code;
 
 type ModelLanguages = Pick<
   Extract<EnvironmentSpeechStatus, { supported: true }>,
@@ -23,15 +34,25 @@ export function SpeechLanguageSelect({ model }: { readonly model: ModelLanguages
         preference,
       )
     : preference;
-  const effectiveLabel = resolved === "auto" ? "Auto-detect" : languageLabel(resolved);
+  const localizedLanguage = (code: string) => languageLabel(code, translationLocale);
+  const effectiveLabel =
+    resolved === "auto"
+      ? translateWebSource(translationLocale, "Auto-detect")
+      : localizedLanguage(resolved);
   const unavailable =
     preference !== "auto" && preference !== resolved
-      ? `${languageLabel(preference)} unavailable`
+      ? translationLocale === "zh-CN"
+        ? `${localizedLanguage(preference)}不可用`
+        : `${localizedLanguage(preference)} unavailable`
       : null;
   const label = unavailable
-    ? `${effectiveLabel} (${unavailable})`
+    ? translationLocale === "zh-CN"
+      ? `${effectiveLabel}（${unavailable}）`
+      : `${effectiveLabel} (${unavailable})`
     : preference === "auto" && resolved !== "auto"
-      ? `Auto (${effectiveLabel})`
+      ? translationLocale === "zh-CN"
+        ? `${translateWebSource(translationLocale, "Auto")}（${effectiveLabel}）`
+        : `Auto (${effectiveLabel})`
       : effectiveLabel;
   return (
     <Select
@@ -56,10 +77,12 @@ export function SpeechLanguageSelect({ model }: { readonly model: ModelLanguages
           </SelectItem>
         ) : null}
         {languages
-          .toSorted((left, right) => languageLabel(left).localeCompare(languageLabel(right)))
+          .toSorted((left, right) =>
+            localizedLanguage(left).localeCompare(localizedLanguage(right), translationLocale),
+          )
           .map((code) => (
             <SelectItem key={code} value={code}>
-              {languageLabel(code)}
+              {localizedLanguage(code)}
             </SelectItem>
           ))}
       </SelectPopup>

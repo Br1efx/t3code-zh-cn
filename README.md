@@ -8,7 +8,7 @@ This unofficial fork adds a natural, beginner-friendly Simplified Chinese interf
 
 Simplified Chinese is selected automatically on first launch. No settings change is needed. English and system-language selection are available under **Settings → General → Language**. Model names, commands, paths, terminal output, and agent replies keep their original text.
 
-Download the [Windows x64 installer (0.1.10-zh.1)](https://github.com/Br1efx/t3code-zh-cn/releases/download/v0.1.10-zh.1/T3-Code-0.1.10-zh.1-x64.exe), or read the [release notes and checksums](https://github.com/Br1efx/t3code-zh-cn/releases/tag/v0.1.10-zh.1). This is an unsigned community prerelease based on official stable v0.1.10. The Windows application name remains **T3 Code (Beta)**. Updates use manual downloads.
+Download the [Windows x64 installer (0.1.10-zh.2)](https://github.com/Br1efx/t3code-zh-cn/releases/download/v0.1.10-zh.2/T3-Code-0.1.10-zh.2-x64.exe), or read the [release notes and checksums](https://github.com/Br1efx/t3code-zh-cn/releases/tag/v0.1.10-zh.2). This is an unsigned community prerelease based on official stable v0.1.10. The Windows application name remains **T3 Code (Beta)**. Updates use manual downloads.
 
 Installers and `npx t3` from the official T3 website install the official English version.
 

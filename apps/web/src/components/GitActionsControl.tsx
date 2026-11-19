@@ -1116,8 +1116,10 @@ export default function GitActionsControl({
   const changesTotals = resolvedChangesTotals ?? { insertions: 0, deletions: 0 };
   const changesBaseLabel = resolvedChangesTotals
     ? resolvedChangesTotals.baseRef === null
-      ? "Uncommitted"
-      : `vs ${resolvedChangesTotals.baseRef}`
+      ? translateWebSource(translationLocale, "Uncommitted")
+      : translationLocale === "zh-CN"
+        ? `对比 ${resolvedChangesTotals.baseRef}`
+        : `vs ${resolvedChangesTotals.baseRef}`
     : null;
 
   const allFiles = gitStatusForActions?.workingTree.files ?? [];
@@ -1548,7 +1550,7 @@ export default function GitActionsControl({
             }}
           >
             <GitActionItemIcon icon={item.icon} SourceControlIcon={SourceControlIcon} />
-            <MenuItemLabel>{item.label}</MenuItemLabel>
+            <MenuItemLabel>{translateWebSource(translationLocale, item.label)}</MenuItemLabel>
           </MenuItem>
         );
       })}
@@ -1656,11 +1658,11 @@ export default function GitActionsControl({
                     cn("not-sr-only ml-0 truncate", THREAD_DETAILS_PANEL_LABEL_CLASS),
                   )}
                 >
-                  {quickAction.label}
+                  {translateWebSource(translationLocale, quickAction.label)}
                 </span>
               </PopoverTrigger>
               <PopoverPopup tooltipStyle side="bottom" align="start">
-                {quickActionDisabledReason}
+                {translateWebSource(translationLocale, quickActionDisabledReason)}
               </PopoverPopup>
             </Popover>
           ) : (
@@ -1689,10 +1691,12 @@ export default function GitActionsControl({
                     cn("not-sr-only ml-0 truncate", THREAD_DETAILS_PANEL_LABEL_CLASS),
                   )}
                 >
-                  {quickAction.label}
+                  {translateWebSource(translationLocale, quickAction.label)}
                 </span>
               </TooltipTrigger>
-              <TooltipPopup side="top">{quickAction.label}</TooltipPopup>
+              <TooltipPopup side="top">
+                {translateWebSource(translationLocale, quickAction.label)}
+              </TooltipPopup>
             </Tooltip>
           )}
           {!gitActionProgress ? (

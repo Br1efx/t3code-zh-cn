@@ -1,5 +1,7 @@
+import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
+import { localizeRelayErrorMessage } from "~/cloud/relayFailureReason";
 import { SessionPermissions } from "./SessionPermissions";
 import {
   ChevronRightIcon,
@@ -80,37 +82,53 @@ type SavedBackendListRowProps = {
   onAddRoute: (environment: EnvironmentPresentation) => void;
 };
 
-function savedBackendStatus(environment: EnvironmentPresentation): {
+function savedBackendStatus(
+  environment: EnvironmentPresentation,
+  locale: ResolvedAppLocale = "en",
+): {
   readonly text: string;
   readonly tone: "muted" | "error";
 } {
   if (!environment.entry.enabled && environment.connection.phase !== "unsupported")
-    return { text: "Off", tone: "muted" };
+    return { text: translateWebSource(locale, "Off"), tone: "muted" };
   const { connection } = environment;
   switch (connection.phase) {
     case "connected":
-      return { text: "Connected", tone: "muted" };
+      return { text: translateWebSource(locale, "Connected"), tone: "muted" };
     case "connecting":
-      return { text: "Connecting", tone: "muted" };
+      return { text: translateWebSource(locale, "Connecting"), tone: "muted" };
     case "reconnecting":
       if (connection.awaitingApproval) {
-        return { text: connection.error ?? "Waiting for approval", tone: "muted" };
+        return {
+          text: connection.error
+            ? localizeRelayErrorMessage(locale, connection.error)
+            : translateWebSource(locale, "Waiting for approval"),
+          tone: "muted",
+        };
       }
       return {
-        text: connection.error ? `Reconnecting: ${connection.error}` : "Reconnecting",
+        text: connection.error
+          ? locale === "zh-CN"
+            ? `正在重新连接：${localizeRelayErrorMessage(locale, connection.error)}`
+            : `Reconnecting: ${connection.error}`
+          : translateWebSource(locale, "Reconnecting"),
         tone: "error",
       };
     case "unsupported":
-      return { text: "Client not supported", tone: "muted" };
+      return { text: translateWebSource(locale, "Client not supported"), tone: "muted" };
     case "error":
       return {
-        text: connection.error ? `Connection failed: ${connection.error}` : "Connection failed",
+        text: connection.error
+          ? locale === "zh-CN"
+            ? `连接失败：${localizeRelayErrorMessage(locale, connection.error)}`
+            : `Connection failed: ${connection.error}`
+          : translateWebSource(locale, "Connection failed"),
         tone: "error",
       };
     case "offline":
-      return { text: "Offline", tone: "muted" };
+      return { text: translateWebSource(locale, "Offline"), tone: "muted" };
     case "available":
-      return { text: "Not connected", tone: "muted" };
+      return { text: translateWebSource(locale, "Not connected"), tone: "muted" };
   }
 }
 
@@ -138,8 +156,8 @@ export function SavedBackendListRow({
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Could not copy trace ID",
-          description: error.message,
+          title: translateWebSource(translationLocale, "Could not copy trace ID"),
+          description: localizeRelayErrorMessage(translationLocale, error.message),
         }),
       );
     },
@@ -152,16 +170,19 @@ export function SavedBackendListRow({
     onCopy: ({ url }) => {
       toastManager.add({
         type: "success",
-        title: "MCP URL copied",
-        description: `Add it to an agent, e.g. claude mcp add --transport http t3 ${url}`,
+        title: translateWebSource(translationLocale, "MCP URL copied"),
+        description:
+          translationLocale === "zh-CN"
+            ? `将它添加到 Agent，例如 claude mcp add --transport http t3 ${url}`
+            : `Add it to an agent, e.g. claude mcp add --transport http t3 ${url}`,
       });
     },
     onError: (error) => {
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Could not copy MCP URL",
-          description: error.message,
+          title: translateWebSource(translationLocale, "Could not copy MCP URL"),
+          description: localizeRelayErrorMessage(translationLocale, error.message),
         }),
       );
     },
@@ -170,7 +191,7 @@ export function SavedBackendListRow({
   const serverUpdateState = useAtomValue(serverEnvironment.updateStateAtom(environmentId));
   const resumingServerUpdate =
     serverUpdateState.status === "running" && serverUpdateState.stage === "resuming";
-  const status = savedBackendStatus(environment);
+  const status = savedBackendStatus(environment, translationLocale);
   const serverVersion = environment.serverConfig?.environment.serverVersion ?? null;
   // Discovery empties its map on every refresh, so hold the last descriptor
   // seen or the glyph would blink back to the generic one each time.
@@ -211,9 +232,13 @@ export function SavedBackendListRow({
   );
   const routeCount = connectionRoutes(environment.entry).length;
   const subtitleText = [
-    environmentTransportLabel(environment, connectedTarget),
+    environmentTransportLabel(environment, connectedTarget, translationLocale),
     // The headline below names the failure in full.
-    diagnosis ? null : resumingServerUpdate ? "Restarting" : status.text,
+    diagnosis
+      ? null
+      : resumingServerUpdate
+        ? translateWebSource(translationLocale, "Restarting")
+        : status.text,
     enabled && versionMismatch ? serverVersion : null,
   ]
     .filter((value): value is string => value !== null)
@@ -227,13 +252,18 @@ export function SavedBackendListRow({
 
   const statusTooltip = `${
     unsupported
-      ? (environment.connection.error ?? connectionStatusText(environment.connection))
+      ? localizeRelayErrorMessage(
+          translationLocale,
+          environment.connection.error ?? connectionStatusText(environment.connection),
+        )
       : enabled
-        ? connectionStatusText(environment.connection)
-        : "Switched off"
+        ? localizeRelayErrorMessage(translationLocale, connectionStatusText(environment.connection))
+        : translateWebSource(translationLocale, "Switched off")
   }${
     versionMismatch
-      ? `\nUpdate available: ${versionMismatch.serverVersion} → ${versionMismatch.clientVersion}`
+      ? translationLocale === "zh-CN"
+        ? `\n有可用更新：${versionMismatch.serverVersion} → ${versionMismatch.clientVersion}`
+        : `\nUpdate available: ${versionMismatch.serverVersion} → ${versionMismatch.clientVersion}`
       : ""
   }`;
 
@@ -279,7 +309,9 @@ export function SavedBackendListRow({
           >
             {routeCount === 1
               ? translateWebSource(translationLocale, "Routes")
-              : `${routeCount} routes`}
+              : translationLocale === "zh-CN"
+                ? `${routeCount} 条路由`
+                : `${routeCount} routes`}
             <ChevronRightIcon
               aria-hidden
               className={cn(
@@ -363,7 +395,11 @@ export function SavedBackendListRow({
       serverUpdateState.status !== "running" ? (
         <OutdatedServerUpdateAction
           environmentId={environmentId}
-          serverLabel={`${environment.label} server`}
+          serverLabel={
+            translationLocale === "zh-CN"
+              ? `${environment.label} 服务端`
+              : `${environment.label} server`
+          }
           fromVersion={lastDescriptor?.serverVersion}
           targetVersion={APP_VERSION}
           label={serverUpdateState.status === "failed" ? "Retry update" : "Update"}
@@ -372,7 +408,11 @@ export function SavedBackendListRow({
       {showUpdateAction ? (
         <ServerUpdateAction
           environmentId={environmentId}
-          serverLabel={`${environment.label} server`}
+          serverLabel={
+            translationLocale === "zh-CN"
+              ? `${environment.label} 服务端`
+              : `${environment.label} server`
+          }
           selfUpdate={resolveServerSelfUpdateCapability(environment.serverConfig)}
           installation={environment.serverConfig?.environment.capabilities.serverInstallation}
           desktopAppUpdate={supportsDesktopAppUpdate(environment.serverConfig)}
@@ -388,7 +428,11 @@ export function SavedBackendListRow({
               size="sm"
               checked={enabled}
               disabled={isRemoving || blocked}
-              aria-label={`${enabled ? "Switch off" : "Switch on"} ${environment.label}`}
+              aria-label={
+                translationLocale === "zh-CN"
+                  ? `${enabled ? "关闭" : "开启"} ${environment.label}`
+                  : `${enabled ? "Switch off" : "Switch on"} ${environment.label}`
+              }
               onCheckedChange={(checked) => onSetEnabled(environmentId, checked)}
             />
           }
@@ -405,7 +449,11 @@ export function SavedBackendListRow({
               variant="ghost-muted"
               size="icon-xs"
               disabled={isRemoving}
-              aria-label={`More actions for ${environment.label}`}
+              aria-label={
+                translationLocale === "zh-CN"
+                  ? `${environment.label} 的更多操作`
+                  : `More actions for ${environment.label}`
+              }
             />
           }
         >
@@ -438,6 +486,19 @@ export function SavedBackendListRow({
   );
 }
 
+function formatLocalizedConnectReachable(
+  result: Parameters<typeof formatConnectReachable>[0],
+  locale: ResolvedAppLocale,
+): string {
+  if (locale !== "zh-CN") return formatConnectReachable(result);
+  const count = result.readyConnections;
+  return [
+    "远程通道已连接",
+    ...(count === null ? [] : [`${count} 个连接`]),
+    ...(result.protocol ? [result.protocol.toUpperCase()] : []),
+  ].join(" · ");
+}
+
 function CloudLinkSwitch({
   checked,
   disabled,
@@ -451,9 +512,10 @@ function CloudLinkSwitch({
   readonly onCheckedChange?: (enabled: boolean) => void;
   readonly ariaLabel?: string;
 }) {
+  const { locale } = useI18n();
   const control = (
     <Switch
-      aria-label={ariaLabel}
+      aria-label={translateWebSource(locale, ariaLabel)}
       checked={checked}
       disabled={disabled}
       {...(onCheckedChange ? { onCheckedChange } : {})}
@@ -588,10 +650,18 @@ function ConfiguredCloudLinkRow({
   const reachability = managedTunnelActive ? cloudLinkState.data?.reachability : undefined;
   const reachabilityStatus =
     reachability?.status === "reachable" ? (
-      formatConnectReachable(reachability)
+      formatLocalizedConnectReachable(reachability, translationLocale)
     ) : reachability?.status === "unreachable" ? (
       <span className="block text-destructive">
-        {[reachability.reason, reachability.hint, `Fix: ${reachability.fix}`]
+        {[
+          reachability.reason ? translateWebSource(translationLocale, reachability.reason) : null,
+          reachability.hint ? translateWebSource(translationLocale, reachability.hint) : null,
+          reachability.fix
+            ? translationLocale === "zh-CN"
+              ? `解决方法：${translateWebSource(translationLocale, reachability.fix)}`
+              : `Fix: ${reachability.fix}`
+            : null,
+        ]
           .filter(Boolean)
           .join(" ")}{" "}
         <a
@@ -612,16 +682,22 @@ function ConfiguredCloudLinkRow({
     if (ok) {
       toastManager.add({
         type: "success",
-        title: enabled
-          ? "T3 Connect linked"
-          : publishAgentActivity
-            ? "T3 Connect tunnel disabled"
-            : "T3 Connect unlinked",
-        description: enabled
-          ? "This environment is available through T3 Connect."
-          : publishAgentActivity
-            ? "The managed tunnel was removed. Agent activity publishing stays on."
-            : "This environment is no longer available through T3 Connect.",
+        title: translateWebSource(
+          translationLocale,
+          enabled
+            ? "T3 Connect linked"
+            : publishAgentActivity
+              ? "T3 Connect tunnel disabled"
+              : "T3 Connect unlinked",
+        ),
+        description: translateWebSource(
+          translationLocale,
+          enabled
+            ? "This environment is available through T3 Connect."
+            : publishAgentActivity
+              ? "The managed tunnel was removed. Agent activity publishing stays on."
+              : "This environment is no longer available through T3 Connect.",
+        ),
       });
     }
     setIsUpdating(false);
@@ -634,10 +710,16 @@ function ConfiguredCloudLinkRow({
     if (ok) {
       toastManager.add({
         type: "success",
-        title: enabled ? "Agent activity enabled" : "Agent activity disabled",
-        description: enabled
-          ? "This environment publishes agent activity to your mobile clients."
-          : "This environment will stop publishing agent activity.",
+        title: translateWebSource(
+          translationLocale,
+          enabled ? "Agent activity enabled" : "Agent activity disabled",
+        ),
+        description: translateWebSource(
+          translationLocale,
+          enabled
+            ? "This environment publishes agent activity to your mobile clients."
+            : "This environment will stop publishing agent activity.",
+        ),
       });
     }
     setIsUpdatingPreference(false);
@@ -653,10 +735,16 @@ function ConfiguredCloudLinkRow({
     if (ok) {
       toastManager.add({
         type: "success",
-        title: enabled ? "Webhooks held while offline" : "Webhooks no longer held",
-        description: enabled
-          ? "T3 Connect keeps webhook requests for up to 24 hours while this environment is offline."
-          : "Requests to an offline environment now fail. Anything already held is still delivered.",
+        title: translateWebSource(
+          translationLocale,
+          enabled ? "Webhooks held while offline" : "Webhooks no longer held",
+        ),
+        description: translateWebSource(
+          translationLocale,
+          enabled
+            ? "T3 Connect keeps webhook requests for up to 24 hours while this environment is offline."
+            : "Requests to an offline environment now fail. Anything already held is still delivered.",
+        ),
       });
     }
     setIsUpdatingPreference(false);

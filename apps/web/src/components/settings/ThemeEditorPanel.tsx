@@ -357,8 +357,10 @@ export function ThemeEditorPanel({
   seedName?: string | undefined;
   restoreTheme: () => void;
 }) {
-  const { locale: translationLocale } = useI18n();
-  const { t } = useI18n();
+  const { locale: translationLocale, t } = useI18n();
+  const isZh = translationLocale === "zh-CN";
+  const appearanceName = (appearance: ThemeAppearance) =>
+    isZh ? (appearance === "light" ? "浅色" : "深色") : appearance;
   const isEditing = editingTheme !== null;
   const [name, setName] = useState("");
   const [activeAppearance, setActiveAppearance] = useState<ThemeAppearance>(initialAppearance);
@@ -450,10 +452,14 @@ export function ThemeEditorPanel({
 
   const appearanceLockReason = (appearance: ThemeAppearance): string | null => {
     if (editableAppearances && !editableAppearances.includes(appearance)) {
-      return `“${editingTheme?.label}” has no ${appearance} palette. Create a theme with the same name to add one.`;
+      return isZh
+        ? `“${editingTheme?.label}”没有${appearanceName(appearance)}配色方案。创建同名主题即可添加。`
+        : `“${editingTheme?.label}” has no ${appearance} palette. Create a theme with the same name to add one.`;
     }
     if (!isEditing && takenAppearances.includes(appearance)) {
-      return `“${mergeTarget?.label}” already has a ${appearance} palette.`;
+      return isZh
+        ? `“${mergeTarget?.label}”已包含${appearanceName(appearance)}配色方案。`
+        : `“${mergeTarget?.label}” already has a ${appearance} palette.`;
     }
     return null;
   };
@@ -779,13 +785,15 @@ export function ThemeEditorPanel({
 
   const handleSubmit = () => {
     if (!name.trim()) {
-      setError("Name your theme first.");
+      setError(translateWebSource(translationLocale, "Name your theme first."));
       return;
     }
 
     if (mergeTarget?.css && css.trim() && mergeTarget.css !== css) {
       setError(
-        `“${mergeTarget.label}” has different custom CSS. Use the same CSS or pick another name.`,
+        isZh
+          ? `“${mergeTarget.label}”使用了不同的自定义 CSS。请使用相同的 CSS 或另选一个名称。`
+          : `“${mergeTarget.label}” has different custom CSS. Use the same CSS or pick another name.`,
       );
       return;
     }
@@ -809,7 +817,11 @@ export function ThemeEditorPanel({
         const editedModes = getThemeModes(editingTheme);
         const collision = editedModes.find((mode) => takenAppearances.includes(mode));
         if (collision) {
-          setError(`“${mergeTarget.label}” already has a ${collision} palette. Pick another name.`);
+          setError(
+            isZh
+              ? `“${mergeTarget.label}”已包含${appearanceName(collision)}配色方案，请另选一个名称。`
+              : `“${mergeTarget.label}” already has a ${collision} palette. Pick another name.`,
+          );
           return;
         }
         mergedAppearance = editedModes[0] ?? null;
@@ -852,7 +864,9 @@ export function ThemeEditorPanel({
       } else if (mergeTarget) {
         if (takenAppearances.includes(activeAppearance)) {
           setError(
-            `“${mergeTarget.label}” already has light and dark palettes. Pick another name.`,
+            isZh
+              ? `“${mergeTarget.label}”已同时包含浅色和深色配色方案，请另选一个名称。`
+              : `“${mergeTarget.label}” already has light and dark palettes. Pick another name.`,
           );
           return;
         }
@@ -901,7 +915,12 @@ export function ThemeEditorPanel({
             if (retiredTheme) installCustomTheme(retiredTheme);
           } catch {}
         }
-        setError("Theme saved, but it could not be made active. Try again.");
+        setError(
+          translateWebSource(
+            translationLocale,
+            "Theme saved, but it could not be made active. Try again.",
+          ),
+        );
         return;
       }
       onOpenChange(false);
@@ -909,9 +928,10 @@ export function ThemeEditorPanel({
       setError(
         cause instanceof Error
           ? cause.message
-          : isEditing
-            ? "Could not save the theme."
-            : "Could not create the theme.",
+          : translateWebSource(
+              translationLocale,
+              isEditing ? "Could not save the theme." : "Could not create the theme.",
+            ),
       );
     }
   };
@@ -939,7 +959,7 @@ export function ThemeEditorPanel({
     // Use aria-disabled so locked modes remain hoverable for explanatory tooltips.
     const button = (
       <Toggle aria-disabled={lockReason !== null} value={appearance}>
-        {appearance === "light" ? "Light" : "Dark"}
+        {translateWebSource(translationLocale, appearance === "light" ? "Light" : "Dark")}
       </Toggle>
     );
     if (lockReason === null) return button;
@@ -1301,7 +1321,7 @@ export function ThemeEditorPanel({
                 onClick={() => setCssOpen(!cssOpen)}
               >
                 {cssOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
-                Custom CSS
+                {translateWebSource(translationLocale, "Custom CSS")}
               </Button>
               {cssOpen ? (
                 <>

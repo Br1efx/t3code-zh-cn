@@ -1,4 +1,4 @@
-import { localizeWebString } from "~/i18n/localizeWebChildren";
+import { localizeRelayErrorMessage } from "~/cloud/relayFailureReason";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { translateWebSource } from "~/i18n/messages";
 
@@ -149,10 +149,8 @@ export function McpConsent({
   readonly environmentLabel?: string | undefined;
   readonly footer?: ReactNode;
 }) {
-  const { locale: i18nLocale, t } = useI18n();
-  const { locale: sourceLocale } = useI18n();
-  const tx = (source: string) => translateWebSource(sourceLocale, source);
-  const { locale: translationLocale } = useI18n();
+  const { locale, t } = useI18n();
+  const tx = (source: string) => translateWebSource(locale, source);
   const [loaded, setLoaded] = useState<Loaded>({ status: "loading" });
   const [requestedAccess, setAccess] = useState<AuthMcpClientAccess | null>(null);
   const [pairingCode, setPairingCode] = useState("");
@@ -221,10 +219,10 @@ export function McpConsent({
     setPending(null);
     setErrorMessage(
       answer.kind === "error"
-        ? answer.message
+        ? localizeRelayErrorMessage(locale, answer.message)
         : answer.kind === "redirect"
-          ? UNSAFE_REDIRECT
-          : translateWebSource(translationLocale, "The sign-in could not continue."),
+          ? tx(UNSAFE_REDIRECT)
+          : tx("The sign-in could not continue."),
     );
   };
 
@@ -245,7 +243,7 @@ export function McpConsent({
       <StandalonePage>
         <ConnectAgentHeading
           title={tx("This sign-in cannot continue")}
-          description={tx(loaded.message)}
+          description={localizeRelayErrorMessage(locale, loaded.message)}
         />
         <p className="mt-4 text-sm text-muted-foreground">
           {tx("Close this page and start the sign-in again from your agent.")}
@@ -270,46 +268,50 @@ export function McpConsent({
       <ConnectAgentHeading
         title={t("connectAgent.title", { client: details.clientName })}
         description={
-          <>
-            {translateWebSource(
-              translationLocale,
-              "This agent wants to use the threads in every project on",
-            )}{" "}
-            <span className="font-medium text-foreground">
-              {environmentLabel ?? details.environmentHost}
-            </span>
-            {environmentLabel ? ` (${details.environmentHost})` : null}.
-          </>
+          locale === "zh-CN" ? (
+            <>
+              此智能体希望访问{" "}
+              <span className="font-medium text-foreground">
+                {environmentLabel ?? details.environmentHost}
+              </span>
+              {environmentLabel ? `（${details.environmentHost}）` : null}
+              上所有项目中的对话。
+            </>
+          ) : (
+            <>
+              This agent wants to use the threads in every project on{" "}
+              <span className="font-medium text-foreground">
+                {environmentLabel ?? details.environmentHost}
+              </span>
+              {environmentLabel ? ` (${details.environmentHost})` : null}.
+            </>
+          )
         }
       />
       <dl className="mt-4 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
-        <dt className="text-muted-foreground">{translateWebSource(translationLocale, "App")}</dt>
+        <dt className="text-muted-foreground">{tx("App")}</dt>
         <dd className="min-w-0 break-words">
           {details.clientName}{" "}
-          <span className="text-muted-foreground">
-            {translateWebSource(i18nLocale, "· name set by the app")}
-          </span>
+          <span className="text-muted-foreground">{tx("· name set by the app")}</span>
         </dd>
-        <dt className="text-muted-foreground">
-          {translateWebSource(translationLocale, "Access goes to")}
-        </dt>
+        <dt className="text-muted-foreground">{tx("Access goes to")}</dt>
         <dd className="min-w-0 break-words font-medium">
           {details.redirectHost}
           {redirectsToThisComputer(details.redirectHost) ? (
             <span className="font-normal text-muted-foreground">
               {" "}
-              {translateWebSource(i18nLocale, "on the computer that opened this page")}
+              {tx("on the computer that opened this page")}
             </span>
           ) : (
             <span className="font-normal text-muted-foreground">
               {" "}
-              {translateWebSource(i18nLocale, "· whoever runs it gets this access")}
+              {tx("· whoever runs it gets this access")}
             </span>
           )}
         </dd>
       </dl>
       <p className="mt-2 text-xs text-muted-foreground">
-        {translateWebSource(translationLocale, "Only approve a sign-in you just started.")}
+        {tx("Only approve a sign-in you just started.")}
       </p>
 
       <form
@@ -322,7 +324,7 @@ export function McpConsent({
         {acceptsCode ? (
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="connect-agent-pairing-code">
-              {translateWebSource(translationLocale, "Sign-in code")}
+              {tx("Sign-in code")}
             </label>
             <Input
               id="connect-agent-pairing-code"
@@ -332,26 +334,29 @@ export function McpConsent({
               disabled={pending !== null}
               nativeInput
               onChange={(event) => setPairingCode(event.currentTarget.value)}
-              placeholder={translateWebSource(translationLocale, "Paste a code")}
+              placeholder={tx("Paste a code")}
               spellCheck={false}
               value={pairingCode}
             />
             <p className="text-xs text-muted-foreground">
-              {translateWebSource(
-                translationLocale,
-                "Get one from Use T3 Code in another app (MCP), Settings → Sharing & access, or",
-              )}{" "}
-              <code>t3 auth pairing create</code>
-              {localizeWebString(i18nLocale, " on this machine.")}
+              {locale === "zh-CN" ? (
+                <>
+                  可在“在其他应用中使用 T3 Code（MCP）”、“设置 → 共享与访问”获取，或在本机运行{" "}
+                  <code>t3 auth pairing create</code> 生成。
+                </>
+              ) : (
+                <>
+                  Get one from Use T3 Code in another app (MCP), Settings → Sharing &amp; access, or{" "}
+                  <code>t3 auth pairing create</code> on this machine.
+                </>
+              )}
             </p>
           </div>
         ) : null}
 
         {codeAccess ? (
           <p className="text-sm">
-            <span className="text-muted-foreground">
-              {translateWebSource(translationLocale, "Access")}
-            </span>{" "}
+            <span className="text-muted-foreground">{tx("Access")}</span>{" "}
             <span className="font-medium">{tx(accessConfig[codeAccess].label)}</span>
           </p>
         ) : (
@@ -374,8 +379,7 @@ export function McpConsent({
               ))}
             </RadioGroup>
             <p className="text-xs text-muted-foreground">
-              {translateWebSource(
-                translationLocale,
+              {tx(
                 "Beyond read only, it can start, message and stop threads, and none of them can run with more than the mode you pick.",
               )}
             </p>
@@ -391,10 +395,12 @@ export function McpConsent({
         <div className="flex flex-wrap gap-2">
           <Button disabled={!canApprove} type="submit">
             {pending === "approve"
-              ? translateWebSource(translationLocale, "Approving…")
+              ? tx("Approving…")
               : approveLevel === null
-                ? translateWebSource(translationLocale, "Choose what it may do")
-                : tx("Approve {access}").replace("{access}", tx(accessConfig[approveLevel].label))}
+                ? tx("Choose what it may do")
+                : locale === "zh-CN"
+                  ? `批准${tx(accessConfig[approveLevel].label)}`
+                  : `Approve ${accessConfig[approveLevel].label}`}
           </Button>
           <Button
             disabled={pending !== null}

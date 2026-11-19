@@ -1,4 +1,5 @@
 import { localizeWebString } from "~/i18n/localizeWebChildren";
+import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useAuth } from "@clerk/react";
@@ -23,6 +24,7 @@ import * as Result from "effect/Result";
 import { type ReactNode, useEffect, useEffectEvent, useState } from "react";
 
 import { checkReachability, readLinkState } from "~/cloud/linkEnvironmentAtoms";
+import { localizeRelayErrorMessage } from "~/cloud/relayFailureReason";
 import { isManagedTunnelActive } from "~/cloud/t3ConnectState";
 import { hasCloudPublicConfig } from "~/cloud/publicConfig";
 import { readCachedCloudLinkState } from "~/cloud/cloudLinkState";
@@ -479,7 +481,10 @@ function GateScreen({
       );
     case "error":
       return (
-        <GateMessage title={cantCheckTitle} lines={[gate.message]}>
+        <GateMessage
+          title={cantCheckTitle}
+          lines={[localizeRelayErrorMessage(translationLocale, gate.message)]}
+        >
           {checkAgain}
         </GateMessage>
       );
@@ -493,9 +498,9 @@ function GateScreen({
             lines={
               reachability
                 ? [
-                    reachability.reason,
+                    translateWebSource(translationLocale, reachability.reason),
                     translationLocale === "zh-CN"
-                      ? `解决方法：${reachability.fix}`
+                      ? `解决方法：${translateWebSource(translationLocale, reachability.fix)}`
                       : `Fix: ${reachability.fix}`,
                   ]
                 : []
@@ -655,11 +660,8 @@ function ConnectStep({
       <p className="text-sm text-muted-foreground">
         {translationLocale === "zh-CN" ? (
           <>
-            当 {app?.name ?? "该应用"}
-            {localizeWebString(
-              translationLocale,
-              " 打开登录页面时，选择允许它执行的操作并用你的 T3 Connect 账号批准。",
-            )}
+            当 {app?.name ?? "该应用"} 打开登录页面时，选择允许它执行的操作并用你的 T3 Connect
+            账号批准。
           </>
         ) : (
           <>
@@ -701,7 +703,7 @@ function ConnectStep({
             )}
           </p>
         ) : app.docs ? (
-          <TextButton onClick={() => openLink(app.docs ?? "")}>
+          <TextButton onClick={() => openLink(app.docs ?? "", translationLocale)}>
             {translationLocale === "zh-CN" ? `${app.name} 帮助文档` : `${app.name} help`}
           </TextButton>
         ) : null}
@@ -749,14 +751,15 @@ function TextButton({
   );
 }
 
-function openLink(url: string) {
+function openLink(url: string, locale: ResolvedAppLocale) {
   void readLocalApi()
     ?.shell.openExternal(url)
     .catch((error: unknown) =>
       toastManager.add({
         type: "error",
-        title: "Could not open the link",
-        description: error instanceof Error ? error.message : url,
+        title: translateWebSource(locale, "Could not open the link"),
+        description:
+          error instanceof Error ? localizeRelayErrorMessage(locale, error.message) : url,
       }),
     );
 }
@@ -790,11 +793,11 @@ function PrimaryAction({ app, mcpUrl }: { readonly app: McpApp; readonly mcpUrl:
   // The desktop app reports a link nothing opens and falls back; a browser cannot tell, and
   // opens an app link in place (a new tab for it would stay blank), so its toast keeps the web.
   const openApp = () => {
-    if (appLink === null) return openLink(link);
+    if (appLink === null) return openLink(link, translationLocale);
     if (!isElectron) return window.location.assign(appLink);
     void readLocalApi()
       ?.shell.openExternal(appLink)
-      .catch(() => openLink(link));
+      .catch(() => openLink(link, translationLocale));
   };
   const handOff = async () => {
     if (copy !== null) {
@@ -803,8 +806,8 @@ function PrimaryAction({ app, mcpUrl }: { readonly app: McpApp; readonly mcpUrl:
       if (!copied) {
         toastManager.add({
           type: "error",
-          title: "Could not copy",
-          description: "Use Set up another way.",
+          title: translateWebSource(translationLocale, "Could not copy"),
+          description: translateWebSource(translationLocale, "Use Set up another way."),
         });
         return;
       }
@@ -825,7 +828,7 @@ function PrimaryAction({ app, mcpUrl }: { readonly app: McpApp; readonly mcpUrl:
                     : appLink === null
                       ? `Open ${app.name}`
                       : `Get ${app.name}`,
-                onClick: () => openLink(link),
+                onClick: () => openLink(link, translationLocale),
               },
             }),
       });

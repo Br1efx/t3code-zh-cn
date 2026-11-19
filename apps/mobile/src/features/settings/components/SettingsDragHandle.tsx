@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 
 import { SymbolView } from "../../../components/ui/AppSymbol";
+import { localizeMobileString } from "../../../i18n/mobileStrings";
 
 export function SettingsDragHandle(props: {
   readonly title: string;
@@ -35,10 +36,14 @@ export function SettingsDragHandle(props: {
         collapsable={false}
         accessible
         accessibilityRole="adjustable"
-        accessibilityLabel={`Reorder ${props.title}`}
+        accessibilityLabel={localizeMobileString(`Reorder ${props.title}`)}
         accessibilityActions={[
-          ...(props.canMoveUp ? [{ name: "decrement", label: "Move up" }] : []),
-          ...(props.canMoveDown ? [{ name: "increment", label: "Move down" }] : []),
+          ...(props.canMoveUp
+            ? [{ name: "decrement", label: localizeMobileString("Move up") }]
+            : []),
+          ...(props.canMoveDown
+            ? [{ name: "increment", label: localizeMobileString("Move down") }]
+            : []),
         ]}
         onAccessibilityAction={({ nativeEvent }) => {
           if (nativeEvent.actionName === "decrement" && props.canMoveUp) props.onStep("up");

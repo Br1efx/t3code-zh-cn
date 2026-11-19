@@ -586,24 +586,38 @@ function ScheduledTaskEnvironmentList({
 
   const loaded = states.filter((state) => state.connected && state.error === null && state.tasks);
   const populated = loaded.filter((state) => state.tasks && state.tasks.length > 0);
+  const isZh = sourceLocale === "zh-CN";
+  const summaryLabels = isZh
+    ? {
+        notConnected: "未连接：",
+        loading: "正在加载定时任务：",
+        error: "无法加载定时任务：",
+        empty: "暂无任务：",
+      }
+    : {
+        notConnected: "Not connected:",
+        loading: "Loading scheduled tasks on",
+        error: "Could not load scheduled tasks:",
+        empty: "No tasks on",
+      };
   const summaries: Record<string, string[]> = {
-    "Not connected:": [],
-    "Loading scheduled tasks on": [],
-    "Could not load scheduled tasks:": [],
-    "No tasks on": [],
+    [summaryLabels.notConnected]: [],
+    [summaryLabels.loading]: [],
+    [summaryLabels.error]: [],
+    [summaryLabels.empty]: [],
   };
   for (const { environment, connected, tasks, error } of states) {
     const label = settingsScopeEnvironmentLabel(environment, environments);
     if (!connected) {
-      summaries["Not connected:"]!.push(
-        `${label} (${connectionStatusTitle(environment.connection)})`,
+      summaries[summaryLabels.notConnected]!.push(
+        `${label} (${translateWebSource(sourceLocale, connectionStatusTitle(environment.connection))})`,
       );
     } else if (error !== null) {
-      summaries["Could not load scheduled tasks:"]!.push(`${label}: ${error}`);
+      summaries[summaryLabels.error]!.push(`${label}: ${error}`);
     } else if (!tasks) {
-      summaries["Loading scheduled tasks on"]!.push(label);
+      summaries[summaryLabels.loading]!.push(label);
     } else if (tasks.length === 0 && populated.length > 0) {
-      summaries["No tasks on"]!.push(label);
+      summaries[summaryLabels.empty]!.push(label);
     }
   }
 
@@ -622,10 +636,13 @@ function ScheduledTaskEnvironmentList({
             >
               <ConnectionStatusDot
                 dotClassName={connectionPhaseDotClassName(environment.connection.phase)}
-                tooltipText={connectionStatusTitle(environment.connection)}
+                tooltipText={translateWebSource(
+                  sourceLocale,
+                  connectionStatusTitle(environment.connection),
+                )}
               />
               <span className="text-xs text-muted-foreground">
-                {connectionStatusTitle(environment.connection)}
+                {translateWebSource(sourceLocale, connectionStatusTitle(environment.connection))}
               </span>
             </EnvironmentRow>
             {tasks?.map((task) => (
@@ -658,7 +675,7 @@ function ScheduledTaskEnvironmentList({
       ) : null}
       {Object.entries(summaries).map(([label, entries]) => {
         if (entries.length === 0) return null;
-        const summary = `${label} ${entries.join(", ")}`;
+        const summary = isZh ? `${label}${entries.join("、")}` : `${label} ${entries.join(", ")}`;
         return (
           <Tooltip key={label}>
             <TooltipTrigger
@@ -708,6 +725,7 @@ function ScheduledTaskEnvironmentSection({
 }) {
   const { locale: translationLocale } = useI18n();
   const { locale: sourceLocale } = useI18n();
+  const isZh = sourceLocale === "zh-CN";
   const { scope } = useSettingsScope();
   const connected =
     environment.connection.phase === "connected" && environment.serverConfig !== null;
@@ -737,7 +755,11 @@ function ScheduledTaskEnvironmentSection({
       {!connected ? (
         <SettingsRow
           title={translateWebSource(sourceLocale, "Environment disconnected")}
-          description={`Reconnect ${environment.label} to view its scheduled tasks.`}
+          description={
+            isZh
+              ? `请重新连接 ${environment.label} 以查看其定时任务。`
+              : `Reconnect ${environment.label} to view its scheduled tasks.`
+          }
         />
       ) : tasksQuery.error ? (
         <SettingsRow
@@ -795,6 +817,7 @@ function ScheduledTaskRow({
   readonly onEdit: () => void;
 }) {
   const { locale: sourceLocale } = useI18n();
+  const isZh = sourceLocale === "zh-CN";
   const canOperate = useAtomValue(
     serverEnvironment.upsertScheduledTask.permissionAtom(environmentId),
   );
@@ -813,7 +836,9 @@ function ScheduledTaskRow({
   const act = async (action: "toggle" | "run" | "delete") => {
     if (busy || !readEnvironmentScope(environmentId, AuthOrchestrationOperateScope)) return;
     if (action === "delete") {
-      const message = `Delete "${task.title}"?\nThis cannot be undone.`;
+      const message = isZh
+        ? `要删除“${task.title}”吗？\n此操作无法撤销。`
+        : `Delete "${task.title}"?\nThis cannot be undone.`;
       const confirmed =
         (await requestConfirmDialog(message, { variant: "destructive" })) ??
         window.confirm(message);
@@ -831,12 +856,21 @@ function ScheduledTaskRow({
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Could not update scheduled task",
+          title: translateWebSource(sourceLocale, "Could not update scheduled task"),
           description: String(squashAtomCommandFailure(result)),
         }),
       );
     }
   };
+  const lastRunStatusLabel = isZh
+    ? task.lastRunStatus === "succeeded"
+      ? "成功"
+      : task.lastRunStatus === "failed"
+        ? "失败"
+        : task.lastRunStatus === "running"
+          ? "运行中"
+          : task.lastRunStatus
+    : task.lastRunStatus;
   return (
     <SettingsRow
       title={task.title}
@@ -844,24 +878,24 @@ function ScheduledTaskRow({
       status={
         <div className="flex flex-wrap items-center gap-2">
           <span>
-            {scheduleLabel(task.schedule, timeZone, task.nextRunAt)} ·{" "}
+            {scheduleLabel(task.schedule, timeZone, task.nextRunAt, sourceLocale)} ·{" "}
             {task.blockedByPolicy !== undefined ? (
               task.blockedByPolicy
             ) : !task.enabled ? (
-              "Paused"
+              translateWebSource(sourceLocale, "Paused")
             ) : isWebhook ? (
-              "Listening"
+              translateWebSource(sourceLocale, "Listening")
             ) : task.nextRunAt ? (
               <>
                 {translateWebSource(sourceLocale, "Next run")}{" "}
                 <ScheduledRelativeLabel value={task.nextRunAt} />
               </>
             ) : (
-              "Not scheduled"
+              translateWebSource(sourceLocale, "Not scheduled")
             )}
           </span>
           {task.lastRunStatus !== "never" ? (
-            <Badge variant={statusVariant(task.lastRunStatus)}>{task.lastRunStatus}</Badge>
+            <Badge variant={statusVariant(task.lastRunStatus)}>{lastRunStatusLabel}</Badge>
           ) : null}
           {task.threadId !== null && scheduledTaskThreadMode(task) !== "new_thread" ? (
             <ScheduledTaskThreadLink environmentId={environmentId} threadId={task.threadId} />
@@ -874,7 +908,7 @@ function ScheduledTaskRow({
           <Switch
             checked={task.enabled}
             disabled={busy || !canOperate}
-            aria-label={`Enable ${task.title}`}
+            aria-label={isZh ? `启用 ${task.title}` : `Enable ${task.title}`}
             onCheckedChange={() => void act("toggle")}
           />
           <Menu>
@@ -884,7 +918,7 @@ function ScheduledTaskRow({
                   size="icon-sm"
                   variant="ghost"
                   disabled={busy || !canOperate}
-                  aria-label={`Actions for ${task.title}`}
+                  aria-label={isZh ? `${task.title} 的操作` : `Actions for ${task.title}`}
                 />
               }
             >
@@ -957,6 +991,7 @@ function WebhookDeliveriesDialog({
   readonly onClose: () => void;
 }) {
   const { locale: sourceLocale } = useI18n();
+  const isZh = sourceLocale === "zh-CN";
   const deliveriesQuery = useEnvironmentQuery(
     serverEnvironment.scheduledTaskWebhookDeliveries({
       environmentId,
@@ -988,7 +1023,7 @@ function WebhookDeliveriesDialog({
       <DialogPopup className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {translateWebSource(sourceLocale, "Deliveries ·")} {task.title}
+            {isZh ? `投递记录 · ${task.title}` : `Deliveries · ${task.title}`}
           </DialogTitle>
           <DialogDescription>
             {translateWebSource(sourceLocale, "Recent requests to this task's webhook URL.")}
@@ -1008,7 +1043,7 @@ function WebhookDeliveriesDialog({
                     selected.pendingWindow ? "coalesced" : selected.outcome,
                   )}
                 >
-                  {webhookDeliveryLabel(selected)}
+                  {webhookDeliveryLabel(selected, sourceLocale)}
                 </Badge>
                 <span>
                   {selected.method} · <ScheduledRelativeLabel value={selected.receivedAt} />
@@ -1039,8 +1074,11 @@ function WebhookDeliveriesDialog({
               >
                 {selected.renderedPrompt ??
                   (selected.pendingWindow
-                    ? "Run scheduled when the window closes; no run started yet."
-                    : "No run was started for this request.")}
+                    ? translateWebSource(
+                        sourceLocale,
+                        "Run scheduled when the window closes; no run started yet.",
+                      )
+                    : translateWebSource(sourceLocale, "No run was started for this request."))}
               </DeliveryBlock>
               {selected.missingFields.length > 0 ? (
                 <p className="text-sm text-muted-foreground">
@@ -1090,7 +1128,7 @@ function WebhookDeliveriesDialog({
                         delivery.pendingWindow ? "coalesced" : delivery.outcome,
                       )}
                     >
-                      {webhookDeliveryLabel(delivery)}
+                      {webhookDeliveryLabel(delivery, sourceLocale)}
                     </Badge>
                     <span>{delivery.method}</span>
                     <span className="text-muted-foreground">
@@ -1101,9 +1139,9 @@ function WebhookDeliveriesDialog({
                     ) : null}
                     {delivery.missingFields.length > 0 ? (
                       <span className="text-muted-foreground">
-                        {delivery.missingFields.length}{" "}
-                        {translateWebSource(sourceLocale, "empty placeholder")}
-                        {delivery.missingFields.length === 1 ? "" : "s"}
+                        {sourceLocale === "zh-CN"
+                          ? `${delivery.missingFields.length} 个空占位符`
+                          : `${delivery.missingFields.length} empty placeholder${delivery.missingFields.length === 1 ? "" : "s"}`}
                       </span>
                     ) : null}
                   </button>
@@ -1155,6 +1193,7 @@ function WebhookEndpointField({
   readonly task: ScheduledTask | null;
 }) {
   const { locale: sourceLocale } = useI18n();
+  const isZh = sourceLocale === "zh-CN";
   const canRotate = useAtomValue(
     serverEnvironment.rotateScheduledTaskWebhookToken.permissionAtom(environmentId),
   );
@@ -1174,10 +1213,18 @@ function WebhookEndpointField({
   }
   const { address: url, copyable, note } = webhookAddress(endpoint, httpBaseUrl);
   const rotateUrl = async () => {
+    const confirmMessage = isZh
+      ? "要轮换此 Webhook URL 吗？\n当前 URL 将立即失效。"
+      : "Rotate this webhook URL?\nThe current URL stops working.";
     const confirmed =
-      (await requestConfirmDialog("Rotate this webhook URL?\nThe current URL stops working.", {
+      (await requestConfirmDialog(confirmMessage, {
         variant: "destructive",
-      })) ?? window.confirm("Rotate this webhook URL? The current URL stops working.");
+      })) ??
+      window.confirm(
+        isZh
+          ? "要轮换此 Webhook URL 吗？当前 URL 将立即失效。"
+          : "Rotate this webhook URL? The current URL stops working.",
+      );
     if (!confirmed) return;
     setRotating(true);
     const result = await rotate({ environmentId, input: { id: task.id } });
@@ -1186,7 +1233,7 @@ function WebhookEndpointField({
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Could not rotate webhook URL",
+          title: translateWebSource(sourceLocale, "Could not rotate webhook URL"),
           description: String(squashAtomCommandFailure(result)),
         }),
       );
@@ -1209,7 +1256,9 @@ function WebhookEndpointField({
           onClick={() => copyToClipboard(url, undefined)}
         >
           <CopyIcon />
-          {isCopied ? "Copied" : "Copy"}
+          {isCopied
+            ? translateWebSource(sourceLocale, "Copied")
+            : translateWebSource(sourceLocale, "Copy")}
         </Button>
         <Button
           size="sm"
@@ -1321,10 +1370,11 @@ function ScheduledTaskDestination({
   const thread = useScheduledTaskThread(environmentId, threadId);
   const currentLabel =
     ref !== null
-      ? thread?.title.trim() || `Thread ${ref.threadId}`
+      ? thread?.title.trim() ||
+        (translationLocale === "zh-CN" ? `对话 ${ref.threadId}` : `Thread ${ref.threadId}`)
       : threadMode === "new_thread"
-        ? "New thread each run"
-        : "Started by the first run";
+        ? translateWebSource(translationLocale, "New thread each run")
+        : translateWebSource(translationLocale, "Started by the first run");
   const shells = useVisibleThreadShells(open);
   // Mounts older settled threads matching the query, which shells may leave out.
   useThreadSearch(open && projectId ? [environmentId] : [], query, {
@@ -1347,7 +1397,8 @@ function ScheduledTaskDestination({
     setOpen(next);
     if (!next) setQuery("");
   };
-  const detail =
+  const detail = translateWebSource(
+    translationLocale,
     threadMode === "new_thread"
       ? "Each run starts a new thread with the workspace and model below."
       : ref === null
@@ -1356,9 +1407,13 @@ function ScheduledTaskDestination({
           : "The first run starts a thread with the workspace and model below. Later runs post there, each in a fresh session without earlier runs' context."
         : threadMode === "continue"
           ? "Each run continues this conversation, in its workspace and with its current model."
-          : "Each run starts a fresh session in this thread, without earlier runs' context.";
+          : "Each run starts a fresh session in this thread, without earlier runs' context.",
+  );
   return (
-    <Field label="Destination" htmlFor="scheduled-task-destination">
+    <Field
+      label={translateWebSource(translationLocale, "Destination")}
+      htmlFor="scheduled-task-destination"
+    >
       {onThreadModeChange ? (
         <Select
           value={threadMode}
@@ -1564,8 +1619,13 @@ function ScheduledTaskEditorForm({
     toastManager.add(
       stackedThreadToast({
         type: "error",
-        title,
-        description: error instanceof Error ? error.message : String(error),
+        title: translateWebSource(sourceLocale, title),
+        description:
+          error instanceof Error
+            ? error.message
+            : typeof error === "string"
+              ? translateWebSource(sourceLocale, error)
+              : String(error),
       }),
     );
   };
@@ -1597,7 +1657,8 @@ function ScheduledTaskEditorForm({
     }
     const schedule = scheduleFromDraft(draft);
     if (schedule === null) {
-      for (const error of scheduleDraftErrors(draft)) reportFailure(error.title, error.description);
+      for (const error of scheduleDraftErrors(draft, sourceLocale))
+        reportFailure(error.title, error.description);
       return;
     }
     if (
@@ -1724,7 +1785,8 @@ function ScheduledTaskEditorForm({
                       kind={resolveEnvironmentMachineKind(environment?.serverConfig ?? null)}
                       className="size-4"
                     />
-                    {environment?.label ?? "Unavailable environment"}
+                    {environment?.label ??
+                      translateWebSource(sourceLocale, "Unavailable environment")}
                   </span>
                 </SelectValue>
               </SelectTrigger>
@@ -1995,7 +2057,7 @@ function ScheduledTaskEditorForm({
               >
                 <Toggle value="fixed">{translateWebSource(translationLocale, "At a time")}</Toggle>
                 {offersOnce || draft.scheduleMode === "once" ? (
-                  <Toggle value="once">Once</Toggle>
+                  <Toggle value="once">{translateWebSource(translationLocale, "Once")}</Toggle>
                 ) : null}
                 <Toggle value="interval">
                   {translateWebSource(translationLocale, "Every interval")}
@@ -2012,7 +2074,9 @@ function ScheduledTaskEditorForm({
             {webhookDenial !== undefined ? (
               <ManagedNotice>
                 {draft.scheduleMode === "webhook"
-                  ? `${webhookDenial} Switch this task to a time or an interval, or turn it off, to save it.`
+                  ? sourceLocale === "zh-CN"
+                    ? `${webhookDenial} 请将此任务切换为定时或间隔执行，或先停用后再保存。`
+                    : `${webhookDenial} Switch this task to a time or an interval, or turn it off, to save it.`
                   : webhookDenial}
               </ManagedNotice>
             ) : null}
@@ -2054,8 +2118,8 @@ function ScheduledTaskEditorForm({
                   onChange={(filters) => setDraft((current) => ({ ...current, filters }))}
                 />
                 <Field
-                  label="Duplicate request key"
-                  hint="template, optional"
+                  label={translateWebSource(sourceLocale, "Duplicate request key")}
+                  hint={translateWebSource(sourceLocale, "template, optional")}
                   htmlFor="scheduled-task-replay-key"
                 >
                   <Input
@@ -2204,8 +2268,8 @@ function ScheduledTaskEditorForm({
                         value={draft.signatureSecret}
                         placeholder={
                           liveTask?.schedule.type === "webhook" && liveTask.webhook?.hasSecret
-                            ? "Unchanged"
-                            : "Shared secret"
+                            ? translateWebSource(sourceLocale, "Unchanged")
+                            : translateWebSource(sourceLocale, "Shared secret")
                         }
                         onChange={(event) =>
                           setDraft((current) => ({
@@ -2277,8 +2341,18 @@ function ScheduledTaskEditorForm({
                   }}
                 >
                   {WEEKDAY_ORDER.map((day) => (
-                    <Toggle key={day} value={String(day)} aria-label={WEEKDAY_LABELS[day]}>
-                      {WEEKDAY_SHORT[day]}
+                    <Toggle
+                      key={day}
+                      value={String(day)}
+                      aria-label={
+                        sourceLocale === "zh-CN"
+                          ? ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][day]
+                          : WEEKDAY_LABELS[day]
+                      }
+                    >
+                      {sourceLocale === "zh-CN"
+                        ? ["日", "一", "二", "三", "四", "五", "六"][day]
+                        : WEEKDAY_SHORT[day]}
                     </Toggle>
                   ))}
                 </ToggleGroup>

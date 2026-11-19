@@ -90,15 +90,22 @@ export function usageLimitRecoveryBannerItem(props: RecoveryProps): ComposerBann
       <>
         {recoveryActions}
         {workspaceLimit ? (
-          <Button size="xs" variant="ghost" onClick={copyAdminRequest}>
-            Copy request for admin
-          </Button>
+          <CopyAdminRequestButton />
         ) : (
           <ChatGptUsageButton size="xs" variant="ghost" />
         )}
       </>
     ),
   };
+}
+
+function CopyAdminRequestButton() {
+  const { locale } = useI18n();
+  return (
+    <Button size="xs" variant="ghost" onClick={() => copyAdminRequest(locale)}>
+      Copy request for admin
+    </Button>
+  );
 }
 
 function RecoveryActions({ runId, resetAt, recovery, snoozedUntil, onChange }: RecoveryProps) {

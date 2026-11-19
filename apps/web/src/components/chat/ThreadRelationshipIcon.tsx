@@ -1,5 +1,6 @@
 import type { ProviderDriverKind, ServerProvider } from "@t3tools/contracts";
 import { BotIcon, type LucideIcon } from "lucide-react";
+import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import { cn } from "../../lib/utils";
 import {
   hasInstanceBadge,
@@ -8,42 +9,46 @@ import {
 } from "../../providerInstances";
 import { ProviderInstanceIcon } from "./ProviderInstanceIcon";
 
-export function threadRelationshipStatusLabel(status: string | null): string {
+export function threadRelationshipStatusLabel(
+  status: string | null,
+  locale?: ResolvedAppLocale,
+): string {
+  const zh = locale === "zh-CN";
   switch (status) {
     case "preparing":
     case "starting":
-      return "Starting";
+      return zh ? "启动中" : "Starting";
     case "running":
     case "in_progress":
-      return "Running";
+      return zh ? "运行中" : "Running";
     case "pending":
     case "queued":
-      return "Queued";
+      return zh ? "排队中" : "Queued";
     case "waiting":
     case "blocked":
-      return "Waiting";
+      return zh ? "等待中" : "Waiting";
     case "completed":
-      return "Done";
+      return zh ? "已完成" : "Done";
     case "failed":
     case "error":
-      return "Failed";
+      return zh ? "失败" : "Failed";
     case "cancelled":
     case "interrupted":
-      return "Stopped";
+      return zh ? "已停止" : "Stopped";
     case "rolled_back":
-      return "Reverted";
+      return zh ? "已回退" : "Reverted";
     case "resolved_native":
-      return "Resolved (native)";
+      return zh ? "已处理（原生）" : "Resolved (native)";
     case "resolved_portable":
-      return "Resolved (portable)";
+      return zh ? "已处理（兼容）" : "Resolved (portable)";
     case "consumed":
-      return "Consumed";
+      return zh ? "已消费" : "Consumed";
     case "superseded":
-      return "Superseded";
+      return zh ? "已被替代" : "Superseded";
     case "idle":
-      return "Idle";
+      return zh ? "空闲" : "Idle";
     default:
-      return "Unknown";
+      return zh ? "未知" : "Unknown";
   }
 }
 

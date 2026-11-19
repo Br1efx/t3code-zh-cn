@@ -281,7 +281,10 @@ function AboutVersionSection() {
               description:
                 updatesDenial ??
                 result.state.message ??
-                "Automatic updates are not available in this build.",
+                translateWebSource(
+                  translationLocale,
+                  "Automatic updates are not available in this build.",
+                ),
             }),
           );
         }
@@ -310,10 +313,10 @@ function AboutVersionSection() {
     install: t("settings.about.action.install"),
   };
   const statusLabel: Record<string, string> = {
-    checking: "Checking…",
-    downloading: "Downloading…",
+    checking: translateWebSource(translationLocale, "Checking…"),
+    downloading: translateWebSource(translationLocale, "Downloading…"),
     // Off its track, "up to date" only means no switch is pending; Review moves it.
-    ...(appOffTrack ? {} : { "up-to-date": "Up to Date" }),
+    ...(appOffTrack ? {} : { "up-to-date": translateWebSource(translationLocale, "Up to Date") }),
   };
   const buttonLabel =
     actionLabel[action] ??
@@ -355,11 +358,17 @@ function AboutVersionSection() {
           {...searchableSetting("update-track")}
           description={
             nightlyDeniedBy !== undefined ? (
-              `${managedUpdatesMessage(nightlyDeniedBy)} Nightly builds are not available${
-                selectedUpdateChannel === "nightly"
-                  ? "; switch to Stable to keep getting updates."
-                  : "."
-              }`
+              translationLocale === "zh-CN" ? (
+                `更新由 ${nightlyDeniedBy} 统一管理。无法使用 Nightly 版本${
+                  selectedUpdateChannel === "nightly" ? "；请切换到稳定版以继续接收更新。" : "。"
+                }`
+              ) : (
+                `${managedUpdatesMessage(nightlyDeniedBy)} Nightly builds are not available${
+                  selectedUpdateChannel === "nightly"
+                    ? "; switch to Stable to keep getting updates."
+                    : "."
+                }`
+              )
             ) : unswitchedMachines > 0 ? (
               <>
                 {translationLocale === "zh-CN"
@@ -643,7 +652,7 @@ export function useSettingsRestore(onRestored?: () => void) {
         t("settings.restore.confirmDescription", {
           settings: changedSettingLabels
             .map((label) => translateWebSource(locale, label))
-            .join("、"),
+            .join(locale === "zh-CN" ? "、" : ", "),
         }),
       ].join("\n"),
       { variant: "destructive" },
@@ -1202,11 +1211,20 @@ export function GeneralSettingsPanel() {
 
 export function ChatSettingsPanel() {
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const modifierLabel = isMacPlatform(navigator.platform) ? "⌘" : "Ctrl";
   const sendShortcutOptions = [
     { value: "enter", label: "Enter" },
-    { value: "mod-enter-multiline", label: `${modifierLabel} + Enter for multiline prompts` },
-    { value: "mod-enter", label: `${modifierLabel} + Enter always` },
+    {
+      value: "mod-enter-multiline",
+      label: isZh
+        ? `${modifierLabel} + Enter 用于多行提示词`
+        : `${modifierLabel} + Enter for multiline prompts`,
+    },
+    {
+      value: "mod-enter",
+      label: isZh ? `始终使用 ${modifierLabel} + Enter` : `${modifierLabel} + Enter always`,
+    },
   ] as const;
   const settings = useScopedSettings();
   const updateSettings = useUpdateScopedSettings();
@@ -1277,7 +1295,7 @@ export function ChatSettingsPanel() {
                 {sendShortcutOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     <span className="flex items-center justify-between gap-4">
-                      {option.label}
+                      {translateWebSource(translationLocale, option.label)}
                       {settings.sendShortcut === option.value && <CheckIcon aria-hidden="true" />}
                     </span>
                   </SelectItem>
@@ -1322,10 +1340,16 @@ export function ChatSettingsPanel() {
         <SettingsRow
           {...searchableSetting("follow-up-behavior")}
           description={
-            "Queue follow-ups while the agent runs or steer the current run. " +
-            (settings.sendShortcut === "mod-enter-multiline"
-              ? `Press ${modifierLabel} + Enter for single-line prompts or ${modifierLabel} + Shift + Enter for multiline prompts to do the opposite for one message.`
-              : `Press ${modifierLabel}${settings.sendShortcut === "mod-enter" ? " + Shift" : ""} + Enter to do the opposite for one message.`)
+            isZh
+              ? `在智能体运行时将后续消息加入队列或引导当前运行。${
+                  settings.sendShortcut === "mod-enter-multiline"
+                    ? `按 ${modifierLabel} + Enter（单行提示词）或 ${modifierLabel} + Shift + Enter（多行提示词）可针对单条消息执行相反操作。`
+                    : `按 ${modifierLabel}${settings.sendShortcut === "mod-enter" ? " + Shift" : ""} + Enter 可针对单条消息执行相反操作。`
+                }`
+              : "Queue follow-ups while the agent runs or steer the current run. " +
+                (settings.sendShortcut === "mod-enter-multiline"
+                  ? `Press ${modifierLabel} + Enter for single-line prompts or ${modifierLabel} + Shift + Enter for multiline prompts to do the opposite for one message.`
+                  : `Press ${modifierLabel}${settings.sendShortcut === "mod-enter" ? " + Shift" : ""} + Enter to do the opposite for one message.`)
           }
           resetAction={
             settings.followUpBehavior !== DEFAULT_UNIFIED_SETTINGS.followUpBehavior ? (
@@ -2143,7 +2167,9 @@ export function ThreadsSettingsPanel() {
                   instanceEntries={textGenerationModelInstanceEntries}
                   modelOptionsByInstance={textGenerationModelOptionsByInstance}
                   triggerClassName={SETTINGS_PICKER_TRIGGER_CLASSNAME}
-                  {...(mixedTextGenerationModel ? { triggerLabel: "Mixed" } : {})}
+                  {...(mixedTextGenerationModel
+                    ? { triggerLabel: translateWebSource(translationLocale, "Mixed") }
+                    : {})}
                   getModelDisabledReason={textGenerationModelDisabledReason}
                   {...(environmentId
                     ? {
@@ -2160,7 +2186,10 @@ export function ThreadsSettingsPanel() {
                     if (reason) {
                       toastManager.add({
                         type: "error",
-                        title: "Text generation model not saved",
+                        title: translateWebSource(
+                          translationLocale,
+                          "Text generation model not saved",
+                        ),
                         description: reason,
                       });
                       return;
@@ -2426,6 +2455,7 @@ export function MaintenanceSettingsPanel() {
 
 export function AboutSettingsPanel() {
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const primaryPolicy = usePrimaryManagedPolicy();
   // The Welcome page sets up this computer, so it needs one.
   const primaryEnvironmentId = usePrimaryEnvironmentId();
@@ -2436,7 +2466,11 @@ export function AboutSettingsPanel() {
         {primaryPolicy ? (
           <SettingsRow
             title={translateWebSource(translationLocale, "Organization")}
-            description={`This environment is managed by ${primaryPolicy.organization}. Some settings and features follow its policy.`}
+            description={
+              isZh
+                ? `此环境由 ${primaryPolicy.organization} 统一管理。部分设置和功能会遵循其策略。`
+                : `This environment is managed by ${primaryPolicy.organization}. Some settings and features follow its policy.`
+            }
             control={
               primaryPolicy.supportUrl ? (
                 <Button
@@ -2446,7 +2480,7 @@ export function AboutSettingsPanel() {
                   size="sm"
                   variant="outline"
                 >
-                  Get help
+                  {translateWebSource(translationLocale, "Get help")}
                 </Button>
               ) : null
             }
@@ -2486,7 +2520,9 @@ export function AboutSettingsPanel() {
           description={
             telemetryOff === undefined
               ? "How we handle your data, including the anonymous usage data T3 Code collects."
-              : `How we handle your data. ${telemetryOff}`
+              : isZh && primaryPolicy
+                ? `我们如何处理你的数据。${primaryPolicy.organization} 已关闭匿名使用数据收集。`
+                : `How we handle your data. ${telemetryOff}`
           }
           control={
             <Button
@@ -2494,7 +2530,7 @@ export function AboutSettingsPanel() {
               size="sm"
               variant="outline"
             >
-              View policy
+              {translateWebSource(translationLocale, "View policy")}
             </Button>
           }
         />
@@ -2507,7 +2543,7 @@ export function AboutSettingsPanel() {
               size="sm"
               variant="outline"
             >
-              View licenses
+              {translateWebSource(translationLocale, "View licenses")}
             </Button>
           }
         />

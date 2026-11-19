@@ -36,12 +36,14 @@ function preferenceLabel(preference: LoadPreference): string {
 function summarizeLoadPreferences(
   environments: ReadonlyArray<Pick<EnvironmentPresentation, "environmentId" | "label">>,
   weights: Readonly<Record<string, number>>,
+  locale: Parameters<typeof translateWebSource>[0],
 ): string | null {
   const parts = environments.flatMap((environment) => {
     const preference = loadPreferenceForWeight(weights[environment.environmentId]);
-    return preference === 50
-      ? []
-      : [`${environment.label} ${preferenceLabel(preference).toLowerCase()}`];
+    if (preference === 50) return [];
+    const label = preferenceLabel(preference);
+    const localized = locale === "zh-CN" ? translateWebSource(locale, label) : label.toLowerCase();
+    return [`${environment.label} ${localized}`];
   });
   return parts.length === 0 ? null : parts.join(" · ");
 }
@@ -68,12 +70,12 @@ export function LoadBalancingSettings({
       title={title}
       summary={
         settings.loadBalancingEnabled
-          ? summarizeLoadPreferences(environments, settings.loadBalancingWeights)
-          : "Off"
+          ? summarizeLoadPreferences(environments, settings.loadBalancingWeights, locale)
+          : translate("Off")
       }
       control={
         <Switch
-          aria-label={translate(translate("Automatically balance load"))}
+          aria-label={translate("Automatically balance load")}
           checked={settings.loadBalancingEnabled}
           disabled={!settingsHydrated}
           onCheckedChange={(loadBalancingEnabled) => updateClientSettings({ loadBalancingEnabled })}

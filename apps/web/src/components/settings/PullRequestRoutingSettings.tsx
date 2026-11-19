@@ -25,18 +25,26 @@ const options: ReadonlyArray<{ value: PullRequestRoutingPermission; label: strin
 ];
 
 const summaryLabels = { "read-write": "read and act", read: "read PRs" } as const;
+const localizedSummarySources = {
+  "read-write": "Read and act",
+  read: "Read PRs",
+} as const;
 
 function summarizePullRequestRouting(
   entries: ReadonlyArray<{
     readonly label: string;
     readonly permission: PullRequestRoutingPermission;
   }>,
+  locale: Parameters<typeof translateWebSource>[0],
 ): string | null {
   const groups = (["read-write", "read"] as const).flatMap((permission) => {
     const labels = entries.filter((entry) => entry.permission === permission);
-    return labels.length === 0
-      ? []
-      : [`${labels.map((entry) => entry.label).join(", ")} ${summaryLabels[permission]}`];
+    if (labels.length === 0) return [];
+    const permissionText =
+      locale === "zh-CN"
+        ? translateWebSource(locale, localizedSummarySources[permission])
+        : summaryLabels[permission];
+    return [`${labels.map((entry) => entry.label).join(", ")} ${permissionText}`];
   });
   return groups.length === 0 ? null : groups.join(" · ");
 }
@@ -65,7 +73,8 @@ export function PullRequestRoutingSettings({
             label: environment.label,
             permission: pullRequestRoutingPermissionFor(environment.entry, permissions),
           })),
-        ) ?? "Off"
+          i18nLocale,
+        ) ?? translateWebSource(i18nLocale, "Off")
       }
     >
       <p className="px-3 py-2.5 text-xs text-muted-foreground sm:px-4">

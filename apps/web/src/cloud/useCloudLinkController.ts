@@ -13,7 +13,9 @@ import { useState } from "react";
 
 import { toastManager } from "../components/ui/toast";
 import { stackedThreadToast } from "../components/ui/toastHelpers";
-import { relayFailureReason } from "./relayFailureReason";
+import { translateWebSource } from "../i18n/messages";
+import { useI18n } from "../i18n/WebI18nContext";
+import { localizeRelayErrorMessage, relayFailureReason } from "./relayFailureReason";
 import { relayEnvironmentDiscovery } from "../state/relay";
 import { readEnvironmentScope } from "../state/session";
 import { useAtomCommand } from "../state/use-atom-command";
@@ -48,6 +50,7 @@ function tunnelLimitFromLinkFailure(cause: unknown): number | null {
 }
 
 export function useCloudLinkController(environmentId: EnvironmentId | null) {
+  const { locale } = useI18n();
   const { getToken, isSignedIn } = useAuth();
   const refreshRelayEnvironments = useAtomCommand(relayEnvironmentDiscovery.refresh, {
     reportFailure: false,
@@ -70,19 +73,32 @@ export function useCloudLinkController(environmentId: EnvironmentId | null) {
   const [tunnelLimit, setTunnelLimit] = useState<number | null>(null);
 
   const reportUpdateFailure = (cause: unknown, reason?: string) => {
-    const message = cause instanceof Error ? cause.message : "Could not update T3 Connect access.";
+    const rawMessage =
+      cause instanceof Error ? cause.message : "Could not update T3 Connect access.";
+    const message = localizeRelayErrorMessage(locale, rawMessage);
+    const localizedReason = reason ? localizeRelayErrorMessage(locale, reason) : undefined;
     const traceId = findErrorTraceId(cause);
-    console.error("[t3-connect] Could not update T3 Connect", { message, traceId, cause });
-    setOperationError(traceId ? `${message} Trace ID: ${traceId}` : message);
+    console.error("[t3-connect] Could not update T3 Connect", {
+      message: rawMessage,
+      traceId,
+      cause,
+    });
+    setOperationError(
+      traceId
+        ? locale === "zh-CN"
+          ? `${message} 追踪 ID：${traceId}`
+          : `${message} Trace ID: ${traceId}`
+        : message,
+    );
     toastManager.add(
       stackedThreadToast({
         type: "error",
-        title: "Could not update T3 Connect",
-        description: reason ?? relayFailureReason(cause) ?? message,
+        title: translateWebSource(locale, "Could not update T3 Connect"),
+        description: localizedReason ?? relayFailureReason(cause, locale) ?? message,
         ...(traceId
           ? {
               actionProps: {
-                children: "Copy trace ID",
+                children: translateWebSource(locale, "Copy trace ID"),
                 onClick: () => void navigator.clipboard?.writeText(traceId),
               },
               actionVariant: "outline",

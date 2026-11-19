@@ -457,7 +457,7 @@ export function DeviceStreamView(props: {
               aria-pressed={!showPhone}
               onClick={() => setPresentation("flat")}
             >
-              Flat
+              {translateWebSource(translationLocale, "Flat")}
             </Button>
           </div>
         ) : null}
@@ -481,10 +481,14 @@ export function DeviceStreamView(props: {
         {status !== "streaming" && !(retainingFrame && showPhone) ? (
           <div className="absolute inset-0">
             <DeviceLoadingView
-              name={props.deviceName ?? "Device"}
+              name={props.deviceName ?? translateWebSource(translationLocale, "Device")}
               description={props.deviceDescription ?? ""}
               stage="stream"
-              message={status === "error" ? (detail ?? "Stream failed.") : "Connecting video…"}
+              message={
+                status === "error"
+                  ? (detail ?? translateWebSource(translationLocale, "Stream failed."))
+                  : translateWebSource(translationLocale, "Connecting video…")
+              }
               error={status === "error"}
             >
               {status === "error" ? (

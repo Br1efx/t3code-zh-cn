@@ -27,6 +27,7 @@ import { type AppSymbolName, SymbolView } from "../../components/ui/AppSymbol";
 import { AppText as Text } from "../../components/ui/AppText";
 import { StatusPill } from "../../components/StatusPill";
 import { environmentCatalog } from "../../connection/catalog";
+import { localizeMobileString } from "../../i18n/mobileStrings";
 import { cn } from "../../lib/cn";
 import { environmentSession } from "../../state/session";
 import { useAtomCommand } from "../../state/use-atom-command";
@@ -158,8 +159,8 @@ export function EnvironmentRoutesSection({
                 have not been checked.
               </Text>
               {AUTH_SCOPE_OPTIONS.map(({ scope, title }) => (
-                <Text key={scope} className="text-sm text-foreground">
-                  {title}: {sessionGrantsScope(session, scope) ? "Allowed" : "Not granted"}
+                <Text key={scope} localize={false} className="text-sm text-foreground">
+                  {`${localizeMobileString(title)}: ${localizeMobileString(sessionGrantsScope(session, scope) ? "Allowed" : "Not granted")}`}
                 </Text>
               ))}
             </>
@@ -260,7 +261,7 @@ function RouteRow(props: {
       {props.editing && props.onRemove ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`Remove ${label} route`}
+          accessibilityLabel={localizeMobileString(`Remove ${label} route`)}
           hitSlop={8}
           onPress={props.onRemove}
           className="active:opacity-70"
@@ -280,9 +281,9 @@ function RouteRow(props: {
         accessibilityLabel={[
           label,
           address,
-          isLearned(route) ? "Found automatically" : null,
-          props.inUse ? "In use" : null,
-          `Route ${props.position} of ${props.count}`,
+          isLearned(route) ? localizeMobileString("Found automatically") : null,
+          props.inUse ? localizeMobileString("In use") : null,
+          localizeMobileString(`Route ${props.position} of ${props.count}`),
         ]
           .filter((part) => part !== null)
           .join(", ")}

@@ -197,8 +197,12 @@ function PullRequestFilterRadioGroup<Value extends string>({
           >
             <span className="flex min-w-0 items-center gap-2">
               <PullRequestFilterOptionIcon option={option} />
-              <span className="min-w-0 flex-1 truncate">{option.label}</span>
-              {option.unavailable ? <span className="shrink-0">· Unavailable</span> : null}
+              <span className="min-w-0 flex-1 truncate">
+                {translateWebSource(locale, option.label)}
+              </span>
+              {option.unavailable ? (
+                <span className="shrink-0">· {translateWebSource(locale, "Unavailable")}</span>
+              ) : null}
               <MenuRadioItemIndicator />
             </span>
           </MenuRadioItem>
@@ -285,8 +289,7 @@ function PullRequestAuthorChoices({
   scope: ReadonlyArray<PullRequestFilterOptionScope>;
   onChange: (author: string | undefined) => void;
 }) {
-  const { t } = useI18n();
-  const { locale: translationLocale } = useI18n();
+  const { t, locale: translationLocale } = useI18n();
   const [query, setQuery] = useState("");
   const hosted = useHostedFilterOptions(scope, "authors", query);
   const login = value?.toLowerCase() ?? "";
@@ -322,9 +325,11 @@ function PullRequestAuthorChoices({
               <span className="min-w-0 flex-1 truncate">{option.actor.login}</span>
               {option.mergedCount > 0 ? (
                 <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                  {option.mergedCount === 1 && translationLocale === "en"
-                    ? "1 merge loaded"
-                    : t("pullRequests.filter.mergesLoaded", { count: option.mergedCount })}
+                  {translationLocale === "zh-CN"
+                    ? `已加载 ${option.mergedCount} 次合并`
+                    : option.mergedCount === 1
+                      ? "1 merge loaded"
+                      : t("pullRequests.filter.mergesLoaded", { count: option.mergedCount })}
                 </span>
               ) : null}
             </span>
@@ -332,7 +337,10 @@ function PullRequestAuthorChoices({
         ))}
         {visible.length === 0 && !hosted.isPending ? (
           <MenuItem disabled>
-            {hosted.error === null ? "No authors found" : "Couldn't search authors on the host"}
+            {translateWebSource(
+              translationLocale,
+              hosted.error === null ? "No authors found" : "Couldn't search authors on the host",
+            )}
           </MenuItem>
         ) : null}
       </MenuRadioGroup>

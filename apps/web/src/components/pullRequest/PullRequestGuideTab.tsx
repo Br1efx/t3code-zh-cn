@@ -127,8 +127,11 @@ export function PullRequestGuideTab({
               )
             : failure === null
               ? (query.error ??
-                "A guide is a tour of the change: stops through the code in reading order, with the calls only a maintainer can make.")
-              : FAILURE_HINT}
+                translateWebSource(
+                  uiLocale,
+                  "A guide is a tour of the change: stops through the code in reading order, with the calls only a maintainer can make.",
+                ))
+              : translateWebSource(uiLocale, FAILURE_HINT)}
         </p>
         {writeButton(
           failure === null
@@ -147,12 +150,17 @@ export function PullRequestGuideTab({
         {running ? <Spinner /> : <TriangleAlertIcon />}
         <AlertDescription>
           {running ? (
-            "Rewriting this guide. You will be told when the new one is ready."
+            translateWebSource(
+              uiLocale,
+              "Rewriting this guide. You will be told when the new one is ready.",
+            )
           ) : failure === null ? (
-            "Written before the latest push."
+            translateWebSource(uiLocale, "Written before the latest push.")
           ) : (
             <>
-              {`Could not rewrite this guide. ${FAILURE_HINT}`}
+              {uiLocale === "zh-CN"
+                ? `无法重写此指南。${translateWebSource(uiLocale, FAILURE_HINT)}`
+                : `Could not rewrite this guide. ${FAILURE_HINT}`}
               <FailureDetails detail={failure} />
             </>
           )}

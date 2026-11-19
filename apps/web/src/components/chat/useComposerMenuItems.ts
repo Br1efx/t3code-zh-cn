@@ -1,3 +1,5 @@
+import { translateWebSource } from "~/i18n/messages";
+import { useI18n } from "~/i18n/WebI18nContext";
 import {
   legacyThreadPullRequestKey,
   threadPullRequestKeyOf,
@@ -106,6 +108,7 @@ export function useComposerMenuItems({
     readonly modelOptionsByInstance: ReadonlyMap<ProviderInstanceId, ReadonlyArray<ModelEsque>>;
   };
 }) {
+  const { locale } = useI18n();
   // Thread mentions rank by recency as of when the composer mounted.
   const [now] = useState(() => Date.now());
   const composerTriggerKind = composerTrigger?.kind ?? null;
@@ -245,7 +248,7 @@ export function useComposerMenuItems({
           type: "slash-command",
           command: "model",
           label: "/model",
-          description: "Switch response model for this thread",
+          description: translateWebSource(locale, "Switch response model for this thread"),
         },
         ...(sideChatAvailable
           ? ([
@@ -254,14 +257,16 @@ export function useComposerMenuItems({
                 type: "slash-command",
                 command: "side",
                 label: "/side",
-                description: sideChatDisabledReason ?? "Ask a side question in a new side chat",
+                description:
+                  sideChatDisabledReason ??
+                  translateWebSource(locale, "Ask a side question in a new side chat"),
               },
               {
                 id: "slash:btw",
                 type: "slash-command",
                 command: "btw",
                 label: "/btw",
-                description: sideChatDisabledReason ?? "Same as /side",
+                description: sideChatDisabledReason ?? translateWebSource(locale, "Same as /side"),
               },
             ] as const)
           : []),
@@ -272,7 +277,10 @@ export function useComposerMenuItems({
                 type: "slash-command",
                 command: "clear",
                 label: "/clear",
-                description: "Start a fresh session; earlier messages stay visible",
+                description: translateWebSource(
+                  locale,
+                  "Start a fresh session; earlier messages stay visible",
+                ),
               },
             ] as const)
           : []),
@@ -290,7 +298,10 @@ export function useComposerMenuItems({
         provider: selectedProvider,
         command,
         label: `/${command.name}`,
-        description: command.description ?? command.input?.hint ?? "Run provider command",
+        description:
+          command.description ??
+          command.input?.hint ??
+          translateWebSource(locale, "Run provider command"),
       }));
       const query = composerTrigger.query.trim().toLowerCase();
       const skillItems = slashMenuSkills.map((skill) => ({

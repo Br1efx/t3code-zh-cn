@@ -18,8 +18,7 @@ function ProviderCustomColorPanel(props: {
   readonly onCommit: (value: string) => void;
   readonly showAddButton: boolean;
 }) {
-  const { t } = useI18n();
-  const { locale: translationLocale } = useI18n();
+  const { locale: translationLocale, t } = useI18n();
   const { onCommit, onPreview } = props;
   const [hsv, setHsv] = useState(() => hexToHsv(props.value));
   const currentColor = hsvToHex(hsv.h, hsv.s, hsv.v);
@@ -71,7 +70,7 @@ function ProviderCustomColorPanel(props: {
       <div className="grid gap-3 p-3">
         <div onPointerDownCapture={startDrag}>
           <ColorHueSlider
-            label="Accent color hue"
+            label={translateWebSource(translationLocale, "Accent color hue")}
             value={hsv.h}
             onChange={(h) => changeHsv({ ...hsv, h })}
             onInteractionEnd={endDrag}
@@ -97,7 +96,7 @@ function ProviderCustomColorPanel(props: {
           <PopoverClose
             render={
               <Button type="button" size="compact" onClick={() => onCommit(currentColor)}>
-                Add color
+                {translateWebSource(translationLocale, "Add color")}
               </Button>
             }
           />
@@ -115,7 +114,7 @@ function ProviderCustomColorPicker(props: {
   readonly onClear: () => void;
   readonly onClose: () => void;
 }) {
-  const { t } = useI18n();
+  const { locale: translationLocale, t } = useI18n();
   const normalized = normalizeProviderAccentColor(props.value);
 
   return (
@@ -136,7 +135,9 @@ function ProviderCustomColorPicker(props: {
             })}
           >
             {normalized ? (
-              <span className="sr-only">Change accent color</span>
+              <span className="sr-only">
+                {translateWebSource(translationLocale, "Change accent color")}
+              </span>
             ) : (
               <PlusIcon aria-hidden />
             )}

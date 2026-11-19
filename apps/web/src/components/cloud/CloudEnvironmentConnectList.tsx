@@ -25,6 +25,7 @@ import type {
 import * as Option from "effect/Option";
 import { type ReactNode, useEffect, useEffectEvent, useState } from "react";
 
+import { localizeRelayErrorMessage } from "~/cloud/relayFailureReason";
 import { environmentCatalog } from "~/connection/catalog";
 import { isDesktopLocalConnectionTarget } from "~/connection/desktopLocal";
 import { cn } from "~/lib/utils";
@@ -94,8 +95,7 @@ export function CloudEnvironmentConnectRows({
     readonly onChange: (environmentId: EnvironmentId, selected: boolean) => void;
   };
 }) {
-  const { locale: uiLocale } = useI18n();
-  const { t } = useI18n();
+  const { locale: uiLocale, t } = useI18n();
   const environmentsState = useRelayEnvironmentDiscovery();
   const registerEnvironment = useAtomCommand(environmentCatalog.register, {
     reportFailure: false,
@@ -169,8 +169,12 @@ export function CloudEnvironmentConnectRows({
           ? translateWebSource(uiLocale, "T3 Connect route added")
           : t("connectEnvironment.added"),
         description: savedWithoutRelay.has(environment.environmentId)
-          ? `${environment.label} falls back to T3 Connect when its other routes are unreachable.`
-          : `Connecting to ${environment.label} through T3 Connect.`,
+          ? uiLocale === "zh-CN"
+            ? `当其他连接方式不可达时，${environment.label} 将回退至 T3 Connect。`
+            : `${environment.label} falls back to T3 Connect when its other routes are unreachable.`
+          : uiLocale === "zh-CN"
+            ? `正在通过 T3 Connect 连接到 ${environment.label}。`
+            : `Connecting to ${environment.label} through T3 Connect.`,
       });
       return true;
     }
@@ -179,7 +183,9 @@ export function CloudEnvironmentConnectRows({
     }
     const cause = squashAtomCommandFailure(result);
     const message =
-      cause instanceof Error ? cause.message : t("connectEnvironment.connectFailedDescription");
+      cause instanceof Error
+        ? localizeRelayErrorMessage(uiLocale, cause.message)
+        : t("connectEnvironment.connectFailedDescription");
     const traceId = findErrorTraceId(cause);
     console.error("[t3-connect] Could not connect environment", { message, traceId, cause });
     toastManager.add({
@@ -295,9 +301,12 @@ export function CloudEnvironmentConnectRows({
   }
 
   if (standalone && visibleEnvironments.length === 0) {
+    const rawDiscoveryProblem = Option.getOrNull(environmentsState.error)?.message ?? null;
     const discoveryProblem = environmentsState.offline
       ? t("connectEnvironment.offline")
-      : (Option.getOrNull(environmentsState.error)?.message ?? null);
+      : rawDiscoveryProblem !== null
+        ? localizeRelayErrorMessage(uiLocale, rawDiscoveryProblem)
+        : null;
     if (discoveryProblem !== null && !environmentsState.refreshing) {
       return (
         <div className={ITEM_ROW_CLASSNAME}>
@@ -324,23 +333,32 @@ export function CloudEnvironmentConnectRows({
     const compatibilityError = discoveredCompatibilityError(status);
     const unsupported =
       compatibilityError !== null || savedEnvironment?.connection.phase === "unsupported";
-    const unsupportedDetail =
+    const rawUnsupportedDetail =
       compatibilityError?.message ?? savedEnvironment?.connection.error ?? null;
+    const unsupportedDetail =
+      rawUnsupportedDetail !== null
+        ? localizeRelayErrorMessage(uiLocale, rawUnsupportedDetail)
+        : null;
     const savedConnection = unsupported
-      ? presentSavedCloudEnvironmentConnection({
-          phase: "unsupported",
-          error: unsupportedDetail,
-          traceId: null,
-        })
+      ? presentSavedCloudEnvironmentConnection(
+          {
+            phase: "unsupported",
+            error: unsupportedDetail,
+            traceId: null,
+          },
+          uiLocale,
+        )
       : savedEnvironment
-        ? presentSavedCloudEnvironmentConnection(savedEnvironment.connection)
+        ? presentSavedCloudEnvironmentConnection(savedEnvironment.connection, uiLocale)
         : null;
     const relayStatus = status === undefined ? null : Option.getOrNull(status);
     const descriptor = relayStatus?.descriptor;
-    const offlineReason =
+    const rawOfflineReason =
       availability === "offline" && relayStatus !== null
         ? relayOfflineReasonMessage(relayStatus)
         : null;
+    const offlineReason =
+      rawOfflineReason !== null ? localizeRelayErrorMessage(uiLocale, rawOfflineReason) : null;
     const machineKind = resolveEnvironmentMachineKind(
       savedEnvironment?.serverConfig ??
         (descriptor === undefined ? null : { environment: descriptor }),
@@ -363,21 +381,24 @@ export function CloudEnvironmentConnectRows({
     const notAdded = savedWithoutRelay.has(environment.environmentId)
       ? translateWebSource(uiLocale, "Saved without T3 Connect")
       : translateWebSource(uiLocale, "Not added");
+    const rawErrorDetail = Option.getOrNull(error)?.message ?? null;
+    const localizedErrorDetail =
+      rawErrorDetail !== null ? localizeRelayErrorMessage(uiLocale, rawErrorDetail) : null;
     const statusText =
       unsupported && !savedEnvironment
-        ? `T3 Connect · ${notAdded} · Client not supported`
+        ? `T3 Connect · ${notAdded} · ${translateWebSource(uiLocale, "Client not supported")}`
         : offlineReason !== null
           ? offlineReason
           : savedConnection
             ? savedConnection.statusText
             : availability === "online"
-              ? `T3 Connect · ${notAdded} · Relay online`
+              ? `T3 Connect · ${notAdded} · ${translateWebSource(uiLocale, "Relay online")}`
               : availability === "offline"
-                ? `T3 Connect · ${notAdded} · Relay offline`
+                ? `T3 Connect · ${notAdded} · ${translateWebSource(uiLocale, "Relay offline")}`
                 : availability === "checking"
-                  ? `T3 Connect · ${notAdded} · Checking relay status…`
-                  : (Option.getOrNull(error)?.message ??
-                    `T3 Connect · ${notAdded} · Relay status unavailable`);
+                  ? `T3 Connect · ${notAdded} · ${translateWebSource(uiLocale, "Checking relay status…")}`
+                  : (localizedErrorDetail ??
+                    `T3 Connect · ${notAdded} · ${translateWebSource(uiLocale, "Relay status unavailable")}`);
     if (selection) {
       return (
         <label
@@ -459,7 +480,8 @@ export function CloudEnvironmentConnectRows({
                             ? t("connectEnvironment.relay.offline")
                             : availability === "checking"
                               ? t("connectEnvironment.relay.checking")
-                              : (Option.getOrNull(error)?.message ?? "Relay status unavailable")
+                              : (localizedErrorDetail ??
+                                translateWebSource(uiLocale, "Relay status unavailable"))
                 }
               />
               <EnvironmentMachineIcon

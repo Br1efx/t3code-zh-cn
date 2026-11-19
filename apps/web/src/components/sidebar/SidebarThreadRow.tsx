@@ -1532,11 +1532,15 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                                 )}
                               >
                                 <AlarmClockIcon aria-hidden className="size-4 shrink-0" />
-                                <span role="status">{topStatus.label}</span>
+                                <span role="status">
+                                  {translateWebSource(translationLocale, topStatus.label)}
+                                </span>
                               </button>
                             }
                           />
-                          <TooltipPopup side="top">Dismiss Woke notification</TooltipPopup>
+                          <TooltipPopup side="top">
+                            {translateWebSource(translationLocale, "Dismiss Woke notification")}
+                          </TooltipPopup>
                         </Tooltip>
                       ) : (
                         <span
@@ -1549,7 +1553,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                           {/* Not a live region: a collapsed sidebar is inert, so
                             BackgroundThreadAnnouncer and the open thread's
                             timeline speak status changes instead. */}
-                          {topStatus.label}
+                          {translateWebSource(translationLocale, topStatus.label)}
                           {status === "preparing" || status === "working" ? (
                             <span aria-hidden>
                               <WorkingDuration

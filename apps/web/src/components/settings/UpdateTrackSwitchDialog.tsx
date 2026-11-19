@@ -47,25 +47,29 @@ export function UpdateTrackSwitchDialog({
   readonly onClose: () => void;
 }) {
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   // npm dist-tags match the desktop channel names.
   const release = useAtomValue(npmReleaseAtom(channel));
   if (AsyncResult.isSuccess(release) && release.value !== null) {
     return <SwitchPlan release={{ channel, ...release.value }} onClose={onClose} />;
   }
   const label = channelSwitchLabel(channel);
+  const displayLabel = translateWebSource(translationLocale, label);
   return (
     <AlertDialog open onOpenChange={(open) => !open && onClose()}>
       <AlertDialogPopup>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {translateWebSource(translationLocale, "Switch to")} {label}
+            {isZh ? `切换到 ${displayLabel}` : `Switch to ${label}`}
           </AlertDialogTitle>
           <AlertDialogDescription>
             {AsyncResult.isFailure(release)
               ? npmReleaseFailureMessage(release.cause)
               : AsyncResult.isSuccess(release)
-                ? `Could not find the latest ${label} release in this environment's npm registry.`
-                : "Checking releases…"}
+                ? isZh
+                  ? `在此环境的 npm 注册表中找不到最新的 ${displayLabel} 版本。`
+                  : `Could not find the latest ${label} release in this environment's npm registry.`
+                : translateWebSource(translationLocale, "Checking releases…")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -85,6 +89,8 @@ function SwitchPlan({
   readonly release: ChannelSwitchRelease;
   readonly onClose: () => void;
 }) {
+  const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const updateState = useDesktopUpdateState();
   const { environments } = useEnvironments();
   const crossesLocal = desktopUpdateChannelOf(APP_VERSION) !== release.channel;
@@ -94,6 +100,7 @@ function SwitchPlan({
   const [checking, setChecking] = useState(false);
   const everything = useUpdateEverything(switchesLocal ? release.version : null, release);
   const label = channelSwitchLabel(release.channel);
+  const displayLabel = translateWebSource(translationLocale, label);
   const idle = nothingToMove({
     label,
     channel: release.channel,
@@ -122,7 +129,11 @@ function SwitchPlan({
     setChecking(true);
     const fail = (description: string) =>
       toastManager.add(
-        stackedThreadToast({ type: "error", title: `Could not switch to ${label}`, description }),
+        stackedThreadToast({
+          type: "error",
+          title: isZh ? `无法切换到 ${displayLabel}` : `Could not switch to ${label}`,
+          description,
+        }),
       );
     const prepared = await prepareLocalTrackSwitch(bridge, {
       channel: release.channel,
@@ -154,8 +165,10 @@ function SwitchPlan({
                   !acceptsTrackSwitchRelease(downloadedVersion, release.channel, release.version)
                 ) {
                   reportError(
-                    "Could not install update",
-                    `This app downloaded ${downloadedVersion ?? "nothing"}, not ${release.version} or newer.`,
+                    translateWebSource(translationLocale, "Could not install update"),
+                    isZh
+                      ? `此应用下载了 ${downloadedVersion ?? "空内容"}，而不是 ${release.version} 或更新版本。`
+                      : `This app downloaded ${downloadedVersion ?? "nothing"}, not ${release.version} or newer.`,
                   );
                   return false;
                 }
@@ -166,7 +179,11 @@ function SwitchPlan({
     );
     if (result._tag === "Failure") {
       const error = squashAtomCommandFailure(result);
-      fail(error instanceof Error ? error.message : "An unexpected error occurred.");
+      fail(
+        error instanceof Error
+          ? error.message
+          : translateWebSource(translationLocale, "An unexpected error occurred."),
+      );
     }
   };
 
@@ -174,25 +191,43 @@ function SwitchPlan({
     <UpdateEverythingDialog
       open
       onOpenChange={(open) => !open && !checking && onClose()}
-      title={`Switch to ${label}?`}
+      title={isZh ? `切换到 ${displayLabel}？` : `Switch to ${label}?`}
       version={release.version}
       providerCount={0}
       rows={everything.rows}
       notes={[
         ...(idle.note === null ? [] : [idle.note]),
         ...(crossesLocal && updatesOff
-          ? ["This app's updates are off here, so reinstall it yourself to switch."]
+          ? [
+              translateWebSource(
+                translationLocale,
+                "This app's updates are off here, so reinstall it yourself to switch.",
+              ),
+            ]
           : []),
         ...(switchesLocal && isMacPlatform(navigator.platform)
-          ? ["If T3 Code does not reopen after it restarts, open it again."]
+          ? [
+              translateWebSource(
+                translationLocale,
+                "If T3 Code does not reopen after it restarts, open it again.",
+              ),
+            ]
           : []),
       ]}
       restarts={everything.restarts}
-      confirmLabel={checking ? "Checking…" : `Switch to ${label}`}
+      confirmLabel={
+        checking
+          ? translateWebSource(translationLocale, "Checking…")
+          : isZh
+            ? `切换到 ${displayLabel}`
+            : `Switch to ${label}`
+      }
       busy={checking}
       disabledReason={
         switchesLocal && localBlocked !== null
-          ? `This app cannot switch: ${localBlocked}.`
+          ? isZh
+            ? `此应用无法切换：${localBlocked}。`
+            : `This app cannot switch: ${localBlocked}.`
           : idle.disabledReason
       }
       onConfirm={() => void run()}

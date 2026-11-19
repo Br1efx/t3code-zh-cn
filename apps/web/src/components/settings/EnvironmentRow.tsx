@@ -8,6 +8,9 @@ import type { DesktopSshEnvironmentTarget, EnvironmentMachineKind } from "@t3too
 import * as Option from "effect/Option";
 import type { ReactNode } from "react";
 
+import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
+import { translateWebSource } from "~/i18n/messages";
+import { useI18n } from "~/i18n/WebI18nContext";
 import { cn } from "~/lib/utils";
 import type { EnvironmentPresentation } from "~/state/environments";
 import { usePreparedConnection } from "~/state/session";
@@ -22,9 +25,12 @@ export function formatDesktopSshTarget(target: DesktopSshEnvironmentTarget): str
 export function environmentTransportLabel(
   environment: EnvironmentPresentation,
   activeTarget: ConnectionTarget | null = null,
+  locale: ResolvedAppLocale = "en",
 ): string {
   const { entry } = environment;
-  if (entry.target._tag === "PrimaryConnectionTarget") return "This machine";
+  if (entry.target._tag === "PrimaryConnectionTarget") {
+    return translateWebSource(locale, "This machine");
+  }
   const routes = connectionRoutes(entry);
   if (routes.length > 1) {
     const active =
@@ -33,9 +39,11 @@ export function environmentTransportLabel(
         : routes.find(
             (route) => connectionRouteId(route.target) === connectionRouteId(activeTarget),
           );
-    return active === undefined
-      ? connectionRouteLabel(routes[0]!)
-      : `via ${connectionRouteLabel(active)}`;
+    if (active === undefined) {
+      return translateWebSource(locale, connectionRouteLabel(routes[0]!));
+    }
+    const routeLabel = translateWebSource(locale, connectionRouteLabel(active));
+    return locale === "zh-CN" ? `通过 ${routeLabel}` : `via ${routeLabel}`;
   }
   if (environment.relayManaged) return "T3 Connect";
   if (isDesktopLocalConnectionTarget(entry.target)) return "WSL";
@@ -46,16 +54,18 @@ export function environmentTransportLabel(
   ) {
     return `SSH ${formatDesktopSshTarget(entry.profile.value.target)}`;
   }
-  return environment.displayUrl ?? "Remote link";
+  return environment.displayUrl ?? translateWebSource(locale, "Remote link");
 }
 
 export function useEnvironmentTransportLabel(environment: EnvironmentPresentation): string {
+  const { locale } = useI18n();
   const prepared = usePreparedConnection(environment.environmentId);
   return environmentTransportLabel(
     environment,
     environment.connection.phase === "connected" && prepared._tag === "Some"
       ? prepared.value.target
       : null,
+    locale,
   );
 }
 

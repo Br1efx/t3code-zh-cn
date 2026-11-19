@@ -111,27 +111,34 @@ function ShimmerOverlay({ children }: { children: ReactNode }) {
   );
 }
 
-function headerLabel(snapshot: WorktreeSetupSnapshot): string {
+function headerLabel(
+  snapshot: WorktreeSetupSnapshot,
+  locale: ReturnType<typeof useI18n>["locale"],
+): string {
   switch (snapshot.phase) {
     case "running":
-      return "Setting up worktree…";
+      return translateWebSource(locale, "Setting up worktree…");
     case "done":
-      return snapshot.stages.some((stage) => stage.status === "failed")
-        ? "Worktree ready, setup script failed"
-        : "Worktree ready";
+      return translateWebSource(
+        locale,
+        snapshot.stages.some((stage) => stage.status === "failed")
+          ? "Worktree ready, setup script failed"
+          : "Worktree ready",
+      );
     case "failed":
-      return "Worktree setup failed";
+      return translateWebSource(locale, "Worktree setup failed");
     case "cancelled":
-      return "Worktree setup cancelled";
+      return translateWebSource(locale, "Worktree setup cancelled");
   }
 }
 
 function SetupHeaderRow({ snapshot }: { snapshot: WorktreeSetupSnapshot }) {
+  const { locale } = useI18n();
   const running = snapshot.phase === "running";
   const failed = snapshot.phase === "failed";
   const finishedWithFailedStage =
     snapshot.phase === "done" && snapshot.stages.some((stage) => stage.status === "failed");
-  const text = headerLabel(snapshot);
+  const text = headerLabel(snapshot, locale);
   const tone = failed
     ? "text-destructive-foreground"
     : finishedWithFailedStage
@@ -288,13 +295,14 @@ function SetupDetails({ snapshot }: { snapshot: WorktreeSetupSnapshot }) {
 }
 
 function CollapsedSummaryRow({ snapshot }: { snapshot: WorktreeSetupSnapshot }) {
+  const { locale } = useI18n();
   const status: WorktreeSetupStage["status"] =
     snapshot.phase === "failed" || snapshot.phase === "cancelled"
       ? "failed"
       : snapshot.stages.some((stage) => stage.id === "setup-script" && stage.status === "failed")
         ? "failed"
         : "done";
-  const label = headerLabel(snapshot);
+  const label = headerLabel(snapshot, locale);
   return (
     <WorkLogRow
       data-worktree-setup-stage="summary"

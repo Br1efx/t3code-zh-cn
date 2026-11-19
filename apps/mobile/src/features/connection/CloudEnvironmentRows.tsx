@@ -22,6 +22,7 @@ import { EnvironmentMachineSymbol } from "../../components/EnvironmentMachineSym
 import { ThemedSwitch } from "../../components/ui/ThemedSwitch";
 import { cn } from "../../lib/cn";
 import { copyTextWithHaptic } from "../../lib/copyTextWithHaptic";
+import { localizeMobileString } from "../../i18n/mobileStrings";
 import type { ConnectedEnvironmentSummary } from "../../state/remote-runtime-types";
 import { serverEnvironment } from "../../state/server";
 import { environmentPresentations } from "../../state/presentation";
@@ -294,6 +295,7 @@ function CloudEnvironmentRowShell(props: {
       traceId: props.connectionErrorTraceId,
       ...(props.awaitingApproval ? { awaitingApproval: true as const } : {}),
     });
+  const localizedStatusText = localizeMobileString(statusText);
   const statusClassName =
     props.connectionError && props.connectionState !== "unsupported" && !props.awaitingApproval
       ? "text-danger-foreground"
@@ -303,7 +305,9 @@ function CloudEnvironmentRowShell(props: {
     readonly lineCount: number;
   } | null>(null);
   const errorTraceId = props.connectionErrorTraceId;
-  const measuredErrorText = errorTraceId ? `${statusText} Trace ID: ${errorTraceId}` : statusText;
+  const measuredErrorText = errorTraceId
+    ? `${localizedStatusText} ${localizeMobileString("Trace ID:")} ${errorTraceId}`
+    : localizedStatusText;
   const errorLineCount =
     errorMeasurement?.text === measuredErrorText ? errorMeasurement.lineCount : 0;
   const errorCanExpand = props.connectionError !== null && errorLineCount > 1;
@@ -327,13 +331,15 @@ function CloudEnvironmentRowShell(props: {
     <View collapsable={false} className="flex-row items-center gap-3 bg-grouped-card px-4 py-3.5">
       <ContentContainer
         className="min-w-0 flex-1 gap-0.5"
-        accessibilityHint={props.onRemove ? "Long press to remove from this device" : undefined}
+        accessibilityHint={
+          props.onRemove ? localizeMobileString("Long press to remove from this device") : undefined
+        }
         accessibilityRole={props.onOpen ? "button" : undefined}
         accessibilityLabel={
           props.onOpen
-            ? `Manage ${props.label}`
+            ? localizeMobileString(`Manage ${props.label}`)
             : props.onRemove
-              ? `Remove ${props.label} from this device`
+              ? localizeMobileString(`Remove ${props.label} from this device`)
               : undefined
         }
         onPress={props.onOpen}
@@ -355,6 +361,7 @@ function CloudEnvironmentRowShell(props: {
         </View>
         {props.connectionError ? (
           <Text
+            localize={false}
             aria-hidden
             onTextLayout={onMeasuredErrorTextLayout}
             className={cn("absolute inset-x-0 -z-[1] text-xs opacity-0", statusClassName)}
@@ -369,10 +376,11 @@ function CloudEnvironmentRowShell(props: {
           className="min-w-0 flex-row items-start gap-1"
         >
           <Text
+            localize={false}
             className={cn("min-w-0 flex-1 text-xs", statusClassName)}
             numberOfLines={isErrorExpanded ? undefined : 1}
           >
-            {statusText}
+            {localizedStatusText}
             {errorTraceId ? (
               <ConnectionTraceId
                 traceId={errorTraceId}
@@ -400,7 +408,7 @@ function CloudEnvironmentRowShell(props: {
         </StatusContainer>
       </ContentContainer>
       <ThemedSwitch
-        accessibilityLabel={`Enable ${props.label}`}
+        accessibilityLabel={localizeMobileString(`Enable ${props.label}`)}
         style={{ alignSelf: "center" }}
         disabled={props.disabled}
         onValueChange={props.onValueChange}
@@ -411,12 +419,16 @@ function CloudEnvironmentRowShell(props: {
           accessibilityRole={props.onOpen ? "button" : undefined}
           accessibilityLabel={
             props.onOpen
-              ? `Manage ${props.label}`
+              ? localizeMobileString(`Manage ${props.label}`)
               : props.onRemove
-                ? `Remove ${props.label} from this device`
+                ? localizeMobileString(`Remove ${props.label} from this device`)
                 : undefined
           }
-          accessibilityHint={props.onRemove ? "Long press to remove from this device" : undefined}
+          accessibilityHint={
+            props.onRemove
+              ? localizeMobileString("Long press to remove from this device")
+              : undefined
+          }
           onPress={props.onOpen}
           onLongPress={props.onRemove}
           style={{

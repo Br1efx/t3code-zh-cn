@@ -334,8 +334,10 @@ export function usePullRequestHandoffs({
       title: translateWebSource(locale, "Asked in a thread"),
       description:
         task.prompt.length > 0
-          ? "The question is in the composer. Read it over, then send."
-          : `The ${terminology.singular} is in the composer. Type your question, then send.`,
+          ? translateWebSource(locale, "The question is in the composer. Read it over, then send.")
+          : locale === "zh-CN"
+            ? "合并请求已放入输入框，输入你的问题后即可发送。"
+            : `The ${terminology.singular} is in the composer. Type your question, then send.`,
     });
   };
 
@@ -351,7 +353,10 @@ export function usePullRequestHandoffs({
     // Explicit timeouts survive toast updates and would pin the result after loading.
     const toastId = toastManager.add({
       type: "loading",
-      title: `Preparing the ${terminology.singular} checkout...`,
+      title:
+        locale === "zh-CN"
+          ? "正在准备合并请求检出…"
+          : `Preparing the ${terminology.singular} checkout...`,
       data: {
         onClose: () => {
           cancelled = true;
@@ -393,7 +398,10 @@ export function usePullRequestHandoffs({
       setHandoff(null);
       toastManager.update(toastId, {
         type: "error",
-        title: `Could not prepare the ${terminology.singular} checkout`,
+        title:
+          locale === "zh-CN"
+            ? "无法准备合并请求检出"
+            : `Could not prepare the ${terminology.singular} checkout`,
         description: checkoutFailureDescription(
           isAtomCommandInterrupted(prepared) ? undefined : squashAtomCommandFailure(prepared),
         ),

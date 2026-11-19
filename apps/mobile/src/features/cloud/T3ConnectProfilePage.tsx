@@ -14,6 +14,7 @@ import { AppActivityIndicator } from "../../components/ui/AppActivityIndicator";
 import { SymbolView } from "../../components/ui/AppSymbol";
 import * as Dialog from "../../components/ui/Dialog";
 import { Menu } from "../../components/ui/Menu";
+import { localizeMobileString } from "../../i18n/mobileStrings";
 import { copyTextWithHaptic } from "../../lib/copyTextWithHaptic";
 import { relayEnvironmentDiscovery } from "../../state/relay";
 import { useAtomCommand } from "../../state/use-atom-command";
@@ -138,12 +139,12 @@ export function T3ConnectProfilePage() {
       {environmentsState.error ? (
         <>
           <ClerkRow
-            title="Could not load T3 Connect environments"
-            subtitle={environmentsState.error}
+            title={localizeMobileString("Could not load T3 Connect environments")}
+            subtitle={localizeMobileString(environmentsState.error)}
           />
           {errorTraceId ? (
             <ClerkButtonRow
-              label="Copy trace ID"
+              label={localizeMobileString("Copy trace ID")}
               onPress={() => {
                 copyTextWithHaptic(errorTraceId, { target: "connection-trace-id" });
               }}
@@ -153,14 +154,16 @@ export function T3ConnectProfilePage() {
       ) : isInitialLoad ? (
         <View className="flex-row items-center gap-3 px-6 py-4">
           <AppActivityIndicator colorClassName={"accent-clerk-foreground-muted"} size="small" />
-          <Text className="text-base text-clerk-foreground-muted">Loading environments</Text>
+          <Text className="text-base text-clerk-foreground-muted">
+            {localizeMobileString("Loading environments")}
+          </Text>
         </View>
       ) : environments.length > 0 ? (
         environments.map((environment) => (
           <ClerkRow
             key={environment.environmentId}
             title={environment.label}
-            subtitle={`${linkedAtLabel(environment.linkedAt)} · ${endpointLabel(environment)}`}
+            subtitle={`${localizeMobileString(linkedAtLabel(environment.linkedAt))} · ${localizeMobileString(endpointLabel(environment))}`}
             accessory={
               deregisteringEnvironmentId === environment.environmentId ? (
                 <AppActivityIndicator
@@ -176,7 +179,7 @@ export function T3ConnectProfilePage() {
                   }
                 >
                   <Pressable
-                    accessibilityLabel={`Actions for ${environment.label}`}
+                    accessibilityLabel={localizeMobileString(`Actions for ${environment.label}`)}
                     accessibilityRole="button"
                     disabled={deregisteringEnvironmentId !== null}
                     className="size-[30px] items-center justify-center active:opacity-60 disabled:opacity-50"
@@ -197,13 +200,15 @@ export function T3ConnectProfilePage() {
         ))
       ) : (
         <ClerkRow
-          title="No servers registered"
-          subtitle="Link a server from its local Settings to reach it through T3 Connect."
+          title={localizeMobileString("No servers registered")}
+          subtitle={localizeMobileString(
+            "Link a server from its local Settings to reach it through T3 Connect.",
+          )}
         />
       )}
 
       <Text className="px-6 pt-6 text-xs leading-normal text-clerk-foreground-muted">
-        Connections on this device are managed in Settings.
+        {localizeMobileString("Connections on this device are managed in Settings.")}
       </Text>
     </ScrollView>
   );
@@ -216,7 +221,7 @@ const ENVIRONMENT_MENU_ACTIONS = [
 function ClerkSectionHeader(props: { readonly children: string }) {
   return (
     <Text className="min-h-4 border-b border-clerk-border px-6 pt-8 pb-4 text-xs font-medium tracking-[0.3px] text-clerk-foreground-muted uppercase">
-      {props.children}
+      {localizeMobileString(props.children)}
     </Text>
   );
 }

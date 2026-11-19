@@ -33,17 +33,25 @@ export function NativeChildWorkDialog(props: {
   readonly environmentId: EnvironmentId;
   readonly threadId: ThreadId;
 }) {
+  const { locale: translationLocale } = useI18n();
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
         <ListTreeIcon />
-        <span className="@max-[420px]/composer-surface:sr-only">Subagent work</span>
+        <span className="@max-[420px]/composer-surface:sr-only">
+          {translateWebSource(translationLocale, "Subagent work")}
+        </span>
       </Button>
       <DialogPopup className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Subagent work</DialogTitle>
-          <DialogDescription>Read only. These subagents cannot take messages.</DialogDescription>
+          <DialogTitle>{translateWebSource(translationLocale, "Subagent work")}</DialogTitle>
+          <DialogDescription>
+            {translateWebSource(
+              translationLocale,
+              "Read only. These subagents cannot take messages.",
+            )}
+          </DialogDescription>
         </DialogHeader>
         {open ? <NativeChildWorkContent {...props} /> : null}
       </DialogPopup>

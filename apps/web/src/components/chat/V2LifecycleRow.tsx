@@ -1,6 +1,5 @@
 import { useI18n } from "~/i18n/WebI18nContext";
 import { translateWebSource } from "~/i18n/messages";
-import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { ThreadHoverCardPopup } from "../ThreadHoverCard";
 import { AgentElapsed } from "./AgentElapsed";
 import { projectedSubagentsToRuntime } from "@t3tools/client-runtime/state/subagentRuntime";
@@ -446,7 +445,10 @@ function SubagentTimelineLink(props: {
         : null;
   const liveStatus = agent?.status ?? props.status;
   const status = props.event ? props.event.status : liveStatus;
-  const statusLabel = props.event?.label ?? subagentStatusVisual(liveStatus).label;
+  const statusLabel = translateWebSource(
+    i18nLocale,
+    props.event?.label ?? subagentStatusVisual(liveStatus).label,
+  );
   const result = (agent?.result ?? props.result)?.trim();
   const progress = (agent?.progress ?? props.progress)?.trim();
   const settled = SETTLED_SUBAGENT_STATUSES.has(status ?? liveStatus);
@@ -474,8 +476,7 @@ function SubagentTimelineLink(props: {
           </span>
           {remote !== undefined ? (
             <span className="shrink-0 text-xs text-muted-foreground">
-              {localizeWebString(i18nLocale, "on ")}
-              {remote.label}
+              {i18nLocale === "zh-CN" ? `位于 ${remote.label}` : `on ${remote.label}`}
             </span>
           ) : null}
         </span>
@@ -611,7 +612,13 @@ function EnvironmentHandoffRow({
 
 /** Marks where `/clear` or an automation started a new provider session in this thread. */
 export function FreshSessionRow() {
-  return <TimelineSystemDivider label="New session" icon={EraserIcon} />;
+  const { locale: i18nLocale } = useI18n();
+  return (
+    <TimelineSystemDivider
+      label={translateWebSource(i18nLocale, "New session")}
+      icon={EraserIcon}
+    />
+  );
 }
 
 /** A same-harness model or effort change. Shows only what changed. */

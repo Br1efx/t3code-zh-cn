@@ -122,7 +122,9 @@ function CheckoutGroupingSelect({ member }: { member: SidebarProjectGroupMember 
       >
         <SelectValue>
           {selection === "inherit"
-            ? `Default (${PROJECT_GROUPING_MODE_LABELS[globalMode]})`
+            ? translationLocale === "zh-CN"
+              ? `默认（${translateWebSource(translationLocale, PROJECT_GROUPING_MODE_LABELS[globalMode])}）`
+              : `Default (${PROJECT_GROUPING_MODE_LABELS[globalMode]})`
             : PROJECT_GROUPING_MODE_LABELS[selection]}
         </SelectValue>
       </SelectTrigger>

@@ -17,6 +17,7 @@ import * as Schema from "effect/Schema";
 import * as Scope from "effect/Scope";
 import * as Sink from "effect/Sink";
 import * as Stream from "effect/Stream";
+import * as TestClock from "effect/testing/TestClock";
 import { HttpClient, HttpClientError, HttpClientResponse } from "effect/http";
 import * as ChildProcess from "effect/process/ChildProcess";
 import * as ChildProcessSpawner from "effect/process/ChildProcessSpawner";
@@ -134,6 +135,9 @@ interface HarnessOptions {
   readonly nativeManifest?: (manifest: { version: string; url: string; sha512: string }) => unknown;
   readonly beforeManifest?: Effect.Effect<void>;
   readonly updateChecksEnabled?: Effect.Effect<boolean>;
+  readonly autoUpdate?: boolean;
+  readonly autoUpdateInitialDelay?: AntigravityInstallation.AntigravityInstallationOptions["autoUpdateInitialDelay"];
+  readonly autoUpdateInterval?: AntigravityInstallation.AntigravityInstallationOptions["autoUpdateInterval"];
 }
 
 const makeHarness = Effect.fn("test.makeAntigravityInstallation")(function* (
@@ -181,6 +185,13 @@ const makeHarness = Effect.fn("test.makeAntigravityInstallation")(function* (
     ...(options.updateChecksEnabled === undefined
       ? {}
       : { updateChecksEnabled: options.updateChecksEnabled }),
+    ...(options.autoUpdate === undefined ? {} : { autoUpdate: options.autoUpdate }),
+    ...(options.autoUpdateInitialDelay === undefined
+      ? {}
+      : { autoUpdateInitialDelay: options.autoUpdateInitialDelay }),
+    ...(options.autoUpdateInterval === undefined
+      ? {}
+      : { autoUpdateInterval: options.autoUpdateInterval }),
     ...(options.useDefaultValidation
       ? {}
       : {
@@ -1316,6 +1327,92 @@ it.layer(Layer.mergeAll(NodeServices.layer, NodeCrypto.layer))("Antigravity inst
       });
       expect(yield* installation.state).toMatchObject({ phase: "idle", operationId: null });
       expect(requests).toEqual([]);
+    }),
+  );
+
+  it.effect("resolves the native agy CLI from PATH when no managed runtime is installed", () =>
+    Effect.gen(function* () {
+      const { installation, fs, path, baseDir } = yield* makeHarness({});
+      const cliDirectory = path.join(baseDir, "agy-cli");
+      yield* fs.makeDirectory(cliDirectory);
+      const cliName = hostPlatform === "win32" ? "agy.exe" : "agy";
+      const cliPath = path.join(cliDirectory, cliName);
+      yield* fs.writeFileString(cliPath, "native cli", { mode: 0o755 });
+      const resolved = yield* installation.resolve(undefined, { PATH: cliDirectory });
+      expect(resolved).toMatchObject({
+        source: "path",
+        harnessPath: null,
+      });
+      expect(
+        hostPlatform === "win32" ? resolved.executablePath.toLowerCase() : resolved.executablePath,
+      ).toBe(hostPlatform === "win32" ? cliPath.toLowerCase() : cliPath);
+    }),
+  );
+
+  it.effect("reports a clear error when runtime validation times out", () =>
+    Effect.gen(function* () {
+      const entered = yield* Deferred.make<void>();
+      const { installation } = yield* makeHarness({
+        validate: () => Deferred.succeed(entered, undefined).pipe(Effect.andThen(Effect.never)),
+      });
+      yield* installation.start;
+      yield* Deferred.await(entered);
+      yield* TestClock.adjust("91 seconds");
+      const state = yield* terminalState(installation);
+      expect(state.phase).toBe("failed");
+      expect(state.message).toMatch(/timed out after 90 seconds/i);
+    }),
+  );
+
+  it.effect(
+    "automatically updates an installed managed runtime in the background when a newer release is available",
+    () =>
+      Effect.gen(function* () {
+        const { installation, stagingReleased, requests } = yield* makeHarness({
+          native: true,
+          platform: "win32",
+          archive: Buffer.from(serverContents),
+          previous: true,
+          nativeVersion: "1.5.12",
+          autoUpdate: true,
+          autoUpdateInitialDelay: "5 seconds",
+          updateChecksEnabled: Effect.succeed(true),
+        });
+        expect((yield* installation.state).installedVersion).toBe(previousVersion);
+        yield* TestClock.adjust("5 seconds");
+        const state = yield* terminalState(installation);
+        expect(state).toMatchObject({
+          phase: "succeeded",
+          installedVersion: "1.5.12",
+        });
+        yield* Deferred.await(stagingReleased);
+        expect(yield* installation.resolve()).toMatchObject({
+          source: "managed",
+          version: "1.5.12",
+          harnessPath: null,
+        });
+        expect(requests.some((url) => url.includes("/manifests/"))).toBe(true);
+      }),
+  );
+
+  it.effect.each([
+    { name: "update checks are disabled", previous: true, enabled: false },
+    { name: "no managed runtime is installed", previous: false, enabled: true },
+  ])("skips background auto-update when $name", ({ previous, enabled }) =>
+    Effect.gen(function* () {
+      const { installation, requests } = yield* makeHarness({
+        native: true,
+        platform: "win32",
+        archive: Buffer.from(serverContents),
+        previous,
+        nativeVersion: "1.5.12",
+        autoUpdate: true,
+        autoUpdateInitialDelay: "5 seconds",
+        updateChecksEnabled: Effect.succeed(enabled),
+      });
+      yield* TestClock.adjust("6 seconds");
+      expect(requests).toEqual([]);
+      expect((yield* installation.state).phase).toBe("idle");
     }),
   );
 });

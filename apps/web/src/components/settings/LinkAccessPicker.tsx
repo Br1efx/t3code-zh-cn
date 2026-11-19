@@ -36,7 +36,7 @@ export function LinkAccessPicker({
           <SelectValue>
             <span className="flex items-center gap-2">
               <selected.icon aria-hidden className="size-4" />
-              {selected.label}
+              {translateWebSource(i18nLocale, selected.label)}
             </span>
           </SelectValue>
         </SelectTrigger>
@@ -48,9 +48,11 @@ export function LinkAccessPicker({
                 <span className="grid min-w-0 gap-0.5 py-0.5">
                   <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
                     <Icon aria-hidden className="size-3.5 shrink-0 text-muted-foreground" />
-                    {label}
+                    {translateWebSource(i18nLocale, label)}
                   </span>
-                  <span className="text-xs leading-4 text-muted-foreground">{description}</span>
+                  <span className="text-xs leading-4 text-muted-foreground">
+                    {translateWebSource(i18nLocale, description)}
+                  </span>
                 </span>
               </SelectItem>
             );
@@ -58,7 +60,7 @@ export function LinkAccessPicker({
         </SelectPopup>
       </Select>
       <p className="text-xs text-muted-foreground">
-        {selected.description}
+        {translateWebSource(i18nLocale, selected.description)}
         {localizeWebString(
           i18nLocale,
           " An agent never gets more access there than its own mode here. Below full access, it can change only threads this link started, not that machine's own threads, projects or settings.",

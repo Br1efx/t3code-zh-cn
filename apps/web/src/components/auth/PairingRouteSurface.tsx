@@ -3,6 +3,7 @@ import type { AuthSessionState } from "@t3tools/contracts";
 import { squashAtomCommandFailure } from "@t3tools/client-runtime/state/runtime";
 import React, { startTransition, useEffect, useEffectEvent, useRef, useState } from "react";
 
+import { localizeRelayErrorMessage } from "../../cloud/relayFailureReason";
 import { connectPairing } from "../../connection/onboarding";
 import {
   peekPairingTokenFromUrl,
@@ -39,7 +40,7 @@ export function PairingRouteSurface({
   initialErrorMessage?: string;
   onAuthenticated: () => void;
 }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [autoPairToken] = useState(peekPairingTokenFromUrl);
   const [credential, setCredential] = useState(autoPairToken ?? "");
   const [errorMessage, setErrorMessage] = useState(initialErrorMessage ?? "");
@@ -52,7 +53,7 @@ export function PairingRouteSurface({
 
     const submitError = await submitServerAuthCredential(nextCredential).then(
       () => null,
-      (error) => errorMessageFromUnknown(error, t("pairing.authenticationFailed")),
+      (error) => errorMessageFromUnknown(error, t("pairing.authenticationFailed"), locale),
     );
 
     setIsSubmitting(false);
@@ -147,7 +148,7 @@ interface HostedPairingMessage {
 }
 
 export function HostedPairingRouteSurface() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const connectPairingEnvironment = useAtomCommand(connectPairing, {
     reportFailure: false,
   });
@@ -204,6 +205,7 @@ export function HostedPairingRouteSurface() {
         error: errorMessageFromUnknown(
           squashAtomCommandFailure(result),
           t("pairing.authenticationFailed"),
+          locale,
         ),
       },
     });
@@ -275,13 +277,17 @@ export function HostedPairingRouteSurface() {
   );
 }
 
-function errorMessageFromUnknown(error: unknown, fallback: string): string {
+function errorMessageFromUnknown(
+  error: unknown,
+  fallback: string,
+  locale: "en" | "zh-CN" = "en",
+): string {
   if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
+    return localizeRelayErrorMessage(locale, error.message);
   }
 
   if (typeof error === "string" && error.trim().length > 0) {
-    return error;
+    return localizeRelayErrorMessage(locale, error);
   }
 
   return fallback;

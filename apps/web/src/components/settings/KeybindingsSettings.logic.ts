@@ -6,6 +6,7 @@ import {
   type ResolvedKeybindingRule,
   type ResolvedKeybindingsConfig,
 } from "@t3tools/contracts";
+import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import {
   DEFAULT_RESOLVED_KEYBINDINGS,
   parseKeybindingShortcut,
@@ -147,12 +148,17 @@ export function whenAstToExpression(node: KeybindingWhenNode | undefined): strin
   }
 }
 
-export function whenNodeRemoveLabel(node: KeybindingWhenNode, depth: number): string {
-  if (depth === 0) return "Clear all conditions";
+export function whenNodeRemoveLabel(
+  node: KeybindingWhenNode,
+  depth: number,
+  locale: ResolvedAppLocale = "en",
+): string {
+  const isZh = locale === "zh-CN";
+  if (depth === 0) return isZh ? "清除所有条件" : "Clear all conditions";
   if (node.type === "identifier" || (node.type === "not" && node.node.type === "identifier")) {
-    return "Remove condition";
+    return isZh ? "移除条件" : "Remove condition";
   }
-  return "Remove group and its conditions";
+  return isZh ? "移除条件组及其条件" : "Remove group and its conditions";
 }
 
 function wrapWhenExpression(node: KeybindingWhenNode): string {
@@ -162,6 +168,7 @@ function wrapWhenExpression(node: KeybindingWhenNode): string {
 
 export function parseWhenExpressionDraft(
   expression: string,
+  locale: ResolvedAppLocale = "en",
 ): { ok: true; value: KeybindingWhenNode | undefined } | { ok: false; message: string } {
   const trimmed = expression.trim();
   if (trimmed.length === 0) return { ok: true, value: undefined };
@@ -170,7 +177,10 @@ export function parseWhenExpressionDraft(
   if (!ast) {
     return {
       ok: false,
-      message: "Use variables with !, &&, ||, and parentheses.",
+      message:
+        locale === "zh-CN"
+          ? "请使用变量以及 !、&&、|| 和括号。"
+          : "Use variables with !, &&, ||, and parentheses.",
     };
   }
 
@@ -278,8 +288,20 @@ function keybindingGroupFor(command: KeybindingCommand): { id: string; title: st
   );
 }
 
+const KEYBINDING_GROUP_ZH_TITLES: Readonly<Record<string, string>> = {
+  navigation: "导航",
+  threads: "对话",
+  composer: "输入框",
+  terminal: "终端",
+  preview: "预览与差异",
+  appearance: "外观",
+  scripts: "项目脚本",
+  other: "其他",
+};
+
 export function groupKeybindingRows(
   rows: ReadonlyArray<KeybindingRow>,
+  locale: ResolvedAppLocale = "en",
 ): ReadonlyArray<KeybindingGroup> {
   const rowsByGroup = new Map<string, Array<KeybindingRow>>();
   for (const row of rows) {
@@ -290,7 +312,18 @@ export function groupKeybindingRows(
   }
   return [...KEYBINDING_GROUPS, OTHER_KEYBINDING_GROUP].flatMap((group) => {
     const groupRows = rowsByGroup.get(group.id);
-    return groupRows ? [{ id: group.id, title: group.title, rows: groupRows }] : [];
+    return groupRows
+      ? [
+          {
+            id: group.id,
+            title:
+              locale === "zh-CN"
+                ? (KEYBINDING_GROUP_ZH_TITLES[group.id] ?? group.title)
+                : group.title,
+            rows: groupRows,
+          },
+        ]
+      : [];
   });
 }
 
@@ -423,26 +456,76 @@ export function buildKeybindingCommandOptions(
   return [...commands].toSorted((left, right) => compareCommands(left, right, labelCommand));
 }
 
-export function commandLabel(command: KeybindingCommand): string {
-  if (command === "workspace.focusNext") return "Focus Next Workspace Area";
-  if (command === "workspace.focusPrevious") return "Focus Previous Workspace Area";
-  if (command === "composer.sendAlternate") return "Composer: Opposite Queue or Steer Action";
-  if (command === "composer.sendBackground") return "Composer: Start in Background";
-  if (command === "composer.sendAndNewThread") return "Composer: Send and Start New Thread";
-  if (command === "composer.dictation") return "Composer: Start or Finish Dictation";
-  if (command === "thread.steerQueuedMessage") return "Queue: Send First Queued Message";
-  if (command === "thread.editQueuedMessage") return "Queue: Edit Last Queued Message";
-  if (command === "thread.copyReference") return "Pull Request: Copy Link or Thread";
+const USAGE_METRIC_ZH_LABELS: Readonly<Record<string, string>> = {
+  cost: "费用",
+  tokens: "Token",
+  limits: "限额",
+};
+
+const USAGE_WINDOW_ZH_LABELS: Readonly<Record<number, string>> = {
+  1: "过去 24 小时",
+  7: "7 天",
+  30: "30 天",
+  90: "90 天",
+};
+
+export function commandLabel(command: KeybindingCommand, locale: ResolvedAppLocale = "en"): string {
+  const isZh = locale === "zh-CN";
+  if (command === "workspace.focusNext") {
+    return isZh ? "聚焦下一个工作区区域" : "Focus Next Workspace Area";
+  }
+  if (command === "workspace.focusPrevious") {
+    return isZh ? "聚焦上一个工作区区域" : "Focus Previous Workspace Area";
+  }
+  if (command === "composer.sendAlternate") {
+    return isZh ? "输入框：切换排队或即时引导发送" : "Composer: Opposite Queue or Steer Action";
+  }
+  if (command === "composer.sendBackground") {
+    return isZh ? "输入框：在后台启动" : "Composer: Start in Background";
+  }
+  if (command === "composer.sendAndNewThread") {
+    return isZh ? "输入框：发送并新建对话" : "Composer: Send and Start New Thread";
+  }
+  if (command === "composer.dictation") {
+    return isZh ? "输入框：开始或结束语音输入" : "Composer: Start or Finish Dictation";
+  }
+  if (command === "thread.steerQueuedMessage") {
+    return isZh ? "队列：发送第一条排队消息" : "Queue: Send First Queued Message";
+  }
+  if (command === "thread.editQueuedMessage") {
+    return isZh ? "队列：编辑最后一条排队消息" : "Queue: Edit Last Queued Message";
+  }
+  if (command === "thread.copyReference") {
+    return isZh ? "Pull Request：复制链接或对话" : "Pull Request: Copy Link or Thread";
+  }
+  if (command === "usage.open" && isZh) {
+    return "用量：打开";
+  }
   const usageMetric = METRIC_OPTIONS.find((option) => option.command === command);
-  if (usageMetric) return `Usage: ${usageMetric.label}`;
+  if (usageMetric) {
+    return isZh
+      ? `用量：${USAGE_METRIC_ZH_LABELS[usageMetric.value] ?? usageMetric.label}`
+      : `Usage: ${usageMetric.label}`;
+  }
   const usagePeriod = WINDOW_OPTIONS.find((option) => option.command === command);
-  if (usagePeriod) return `Usage: Period: ${usagePeriod.label}`;
-  if (command === "view.reopenClosed") return "Reopen Closed Tab";
-  if (command === "preview.focusUrl") return "Preview: Focus URL";
-  if (command === "preview.find") return "Preview: Find on Page";
+  if (usagePeriod) {
+    return isZh
+      ? `用量：时间范围：${USAGE_WINDOW_ZH_LABELS[usagePeriod.days] ?? usagePeriod.label}`
+      : `Usage: Period: ${usagePeriod.label}`;
+  }
+  if (command === "view.reopenClosed") {
+    return isZh ? "重新打开已关闭的标签页" : "Reopen Closed Tab";
+  }
+  if (command === "preview.focusUrl") {
+    return isZh ? "预览：聚焦地址栏" : "Preview: Focus URL";
+  }
+  if (command === "preview.find") {
+    return isZh ? "预览：页内查找" : "Preview: Find on Page";
+  }
   const raw = String(command);
   if (raw.startsWith("script.") && raw.endsWith(".run")) {
-    return `Run Script: ${titleCaseCommandSegment(raw.slice("script.".length, -".run".length))}`;
+    const scriptName = titleCaseCommandSegment(raw.slice("script.".length, -".run".length));
+    return isZh ? `运行脚本：${scriptName}` : `Run Script: ${scriptName}`;
   }
   return raw.split(".").map(titleCaseCommandSegment).join(": ");
 }
@@ -450,6 +533,7 @@ export function commandLabel(command: KeybindingCommand): string {
 export function localizedCommandLabel(
   command: KeybindingCommand,
   translate: KeybindingCommandTranslator,
+  locale: ResolvedAppLocale = "en",
 ): string {
   const raw = String(command);
   const threadJumpMatch = /^thread\.jump\.(\d+)$/.exec(raw);
@@ -469,7 +553,7 @@ export function localizedCommandLabel(
   }
 
   const messageKey = STATIC_COMMAND_MESSAGE_KEYS[raw as keyof typeof STATIC_COMMAND_MESSAGE_KEYS];
-  return messageKey ? translate(messageKey) : commandLabel(command);
+  return messageKey ? translate(messageKey) : commandLabel(command, locale);
 }
 
 function titleCaseCommandSegment(segment: string): string {

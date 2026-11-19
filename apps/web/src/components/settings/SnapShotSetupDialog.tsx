@@ -100,6 +100,7 @@ export function SnapShotSetupDialog({
   onLeaveStep: () => void;
 }) {
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const [step, setStep] = useState(() => captureSetupInitialStep(state, initialStep));
   const [checking, setChecking] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -117,7 +118,9 @@ export function SnapShotSetupDialog({
   const permissionStatus = usePermissionStatus(
     async () => {
       const refreshed = await onRefresh();
-      if (!refreshed?.macPermissions) throw new Error("Permission status unavailable");
+      if (!refreshed?.macPermissions) {
+        throw new Error(translateWebSource(translationLocale, "Permission status unavailable"));
+      }
       return refreshed.macPermissions;
     },
     state.macPermissions ?? { screenRecording: false, accessibility: false },
@@ -147,49 +150,74 @@ export function SnapShotSetupDialog({
   const accessCopy =
     state.message && !macPermissions
       ? {
-          title: "Let's try that again",
-          description: "Couldn't check snapshots. Try again to continue.",
+          title: translateWebSource(translationLocale, "Let's try that again"),
+          description: translateWebSource(
+            translationLocale,
+            "Couldn't check snapshots. Try again to continue.",
+          ),
         }
       : backend === "gnome" && extension
         ? extension.status === "enabled" && !accessReady
           ? {
-              title: "Check capture access",
-              description: "The extension isn't ready yet. Try again in a moment.",
+              title: translateWebSource(translationLocale, "Check capture access"),
+              description: translateWebSource(
+                translationLocale,
+                "The extension isn't ready yet. Try again in a moment.",
+              ),
             }
-          : GNOME_ACCESS_COPY[extension.status]
+          : {
+              title: translateWebSource(
+                translationLocale,
+                GNOME_ACCESS_COPY[extension.status].title,
+              ),
+              description: translateWebSource(
+                translationLocale,
+                GNOME_ACCESS_COPY[extension.status].description,
+              ),
+            }
         : helperBackend
           ? helper?.status === "ready"
             ? {
-                title: "Capture is ready",
-                description: "Next, choose your shortcut.",
+                title: translateWebSource(translationLocale, "Capture is ready"),
+                description: translateWebSource(translationLocale, "Next, choose your shortcut."),
               }
             : helper?.status === "error"
               ? {
-                  title: "Let's fix capture access",
-                  description: "Try reinstalling the capture helper, then check again.",
+                  title: translateWebSource(translationLocale, "Let's fix capture access"),
+                  description: translateWebSource(
+                    translationLocale,
+                    "Try reinstalling the capture helper, then check again.",
+                  ),
                 }
               : {
-                  title:
+                  title: translateWebSource(
+                    translationLocale,
                     helper?.status === "update-required"
                       ? "Update the capture helper"
                       : "Allow snapshots",
-                  description:
+                  ),
+                  description: translateWebSource(
+                    translationLocale,
                     "T3 Code's capture helper lets you capture other apps and return to your draft. It's included with T3 Code.",
+                  ),
                 }
           : backend === "niri"
             ? {
-                title: "Capture is ready",
-                description: "Next, choose your shortcut.",
+                title: translateWebSource(translationLocale, "Capture is ready"),
+                description: translateWebSource(translationLocale, "Next, choose your shortcut."),
               }
             : backend === "picker"
               ? {
-                  title: "Choose a window each time",
-                  description:
+                  title: translateWebSource(translationLocale, "Choose a window each time"),
+                  description: translateWebSource(
+                    translationLocale,
                     "Your desktop doesn't support automatic capture. You'll choose the window to capture instead.",
+                  ),
                 }
               : {
-                  title: "Allow snapshots",
-                  description:
+                  title: translateWebSource(translationLocale, "Allow snapshots"),
+                  description: translateWebSource(
+                    translationLocale,
                     backend === "portal"
                       ? "Your desktop may ask for permission when you first capture."
                       : macPermissions
@@ -197,16 +225,23 @@ export function SnapShotSetupDialog({
                           ? "Test a snapshot of the current window. If macOS asks to bypass its window picker, choose Allow. The test image is discarded."
                           : "Allow each permission, then continue."
                         : "Allow access when prompted to start capturing windows.",
+                  ),
                 };
-  const title = step === "access" ? accessCopy.title : "Choose your shortcut";
+  const title =
+    step === "access"
+      ? accessCopy.title
+      : translateWebSource(translationLocale, "Choose your shortcut");
   const description =
     step === "access"
       ? accessCopy.description
-      : configShortcut
-        ? "Click the shortcut, then press the keys you want."
-        : state.mode === "portal"
-          ? "Choose your keys, then approve the permission prompt if asked."
-          : "Use both Shift keys, or record a different shortcut.";
+      : translateWebSource(
+          translationLocale,
+          configShortcut
+            ? "Click the shortcut, then press the keys you want."
+            : state.mode === "portal"
+              ? "Choose your keys, then approve the permission prompt if asked."
+              : "Use both Shift keys, or record a different shortcut.",
+        );
   const stepIndex = SETUP_STEPS.findIndex(({ id }) => id === step);
   const details = [
     ...new Set(
@@ -237,12 +272,14 @@ export function SnapShotSetupDialog({
         <WizardHeader
           title={
             desktop
-              ? `Set up snapshots for ${desktop}`
+              ? isZh
+                ? `为 ${desktop} 设置快照`
+                : `Set up snapshots for ${desktop}`
               : translateWebSource(translationLocale, "Set up snapshots")
           }
         >
           <WizardSteps
-            steps={SETUP_STEPS.map((item) => item.label)}
+            steps={SETUP_STEPS.map((item) => translateWebSource(translationLocale, item.label))}
             currentStep={stepIndex}
             isStepDisabled={(index) => busy || index > stepIndex}
             onStepChange={(index) => {
@@ -266,7 +303,9 @@ export function SnapShotSetupDialog({
                     checked && !busy && !error ? "text-xs text-muted-foreground" : "sr-only"
                   }
                 >
-                  {checked && !busy && !error ? captureSetupCheckMessage(state) : null}
+                  {checked && !busy && !error
+                    ? translateWebSource(translationLocale, captureSetupCheckMessage(state))
+                    : null}
                 </p>
                 {macPermissions ? (
                   <PermissionChecklist
@@ -275,18 +314,24 @@ export function SnapShotSetupDialog({
                       {
                         id: "screenRecording",
                         icon: <MacScreenRecordingIcon className="size-8 shrink-0 drop-shadow-sm" />,
-                        title: "Screen Recording",
-                        description: "Capture the window you're using.",
+                        title: translateWebSource(translationLocale, "Screen Recording"),
+                        description: translateWebSource(
+                          translationLocale,
+                          "Capture the window you're using.",
+                        ),
                         granted: macPermissions.screenRecording,
                         onAllow: () => void onAction("allow-screen-recording"),
                       },
                       {
                         id: "accessibility",
                         icon: <MacAccessibilityIcon className="size-8 shrink-0 drop-shadow-sm" />,
-                        title: "Accessibility",
-                        description: includeAccessibility
-                          ? "Include text and controls from the captured app."
-                          : "Optional. Include text and controls from the captured app.",
+                        title: translateWebSource(translationLocale, "Accessibility"),
+                        description: translateWebSource(
+                          translationLocale,
+                          includeAccessibility
+                            ? "Include text and controls from the captured app."
+                            : "Optional. Include text and controls from the captured app.",
+                        ),
                         granted: macPermissions.accessibility,
                         onAllow: () => void onAction("allow-accessibility"),
                       },
@@ -305,7 +350,7 @@ export function SnapShotSetupDialog({
                     disabled={busy}
                     onClick={() => void onAction(installHelper)}
                   >
-                    Reinstall helper
+                    {translateWebSource(translationLocale, "Reinstall helper")}
                   </Button>
                 ) : null}
               </>
@@ -336,7 +381,10 @@ export function SnapShotSetupDialog({
                     disabled={busy}
                     onClick={() => void onAction("retry-shortcut")}
                   >
-                    {state.mode === "portal" ? "Shortcut permissions" : "Try again"}
+                    {translateWebSource(
+                      translationLocale,
+                      state.mode === "portal" ? "Shortcut permissions" : "Try again",
+                    )}
                   </Button>
                 ) : null}
               </div>
@@ -383,7 +431,7 @@ export function SnapShotSetupDialog({
                       disabled={busy}
                       onClick={() => void onAction("disable-extension")}
                     >
-                      Disable extension
+                      {translateWebSource(translationLocale, "Disable extension")}
                     </Button>
                   ) : null}
                   {step === "access" && helperBackend && helper?.status !== "not-installed" ? (
@@ -393,7 +441,7 @@ export function SnapShotSetupDialog({
                       disabled={busy}
                       onClick={() => void onAction(removeHelper)}
                     >
-                      Remove capture helper
+                      {translateWebSource(translationLocale, "Remove capture helper")}
                     </Button>
                   ) : null}
                 </div>
@@ -408,7 +456,7 @@ export function SnapShotSetupDialog({
             </Button>
           ) : null}
           <Button variant="ghost" disabled={busy} onClick={() => void onClose(false)}>
-            {wasEnabled ? "Close" : "Finish later"}
+            {translateWebSource(translationLocale, wasEnabled ? "Close" : "Finish later")}
           </Button>
           {step === "access" ? (
             helperBackend && !accessReady && helper?.status !== "ready" ? (
@@ -419,15 +467,18 @@ export function SnapShotSetupDialog({
                   void (helper?.status === "error" ? checkAgain() : onAction(installHelper))
                 }
               >
-                {checking
-                  ? "Checking…"
-                  : busy
-                    ? "Installing…"
-                    : helper?.status === "error"
-                      ? "Check again"
-                      : helper?.status === "update-required"
-                        ? "Update helper"
-                        : "Install helper"}
+                {translateWebSource(
+                  translationLocale,
+                  checking
+                    ? "Checking…"
+                    : busy
+                      ? "Installing…"
+                      : helper?.status === "error"
+                        ? "Check again"
+                        : helper?.status === "update-required"
+                          ? "Update helper"
+                          : "Install helper",
+                )}
               </Button>
             ) : backend === "gnome" && !accessReady && extension?.status !== "enabled" ? (
               <Button
@@ -441,21 +492,24 @@ export function SnapShotSetupDialog({
                       : checkAgain())
                 }
               >
-                {checking
-                  ? "Checking…"
-                  : busy
-                    ? install
-                      ? "Installing…"
-                      : enable
-                        ? "Enabling…"
-                        : "Working…"
-                    : install
-                      ? extension?.status === "update-required"
-                        ? "Update extension"
-                        : "Install extension"
-                      : enable
-                        ? "Enable extension"
-                        : "Check again"}
+                {translateWebSource(
+                  translationLocale,
+                  checking
+                    ? "Checking…"
+                    : busy
+                      ? install
+                        ? "Installing…"
+                        : enable
+                          ? "Enabling…"
+                          : "Working…"
+                      : install
+                        ? extension?.status === "update-required"
+                          ? "Update extension"
+                          : "Install extension"
+                        : enable
+                          ? "Enable extension"
+                          : "Check again",
+                )}
               </Button>
             ) : (
               <PermissionContinueButton
@@ -485,7 +539,10 @@ export function SnapShotSetupDialog({
                 if (!shortcutChanged || (await onSaveShortcut())) await onClose(true);
               }}
             >
-              {busy ? "Saving…" : shortcutChanged ? "Save and finish" : "Done"}
+              {translateWebSource(
+                translationLocale,
+                busy ? "Saving…" : shortcutChanged ? "Save and finish" : "Done",
+              )}
             </Button>
           ) : null}
         </WizardFooter>

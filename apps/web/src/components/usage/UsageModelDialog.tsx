@@ -64,14 +64,26 @@ export function UsageModelDialog({
   const stats = [
     {
       label: translateWebSource(translationLocale, "Cost"),
-      value: costUnknown ? "Unpriced" : formatUsd(model.costUsd),
+      value: costUnknown
+        ? translateWebSource(translationLocale, "Unpriced")
+        : formatUsd(model.costUsd),
     },
     {
       label: translateWebSource(translationLocale, "Tokens"),
       value: formatTokens(model.totalTokens),
     },
-    perMillion === null ? null : { label: "Per 1M tokens", value: formatUsd(perMillion) },
-    hitRate === null ? null : { label: "Cache hit", value: formatPercent(hitRate) },
+    perMillion === null
+      ? null
+      : {
+          label: translateWebSource(translationLocale, "Per 1M tokens"),
+          value: formatUsd(perMillion),
+        },
+    hitRate === null
+      ? null
+      : {
+          label: translateWebSource(translationLocale, "Cache hit"),
+          value: formatPercent(hitRate),
+        },
   ].filter((stat) => stat !== null);
 
   return (
@@ -93,7 +105,11 @@ export function UsageModelDialog({
           </div>
           <DialogDescription>
             {presentation.label}
-            {costUnknown ? "" : ` · ${formatPercent(model.costShare)} of cost`}
+            {costUnknown
+              ? ""
+              : translationLocale === "zh-CN"
+                ? ` · 占总费用 ${formatPercent(model.costShare)}`
+                : ` · ${formatPercent(model.costShare)} of cost`}
           </DialogDescription>
         </DialogHeader>
         <DialogPanel>

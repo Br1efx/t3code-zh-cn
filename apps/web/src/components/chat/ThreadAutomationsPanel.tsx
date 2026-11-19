@@ -41,7 +41,11 @@ const STATUS_DOT_CLASS: Record<ScheduledTask["lastRunStatus"], string> = {
   failed: "bg-destructive",
 };
 
-function taskScheduleLine(task: ScheduledTask, timeZone: string | undefined) {
+function taskScheduleLine(
+  task: ScheduledTask,
+  timeZone: string | undefined,
+  locale: ReturnType<typeof useI18n>["locale"],
+) {
   return (
     <>
       {scheduleLabel(task.schedule, timeZone, task.nextRunAt)}
@@ -49,11 +53,13 @@ function taskScheduleLine(task: ScheduledTask, timeZone: string | undefined) {
         ` · ${task.blockedByPolicy}`
       ) : task.enabled && task.nextRunAt !== null ? (
         <>
-          {" · next "}
+          {locale === "zh-CN" ? " · 下次 " : " · next "}
           <ScheduledRelativeLabel value={task.nextRunAt} />
         </>
       ) : task.enabled ? (
         ""
+      ) : locale === "zh-CN" ? (
+        " · 已暂停"
       ) : (
         " · paused"
       )}
@@ -156,7 +162,9 @@ export function ThreadAutomationsPanel(props: {
               </ThreadDetailsControl>
             }
           />
-          <TooltipPopup>Manage scheduled tasks</TooltipPopup>
+          <TooltipPopup>
+            {translateWebSource(translationLocale, "Manage scheduled tasks")}
+          </TooltipPopup>
         </Tooltip>
       }
     >
@@ -185,13 +193,13 @@ export function ThreadAutomationsPanel(props: {
                   {task.title}
                 </span>
                 <p className="truncate text-2xs text-muted-foreground">
-                  {taskScheduleLine(task, tasksQuery.data?.timeZone)}
+                  {taskScheduleLine(task, tasksQuery.data?.timeZone, translationLocale)}
                 </p>
               </TooltipTrigger>
               <TooltipPopup side="left">
                 <p className="font-medium">{task.title}</p>
                 <p className="text-muted-foreground">
-                  {taskScheduleLine(task, tasksQuery.data?.timeZone)}
+                  {taskScheduleLine(task, tasksQuery.data?.timeZone, translationLocale)}
                 </p>
               </TooltipPopup>
             </Tooltip>

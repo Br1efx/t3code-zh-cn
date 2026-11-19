@@ -184,15 +184,43 @@ function ExtendedOfficeViewer(props: {
   const navigation = workbook ? "sheet" : (previewDocument?.navigation ?? "slide");
   const documentCount = previewDocument?.pages.length ?? 0;
   const documentDetails =
-    navigation === "chapter"
-      ? `Chapter ${page + 1} of ${documentCount}`
-      : `${documentCount} ${navigation}${documentCount === 1 ? "" : "s"}`;
+    i18nLocale === "zh-CN"
+      ? navigation === "chapter"
+        ? `第 ${page + 1} / ${documentCount} 章`
+        : navigation === "slide"
+          ? `${documentCount} 张幻灯片`
+          : navigation === "page"
+            ? `${documentCount} 页`
+            : `${documentCount} 个工作表`
+      : navigation === "chapter"
+        ? `Chapter ${page + 1} of ${documentCount}`
+        : `${documentCount} ${navigation}${documentCount === 1 ? "" : "s"}`;
+  const previousNavigationLabel =
+    i18nLocale === "zh-CN"
+      ? navigation === "chapter"
+        ? "上一章"
+        : navigation === "slide"
+          ? "上一张幻灯片"
+          : navigation === "page"
+            ? "上一页"
+            : "上一个工作表"
+      : `Previous ${navigation}`;
+  const nextNavigationLabel =
+    i18nLocale === "zh-CN"
+      ? navigation === "chapter"
+        ? "下一章"
+        : navigation === "slide"
+          ? "下一张幻灯片"
+          : navigation === "page"
+            ? "下一页"
+            : "下一个工作表"
+      : `Next ${navigation}`;
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       {count > 0 ? (
         <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border/60 px-3 text-xs">
           <FileSurfaceAction
-            label={`Previous ${navigation}`}
+            label={previousNavigationLabel}
             disabled={page === 0}
             onPress={() => selectPage(page - 1)}
           >
@@ -240,16 +268,13 @@ function ExtendedOfficeViewer(props: {
             </div>
           ) : (
             <span className="flex-1 text-center tabular-nums" aria-live="polite">
-              {navigation === "slide"
-                ? translateWebSource(i18nLocale, "Slide")
-                : translateWebSource(i18nLocale, "Page")}{" "}
-              {page + 1}
-              {localizeWebString(i18nLocale, " of ")}
-              {count}
+              {i18nLocale === "zh-CN"
+                ? `${navigation === "slide" ? translateWebSource(i18nLocale, "Slide") : translateWebSource(i18nLocale, "Page")} ${page + 1} / ${count}`
+                : `${navigation === "slide" ? "Slide" : "Page"} ${page + 1} of ${count}`}
             </span>
           )}
           <FileSurfaceAction
-            label={`Next ${navigation}`}
+            label={nextNavigationLabel}
             disabled={page + 1 === count}
             onPress={() => selectPage(page + 1)}
           >
@@ -262,14 +287,9 @@ function ExtendedOfficeViewer(props: {
           className="flex min-h-10 shrink-0 flex-wrap items-center gap-x-1 border-b border-border/60 px-3 py-2 text-xs text-muted-foreground tabular-nums"
           role="status"
         >
-          {localizeWebString(i18nLocale, "Sheet ")}
-          {page + 1}
-          {localizeWebString(i18nLocale, " of ")}
-          {count} · {sheet.rowCount.toLocaleString()}
-          {localizeWebString(i18nLocale, " row")}
-          {sheet.rowCount === 1 ? "" : "s"} · {sheet.columns.toLocaleString()}
-          {localizeWebString(i18nLocale, " column")}
-          {sheet.columns === 1 ? "" : "s"}
+          {i18nLocale === "zh-CN"
+            ? `工作表 ${page + 1} / ${count} · ${sheet.rowCount.toLocaleString()} 行 · ${sheet.columns.toLocaleString()} 列`
+            : `Sheet ${page + 1} of ${count} · ${sheet.rowCount.toLocaleString()} row${sheet.rowCount === 1 ? "" : "s"} · ${sheet.columns.toLocaleString()} column${sheet.columns === 1 ? "" : "s"}`}
           {fileSize !== undefined
             ? ` · ${fileSize === 0 ? "0 bytes" : formatAttachmentSize(fileSize)}`
             : ""}

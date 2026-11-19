@@ -126,7 +126,11 @@ export function PullRequestCommentForm({
         value={body}
         rows={3}
         placeholder={translateWebSource(translationLocale, "Leave a comment")}
-        aria-label={`Comment on this ${sourceControlClients.get(detail.provider).changeRequest.singular}`}
+        aria-label={
+          translationLocale === "zh-CN"
+            ? "评论此合并请求"
+            : `Comment on this ${sourceControlClients.get(detail.provider).changeRequest.singular}`
+        }
         onValueChange={setBody}
         onKeyDown={(event) => {
           if (event.nativeEvent.isComposing || event.keyCode === 229) return;
@@ -165,17 +169,21 @@ export function PullRequestCommentForm({
                   {translateWebSource(translationLocale, "Close with comment")}
                 </span>
                 <span className="col-start-1 row-start-1">
-                  {submitting === "close"
-                    ? "Closing..."
-                    : inlineConfirm.isArmed("close")
-                      ? "Confirm close?"
-                      : "Close with comment"}
+                  {translateWebSource(
+                    translationLocale,
+                    submitting === "close"
+                      ? "Closing..."
+                      : inlineConfirm.isArmed("close")
+                        ? "Confirm close?"
+                        : "Close with comment",
+                  )}
                 </span>
               </span>
-            ) : submitting === "reopen" ? (
-              "Reopening..."
             ) : (
-              "Reopen with comment"
+              translateWebSource(
+                translationLocale,
+                submitting === "reopen" ? "Reopening..." : "Reopen with comment",
+              )
             )}
           </Button>
         )}
@@ -186,7 +194,10 @@ export function PullRequestCommentForm({
           onClick={() => submitAfterDictation("comment")}
         >
           <SendIcon className="size-3.5" />
-          {submitting === "comment" ? "Posting..." : "Comment"}
+          {translateWebSource(
+            translationLocale,
+            submitting === "comment" ? "Posting..." : "Comment",
+          )}
         </Button>
       </div>
     </div>

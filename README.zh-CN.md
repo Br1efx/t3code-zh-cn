@@ -6,7 +6,7 @@
 
 ## 下载与运行
 
-- [Windows x64 安装程序（0.1.10-zh.1）](https://github.com/Br1efx/t3code-zh-cn/releases/download/v0.1.10-zh.1/T3-Code-0.1.10-zh.1-x64.exe) · [发布说明与校验值](https://github.com/Br1efx/t3code-zh-cn/releases/tag/v0.1.10-zh.1)
+- [Windows x64 安装程序（0.1.10-zh.2）](https://github.com/Br1efx/t3code-zh-cn/releases/download/v0.1.10-zh.2/T3-Code-0.1.10-zh.2-x64.exe) · [发布说明与校验值](https://github.com/Br1efx/t3code-zh-cn/releases/tag/v0.1.10-zh.2)
 - [源码验证结果](https://github.com/Br1efx/t3code-zh-cn/actions/workflows/client-release.yml)
 
 此 Windows 安装包是基于官方稳定版 v0.1.10 的未签名社区预发布，应用名称沿用上游的 **T3 Code (Beta)**。官方网页上的安装程序及 `npx t3` 安装的是官方英文版。汉化桌面版使用手动下载，不提供自动更新源。

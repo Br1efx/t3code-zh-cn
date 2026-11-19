@@ -17,12 +17,15 @@ import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../
  * machine, with where that address leads.
  */
 export function LinkAddressWarning({ address }: { readonly address: string }) {
+  const { locale } = useI18n();
   return (
     <Alert variant="warning">
       <AlertTitle>Check this address</AlertTitle>
       <AlertDescription>
-        This app cannot confirm it is one of your machines. The pairing code you paste is sent
-        there.
+        {translateWebSource(
+          locale,
+          "This app cannot confirm it is one of your machines. The pairing code you paste is sent there.",
+        )}
         <span className="block break-all">{linkDestination(address)}</span>
       </AlertDescription>
     </Alert>
@@ -84,9 +87,15 @@ export function LinkMachineSelect({
         <SelectTrigger aria-labelledby={labelId}>
           <SelectValue>
             {(selected: string | null) => {
-              if (selected === ANOTHER_ADDRESS) return "Another address…";
+              if (selected === ANOTHER_ADDRESS) {
+                return translateWebSource(translationLocale, "Another address…");
+              }
               const machine = machines.find((candidate) => candidate.environmentId === selected);
-              return machine === undefined ? "Choose a machine" : <MachineName machine={machine} />;
+              return machine === undefined ? (
+                translateWebSource(translationLocale, "Choose a machine")
+              ) : (
+                <MachineName machine={machine} />
+              );
             }}
           </SelectValue>
         </SelectTrigger>
@@ -100,7 +109,7 @@ export function LinkMachineSelect({
             </SelectItem>
           ))}
           <SelectItem value={ANOTHER_ADDRESS} hideIndicator>
-            Another address…
+            {translateWebSource(translationLocale, "Another address…")}
           </SelectItem>
         </SelectPopup>
       </Select>

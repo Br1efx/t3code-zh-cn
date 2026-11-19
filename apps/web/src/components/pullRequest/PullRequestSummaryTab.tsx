@@ -279,12 +279,13 @@ function chatSubject(
 }
 
 function AddToChatButton({ onClick }: { onClick: () => void }) {
+  const { locale: uiLocale } = useI18n();
   return (
     <Button size="xs" variant="ghost" className="shrink-0" onClick={onClick}>
       {/* Wrapped like Fix's label so both sit on the header's baseline. */}
       <span className="inline-flex items-baseline gap-1">
         <MessageSquarePlusIcon className="size-3 self-center" />
-        <span>Add to chat</span>
+        <span>{translateWebSource(uiLocale, "Add to chat")}</span>
       </span>
     </Button>
   );
@@ -1003,8 +1004,16 @@ export function PullRequestSummaryTab({
               environmentId={environmentId}
               completionScope={completionScope}
               threadRef={threadRef}
-              label={`${capitalizeTerm(terminology.singular)} description`}
-              placeholder={`Describe this ${terminology.singular}`}
+              label={
+                translationLocale === "zh-CN"
+                  ? "合并请求描述"
+                  : `${capitalizeTerm(terminology.singular)} description`
+              }
+              placeholder={
+                translationLocale === "zh-CN"
+                  ? "描述此合并请求"
+                  : `Describe this ${terminology.singular}`
+              }
               saving={descriptionSaving}
               onSave={(body) => void saveBody(body)}
               onCancel={() => setBodyScope(null)}
@@ -1013,7 +1022,13 @@ export function PullRequestSummaryTab({
             <div className="flex items-start gap-1" data-pr-description>
               <PullRequestMarkdown
                 className="min-w-0 flex-1"
-                text={description.trim().length > 0 ? description : "_No description provided._"}
+                text={
+                  description.trim().length > 0
+                    ? description
+                    : translationLocale === "zh-CN"
+                      ? "_未提供描述。_"
+                      : "_No description provided._"
+                }
                 cwd={detail.workspaceRoot}
                 environmentId={environmentId}
                 threadRef={threadRef}

@@ -431,13 +431,14 @@ function CompactingLabel({ createdAt }: { createdAt: string | null }) {
           <WorkingTimer createdAt={createdAt} />
         </span>
       ) : (
-        "Compacting…"
+        translateWebSource(i18nLocale, "Compacting…")
       )}
     </span>
   );
 }
 
 export function ThinkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "thinking" }> }) {
+  const { locale: i18nLocale } = useI18n();
   const ctx = use(TimelineRowCtx);
   const { isCompacting, isPreparingWorktree, liveAnswerPreview, providerStartingLabel } =
     use(TimelineRowActivityCtx);
@@ -446,7 +447,12 @@ export function ThinkingTimelineRow({ row }: { row: Extract<TimelineRow, { kind:
   const live = ctx.pendingApprovals.size === 0;
   const activity = (
     <LiveActivityRow
-      label={providerStartingLabel ?? row.label ?? liveAnswerPreview ?? "Thinking"}
+      label={
+        providerStartingLabel ??
+        row.label ??
+        liveAnswerPreview ??
+        translateWebSource(i18nLocale, "Thinking")
+      }
       iconName="brain"
       active={live}
       shimmer={live}
@@ -578,6 +584,7 @@ export function LiveWorkEntryTimelineRow({
 }: {
   row: Extract<TimelineRow, { kind: "work-live" }>;
 }) {
+  const { locale: i18nLocale } = useI18n();
   const ctx = use(TimelineRowCtx);
   const threadTarget = useThreadReadTarget(row.entry, ctx.activeThreadEnvironmentId);
   const label = liveWorkEntryLabel(row.entry, ctx.workspaceRoot, row.active);
@@ -639,11 +646,7 @@ export function LiveWorkEntryTimelineRow({
       <LiveActivityRow
         label={
           thoughtIsStatus ? (
-            row.active ? (
-              "Thinking"
-            ) : (
-              "Thought"
-            )
+            translateWebSource(i18nLocale, row.active ? "Thinking" : "Thought")
           ) : row.entry.itemType === "reasoning" ? (
             <ChatMarkdown
               inline

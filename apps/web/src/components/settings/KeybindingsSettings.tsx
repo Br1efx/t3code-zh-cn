@@ -1,4 +1,3 @@
-import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { useEnvironmentScope } from "../../state/session";
 import { useEnvironmentsWithScope, readEnvironmentScope } from "../../state/session";
 import {
@@ -253,8 +252,12 @@ function UnknownWhenVariableWarning({
 }) {
   const { locale: translationLocale } = useI18n();
   if (identifiers.length === 0) return null;
-  const label =
-    identifiers.length === 1
+  const isZh = translationLocale === "zh-CN";
+  const label = isZh
+    ? identifiers.length === 1
+      ? `未知条件：${identifiers[0]}`
+      : `未知条件：${identifiers.join("、")}`
+    : identifiers.length === 1
       ? `Unknown condition: ${identifiers[0]}`
       : `Unknown conditions: ${identifiers.join(", ")}`;
 
@@ -269,20 +272,26 @@ function UnknownWhenVariableWarning({
 }
 
 function KeybindingConflictWarning({ labels }: { labels: ReadonlyArray<string> }) {
-  const { locale: i18nLocale } = useI18n();
+  const { locale } = useI18n();
   if (labels.length === 0) return null;
-  const description =
-    labels.length === 1
+  const isZh = locale === "zh-CN";
+  const description = isZh
+    ? labels.length === 1
+      ? `与“${labels[0]}”冲突。`
+      : `与${labels
+          .slice(0, 3)
+          .map((item) => `“${item}”`)
+          .join("、")}${labels.length > 3 ? "等" : ""}冲突。`
+    : labels.length === 1
       ? `Conflicts with ${labels[0]}.`
       : `Conflicts with ${labels.slice(0, 3).join(", ")}${labels.length > 3 ? ", and more" : ""}.`;
 
   return (
     <WarningTooltipIcon label={description}>
       {description}
-      {localizeWebString(
-        i18nLocale,
-        " The most recent matching binding wins when both conditions can apply.",
-      )}
+      {isZh
+        ? "当两个条件同时满足时，最新匹配的快捷键生效。"
+        : " The most recent matching binding wins when both conditions can apply."}
     </WarningTooltipIcon>
   );
 }
@@ -366,7 +375,7 @@ function WhenExpressionNodeEditor({
   onChange: (node: KeybindingWhenNode) => void;
   onRemove?: () => void;
 }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const condition = conditionParts(node);
 
   if (condition) {
@@ -394,7 +403,7 @@ function WhenExpressionNodeEditor({
         />
         {onRemove ? (
           <WhenExpressionRemoveButton
-            label={whenNodeRemoveLabel(node, depth)}
+            label={whenNodeRemoveLabel(node, depth, locale)}
             onRemove={onRemove}
           />
         ) : null}
@@ -423,7 +432,7 @@ function WhenExpressionNodeEditor({
           </Toggle>
           {onRemove ? (
             <WhenExpressionRemoveButton
-              label={whenNodeRemoveLabel(node, depth)}
+              label={whenNodeRemoveLabel(node, depth, locale)}
               className="ml-auto"
               onRemove={onRemove}
             />
@@ -513,13 +522,20 @@ function WhenExpressionNodeEditor({
       )}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <Select value={operator} onValueChange={(value) => setOperator(value as BooleanOperator)}>
+        <Select
+          items={{
+            and: t("keybindings.when.and"),
+            or: t("keybindings.when.or"),
+          }}
+          value={operator}
+          onValueChange={(value) => setOperator(value as BooleanOperator)}
+        >
           <SelectTrigger size="compact" className="w-24">
             <SelectValue />
           </SelectTrigger>
           <SelectContent alignItemWithTrigger={false} matchTriggerWidth={false}>
-            <SelectItem value={t("keybindings.when.and")}>{t("keybindings.when.and")}</SelectItem>
-            <SelectItem value={t("keybindings.when.or")}>{t("keybindings.when.or")}</SelectItem>
+            <SelectItem value="and">{t("keybindings.when.and")}</SelectItem>
+            <SelectItem value="or">{t("keybindings.when.or")}</SelectItem>
           </SelectContent>
         </Select>
         <Button type="button" variant="outline" size="compact" onClick={addCondition}>
@@ -532,7 +548,7 @@ function WhenExpressionNodeEditor({
         </Button>
         {onRemove ? (
           <WhenExpressionRemoveButton
-            label={whenNodeRemoveLabel(node, depth)}
+            label={whenNodeRemoveLabel(node, depth, locale)}
             className="ml-auto"
             onRemove={onRemove}
           />
@@ -580,17 +596,16 @@ function WhenExpressionBuilder({
   onChange: (value: KeybindingWhenNode | undefined) => void;
   onValidityChange?: (valid: boolean) => void;
 }) {
-  const { locale: translationLocale } = useI18n();
-  const { t } = useI18n();
+  const { locale: translationLocale, t } = useI18n();
   const expression = whenAstToExpression(value);
   const [expressionDraft, setExpressionDraft] = useState(expression);
-  const parseResult = parseWhenExpressionDraft(expressionDraft);
+  const parseResult = parseWhenExpressionDraft(expressionDraft, translationLocale);
   const parseError = parseResult.ok ? null : parseResult.message;
   const unknownIdentifiers = parseResult.ok ? unknownWhenVariables(parseResult.value) : [];
 
   const updateExpressionDraft = (nextExpression: string) => {
     setExpressionDraft(nextExpression);
-    const nextResult = parseWhenExpressionDraft(nextExpression);
+    const nextResult = parseWhenExpressionDraft(nextExpression, translationLocale);
     onValidityChange?.(nextResult.ok);
     if (nextResult.ok) {
       onChange(nextResult.value);
@@ -738,16 +753,21 @@ function useKeybindingRowEditor({
   allRows: ReadonlyArray<KeybindingRow>;
   onSave: (input: ServerUpsertKeybindingInput) => void;
 }) {
+  const commandLabel = useCommandLabel();
   const [draft, setDraft] = useReducer(keybindingRowDraftReducer, row, createKeybindingRowDraft);
   const pillRef = useRef<HTMLButtonElement>(null);
   const { keyDraft, whenDraft, isRecording, isWhenDraftValid } = draft;
   const whenDraftExpression = whenAstToExpression(whenDraft);
   const isDirty = keyDraft !== row.key || whenDraftExpression !== row.when;
-  const conflictLabels = keybindingConflictLabels(allRows, {
-    rowId: row.id,
-    key: keyDraft,
-    when: whenDraftExpression,
-  });
+  const conflictLabels = keybindingConflictLabels(
+    allRows,
+    {
+      rowId: row.id,
+      key: keyDraft,
+      when: whenDraftExpression,
+    },
+    commandLabel,
+  );
 
   const save = () => {
     onSave({
@@ -810,8 +830,8 @@ type KeybindingRowProps = KeybindingRowActions & {
 };
 
 function useCommandLabel() {
-  const { t } = useI18n();
-  return (command: KeybindingCommand) => localizedCommandLabel(command, t);
+  const { locale, t } = useI18n();
+  return (command: KeybindingCommand) => localizedCommandLabel(command, t, locale);
 }
 
 function KeybindingKeyControl({
@@ -901,7 +921,7 @@ function WhenClauseControl({
   onChange: (value: KeybindingWhenNode | undefined) => void;
   onValidityChange: (valid: boolean) => void;
 }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   // Closing unmounts the builder, which drops an unparsed draft and keeps the last valid value.
   const handleOpenChange = (open: boolean) => {
     if (!open) onValidityChange(true);
@@ -917,7 +937,9 @@ function WhenClauseControl({
             className="min-w-0 shrink"
           />
         }
-        aria-label={`Edit when clause for ${label}`}
+        aria-label={
+          locale === "zh-CN" ? `编辑“${label}”的触发条件` : `Edit when clause for ${label}`
+        }
       >
         <span className="truncate font-mono">{expression || t("keybindings.always")}</span>
         <ChevronDownIcon className="size-3.5 shrink-0 opacity-60" />
@@ -1095,11 +1117,15 @@ function useNewKeybindingDraft({
   });
   const { keyDraft, whenDraft, isRecording, isWhenDraftValid } = draft;
   const whenDraftExpression = whenAstToExpression(whenDraft);
-  const conflictLabels = keybindingConflictLabels(allRows, {
-    rowId: "new",
-    key: keyDraft,
-    when: whenDraftExpression,
-  });
+  const conflictLabels = keybindingConflictLabels(
+    allRows,
+    {
+      rowId: "new",
+      key: keyDraft,
+      when: whenDraftExpression,
+    },
+    commandLabel,
+  );
   const commandLabelText = commandDraft
     ? commandLabel(commandDraft)
     : t("keybindings.newDescription");
@@ -1169,8 +1195,13 @@ function NewKeybindingCommandSelect({
 }) {
   const commandLabel = useCommandLabel();
   const { t } = useI18n();
+  const items = commandOptions.map((command) => ({
+    value: command,
+    label: commandLabel(command),
+  }));
   return (
     <Select
+      items={items}
       value={draft.commandDraft}
       onValueChange={(value) => draft.setCommandDraft(value as KeybindingCommand)}
     >
@@ -1366,8 +1397,7 @@ function useKeybindingCatalog() {
 }
 
 export function KeybindingsSettingsPanel() {
-  const { locale: translationLocale } = useI18n();
-  const { t } = useI18n();
+  const { locale: translationLocale, t } = useI18n();
   const { environment: primaryEnvironment, connectedEnvironments } = useSettingsScope();
   const canOpenKeybindingsFile = useEnvironmentScope(
     primaryEnvironment?.environmentId ?? null,
@@ -1404,7 +1434,7 @@ export function KeybindingsSettingsPanel() {
   const { commandOptions, allRows } = useKeybindingCatalog();
   const commandLabel = useCommandLabel();
   const rows = filterKeybindingRows(allRows, query, commandLabel);
-  const groups = groupKeybindingRows(rows);
+  const groups = groupKeybindingRows(rows, translationLocale);
   const anchorIds = keybindingAnchorIds(rows);
 
   const openKeybindingsFile = () => {

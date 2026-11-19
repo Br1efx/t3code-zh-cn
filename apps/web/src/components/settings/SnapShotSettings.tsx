@@ -1,4 +1,3 @@
-import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { RegistryContext, useAtomValue } from "@effect/atom-react";
@@ -483,22 +482,26 @@ export function SnapShotSettings() {
                 control={
                   <Menu>
                     <MenuTrigger
-                      aria-label={"Snapshot sound: " + soundLabel}
+                      aria-label={
+                        translationLocale === "zh-CN"
+                          ? `${translateWebSource(translationLocale, "Snapshot sound")}：${translateWebSource(translationLocale, soundLabel)}`
+                          : `Snapshot sound: ${soundLabel}`
+                      }
                       render={<SelectButton size="sm" />}
                       className="w-auto min-w-0"
                       disabled={!captureAvailable}
                     >
                       {soundSelection === "off" ? (
-                        "Off"
+                        translateWebSource(translationLocale, "Off")
                       ) : soundSelection === "soft-pop" ? (
                         <>
-                          {localizeWebString(translationLocale, "Whoosh ")}
+                          {translateWebSource(translationLocale, "Whoosh")}{" "}
                           <span className="text-muted-foreground">
                             {translateWebSource(translationLocale, "(Default)")}
                           </span>
                         </>
                       ) : (
-                        "Click"
+                        translateWebSource(translationLocale, "Click")
                       )}
                     </MenuTrigger>
                     <MenuPopup align="end">
@@ -513,7 +516,10 @@ export function SnapShotSettings() {
                         </MenuRadioItem>
                         <div className={soundOptionRowClassName}>
                           <MenuRadioItem closeOnClick value="soft-pop">
-                            Whoosh <span className="text-muted-foreground">(Default)</span>
+                            {translateWebSource(translationLocale, "Whoosh")}{" "}
+                            <span className="text-muted-foreground">
+                              {translateWebSource(translationLocale, "(Default)")}
+                            </span>
                           </MenuRadioItem>
                           <MenuItem
                             aria-label={translateWebSource(translationLocale, "Play Whoosh")}
@@ -525,7 +531,7 @@ export function SnapShotSettings() {
                         </div>
                         <div className={soundOptionRowClassName}>
                           <MenuRadioItem closeOnClick value="camera-shutter">
-                            Click
+                            {translateWebSource(translationLocale, "Click")}
                           </MenuRadioItem>
                           <MenuItem
                             aria-label={translateWebSource(translationLocale, "Play Click")}

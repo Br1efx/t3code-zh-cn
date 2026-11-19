@@ -58,6 +58,7 @@ export function ModelBenchmarks({
   facts: readonly string[];
 }) {
   const { locale: i18nLocale } = useI18n();
+  const isZh = i18nLocale === "zh-CN";
   const data = model.benchmark;
   const seconds = data?.secondsPer30s[tier];
   const visible = !data
@@ -73,15 +74,22 @@ export function ModelBenchmarks({
         const score = data?.accuracy[code];
         return (
           <span key={code}>
-            {languageLabel(code)}:{" "}
+            {languageLabel(code, i18nLocale)}:{" "}
             {score ? (
-              <>
-                <strong className="font-medium text-foreground">{score.grade}</strong> (
-                {score.errorPercent}
-                {translateWebSource(i18nLocale, "% error)")}
-              </>
+              isZh ? (
+                <>
+                  <strong className="font-medium text-foreground">{score.grade}</strong>（错误率{" "}
+                  {score.errorPercent}%）
+                </>
+              ) : (
+                <>
+                  <strong className="font-medium text-foreground">{score.grade}</strong> (
+                  {score.errorPercent}
+                  {translateWebSource(i18nLocale, "% error)")}
+                </>
+              )
             ) : (
-              "not benchmarked"
+              translateWebSource(i18nLocale, "not benchmarked")
             )}
           </span>
         );
@@ -89,9 +97,13 @@ export function ModelBenchmarks({
       <span>
         {translateWebSource(i18nLocale, "Speed:")}{" "}
         {tier === "cpu" && data && data.secondsPer30s.cpu === undefined ? (
-          "update server"
+          translateWebSource(i18nLocale, "update server")
         ) : seconds == null ? (
-          "not benchmarked"
+          translateWebSource(i18nLocale, "not benchmarked")
+        ) : isZh ? (
+          <>
+            <strong className="font-medium text-foreground">{seconds} 秒</strong> / 30 秒
+          </>
         ) : (
           <>
             <strong className="font-medium text-foreground">{seconds} s</strong> / 30 s

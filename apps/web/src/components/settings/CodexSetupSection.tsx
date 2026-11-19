@@ -132,22 +132,25 @@ export function CodexSetupSection(props: CodexSetupSectionProps) {
                 {translateWebSource(translationLocale, "Signed in as")}{" "}
                 <RedactedSensitiveText
                   value={props.provider.auth.email.trim()}
-                  ariaLabel="Toggle account email visibility"
-                  revealTooltip="Click to reveal email"
-                  hideTooltip="Click to hide email"
+                  ariaLabel={translateWebSource(
+                    translationLocale,
+                    "Toggle account email visibility",
+                  )}
+                  revealTooltip={translateWebSource(translationLocale, "Click to reveal email")}
+                  hideTooltip={translateWebSource(translationLocale, "Click to hide email")}
                   className="break-all"
                 />
-                .
+                {translationLocale === "zh-CN" ? "。" : "."}
               </>
             ) : (
-              "Connected with your Codex CLI."
+              translateWebSource(translationLocale, "Connected with your Codex CLI.")
             )
           ) : existingChecking ? (
-            "Checking your Codex CLI..."
+            translateWebSource(translationLocale, "Checking your Codex CLI...")
           ) : props.provider?.installed ? (
             existingSummary.headline
           ) : (
-            "Code with your ChatGPT subscription."
+            translateWebSource(translationLocale, "Code with your ChatGPT subscription.")
           )
         }
         control={
@@ -185,7 +188,7 @@ export function CodexSetupSection(props: CodexSetupSectionProps) {
               disabled={props.existingCliDisabled}
               onClick={() => props.onModeChange("existing")}
             >
-              Use existing CLI
+              {translateWebSource(translationLocale, "Use existing CLI")}
             </Button>
           ) : null
         }
@@ -280,6 +283,7 @@ function ManagedCodexSetup({
   readonly allowExistingCli?: boolean;
 }) {
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const target = { environmentId, input: { instanceId } };
   const authQuery = useEnvironmentQuery(serverEnvironment.providerAuthState(target));
   const installQuery = useEnvironmentQuery(serverEnvironment.providerInstallState(target));
@@ -404,14 +408,18 @@ function ManagedCodexSetup({
       if (result._tag === "Failure") {
         if (!isAtomCommandInterrupted(result)) {
           const failure = squashAtomCommandFailure(result);
-          setError(failure instanceof Error ? failure.message : "Codex setup failed. Try again.");
+          setError(
+            failure instanceof Error
+              ? failure.message
+              : translateWebSource(translationLocale, "Codex setup failed. Try again."),
+          );
         }
       } else {
         succeeded = true;
         onSuccess?.(result.value);
       }
     } catch {
-      setError("Codex setup failed. Try again.");
+      setError(translateWebSource(translationLocale, "Codex setup failed. Try again."));
     }
     pendingRef.current = false;
     setPending(false);
@@ -451,8 +459,12 @@ function ManagedCodexSetup({
   ) {
     setError(
       handoffQuery.data?.phase === "auth"
-        ? (handoffQuery.data.state.message ?? "ChatGPT sign-in could not finish. Try again.")
-        : "ChatGPT sign-in on the primary environment was interrupted. Try again.",
+        ? (handoffQuery.data.state.message ??
+            translateWebSource(translationLocale, "ChatGPT sign-in could not finish. Try again."))
+        : translateWebSource(
+            translationLocale,
+            "ChatGPT sign-in on the primary environment was interrupted. Try again.",
+          ),
     );
     setHandoff(null);
   }
@@ -489,7 +501,12 @@ function ManagedCodexSetup({
         await ensureLocalApi().shell.openExternal(authorizationUrl);
       }
     } catch {
-      setError("Could not finish sign-in on this computer. Try again.");
+      setError(
+        translateWebSource(
+          translationLocale,
+          "Could not finish sign-in on this computer. Try again.",
+        ),
+      );
     }
   };
 
@@ -615,25 +632,47 @@ function ManagedCodexSetup({
     };
   }, [clientCallback, url]);
 
+  const downloadedMb =
+    installation?.phase === "downloading"
+      ? (installation.downloadedBytes / 1_000_000).toFixed(1)
+      : null;
+  const totalMb =
+    installation?.phase === "downloading" && installation.totalBytes !== null
+      ? (installation.totalBytes / 1_000_000).toFixed(1)
+      : null;
   const runtimeDescription =
     installation?.phase === "downloading"
-      ? `Downloading ${(installation.downloadedBytes / 1_000_000).toFixed(1)}${installation.totalBytes === null ? "" : ` of ${(installation.totalBytes / 1_000_000).toFixed(1)}`} MB.`
+      ? isZh
+        ? totalMb === null
+          ? `正在下载 ${downloadedMb} MB。`
+          : `正在下载 ${downloadedMb} / ${totalMb} MB。`
+        : `Downloading ${downloadedMb}${totalMb === null ? "" : ` of ${totalMb}`} MB.`
       : installation?.phase === "extracting"
-        ? "Installing Codex."
+        ? translateWebSource(translationLocale, "Installing Codex.")
         : installation?.phase === "verifying"
-          ? "Checking Codex."
+          ? translateWebSource(translationLocale, "Checking Codex.")
           : installed
-            ? `${installation?.source === "local" ? "Using your installed Codex" : "Managed by T3 Code"}${installation?.installedVersion ? ` · v${installation.installedVersion}` : ""}.`
-            : (installation?.message ?? "T3 Code downloads and manages Codex for you.");
+            ? isZh
+              ? `${installation?.source === "local" ? "使用你已安装的 Codex" : "由 T3 Code 托管"}${installation?.installedVersion ? ` · v${installation.installedVersion}` : ""}。`
+              : `${installation?.source === "local" ? "Using your installed Codex" : "Managed by T3 Code"}${installation?.installedVersion ? ` · v${installation.installedVersion}` : ""}.`
+            : (installation?.message ??
+              translateWebSource(
+                translationLocale,
+                "T3 Code downloads and manages Codex for you.",
+              ));
   const accountDescription = finishingSignIn ? (
-    "Finishing sign-in..."
+    translateWebSource(translationLocale, "Finishing sign-in...")
   ) : installActive ? (
     runtimeDescription
   ) : authActive || auth?.phase === "failed" || auth?.phase === "cancelled" ? (
     auth?.phase === "waiting" && requestedAccountEmail ? (
-      `Continue as ${requestedAccountEmail} on OpenAI.`
+      isZh ? (
+        `请在 OpenAI 页面以 ${requestedAccountEmail} 继续登录。`
+      ) : (
+        `Continue as ${requestedAccountEmail} on OpenAI.`
+      )
     ) : (
-      (auth?.message ?? "Finish signing in in your browser.")
+      (auth?.message ?? translateWebSource(translationLocale, "Finish signing in in your browser."))
     )
   ) : authenticated ? (
     provider?.auth.email?.trim() ? (
@@ -641,17 +680,17 @@ function ManagedCodexSetup({
         {translateWebSource(translationLocale, "Signed in as")}{" "}
         <RedactedSensitiveText
           value={provider.auth.email.trim()}
-          ariaLabel="Toggle account email visibility"
-          revealTooltip="Click to reveal email"
-          hideTooltip="Click to hide email"
+          ariaLabel={translateWebSource(translationLocale, "Toggle account email visibility")}
+          revealTooltip={translateWebSource(translationLocale, "Click to reveal email")}
+          hideTooltip={translateWebSource(translationLocale, "Click to hide email")}
         />
-        .
+        {isZh ? "。" : "."}
       </>
     ) : (
-      "Signed in with ChatGPT."
+      translateWebSource(translationLocale, "Signed in with ChatGPT.")
     )
   ) : (
-    (reconnectEmail ?? "Use your ChatGPT subscription.")
+    (reconnectEmail ?? translateWebSource(translationLocale, "Use your ChatGPT subscription."))
   );
 
   const handoffUrl =
@@ -683,19 +722,22 @@ function ManagedCodexSetup({
         else if (url) void openPage(url, auth?.flowId ?? null, clientCallback);
       }}
     >
-      {finishingSignIn
-        ? "Finishing sign-in..."
-        : handoffQuery.data?.phase === "finished"
-          ? transferFailed
-            ? "Retry connection"
-            : "Finishing sign-in..."
-          : auth?.phase === "waiting"
-            ? remoteWeb
-              ? "Open ChatGPT sign-in"
-              : "Open sign-in page"
-            : presentation === "onboarding"
-              ? "Open sign-in page"
-              : "Signing in..."}
+      {translateWebSource(
+        translationLocale,
+        finishingSignIn
+          ? "Finishing sign-in..."
+          : handoffQuery.data?.phase === "finished"
+            ? transferFailed
+              ? "Retry connection"
+              : "Finishing sign-in..."
+            : auth?.phase === "waiting"
+              ? remoteWeb
+                ? "Open ChatGPT sign-in"
+                : "Open sign-in page"
+              : presentation === "onboarding"
+                ? "Open sign-in page"
+                : "Signing in...",
+      )}
     </Button>
   );
   const callbackCompletion =
@@ -726,10 +768,13 @@ function ManagedCodexSetup({
         >
           <div className="min-w-0 flex-1">
             <Input
-              aria-label="ChatGPT sign-in redirect URL"
+              aria-label={translateWebSource(translationLocale, "ChatGPT sign-in redirect URL")}
               type="password"
               autoComplete="off"
-              placeholder="Paste the URL from the sign-in tab"
+              placeholder={translateWebSource(
+                translationLocale,
+                "Paste the URL from the sign-in tab",
+              )}
               value={callbackUrl}
               maxLength={16_384}
               disabled={pending || readOnly}
@@ -753,7 +798,7 @@ function ManagedCodexSetup({
               variant="ghost-muted"
               onClick={() => void ensureLocalApi().shell.openExternal(url)}
             >
-              Try sign-in in your browser
+              {translateWebSource(translationLocale, "Try sign-in in your browser")}
               <ExternalLinkIcon className="size-3.5" />
             </Button>
           </div>
@@ -764,7 +809,7 @@ function ManagedCodexSetup({
               {translateWebSource(translationLocale, "Other ways to connect")}
             </summary>
             <Button className="mt-2" size="sm" variant="outline" render={<a href={handoffUrl} />}>
-              Use T3 desktop for automatic return
+              {translateWebSource(translationLocale, "Use T3 desktop for automatic return")}
             </Button>
           </details>
         ) : null}
@@ -781,7 +826,7 @@ function ManagedCodexSetup({
   ) : callbackCompletion ? (
     <div className="space-y-3 text-xs leading-relaxed text-muted-foreground">
       <CodexSignInDescription
-        label="Having trouble signing in?"
+        label={translateWebSource(translationLocale, "Having trouble signing in?")}
         expanded={callbackHelpOpen}
         controls={callbackHelpId}
         onToggle={() => setCallbackHelpOpen((open) => !open)}
@@ -820,7 +865,10 @@ function ManagedCodexSetup({
       logoutWarning ??
       error ??
       (authQuery.error || installQuery.error
-        ? "Could not read setup status. Reconnect and try again."
+        ? translateWebSource(
+            translationLocale,
+            "Could not read setup status. Reconnect and try again.",
+          )
         : installation?.phase === "failed"
           ? installation.message
           : null);
@@ -838,15 +886,18 @@ function ManagedCodexSetup({
                   {translateWebSource(translationLocale, "Signed in as")}{" "}
                   <RedactedSensitiveText
                     value={provider.auth.email.trim()}
-                    ariaLabel="Toggle account email visibility"
-                    revealTooltip="Click to reveal email"
-                    hideTooltip="Click to hide email"
+                    ariaLabel={translateWebSource(
+                      translationLocale,
+                      "Toggle account email visibility",
+                    )}
+                    revealTooltip={translateWebSource(translationLocale, "Click to reveal email")}
+                    hideTooltip={translateWebSource(translationLocale, "Click to hide email")}
                     className="break-all"
                   />
-                  .
+                  {isZh ? "。" : "."}
                 </>
               ) : (
-                "Connected to ChatGPT."
+                translateWebSource(translationLocale, "Connected to ChatGPT.")
               )
             ) : callbackCompletion && !needsManualCallback ? (
               <CodexSignInDescription
@@ -863,7 +914,7 @@ function ManagedCodexSetup({
             ) : authActive || auth?.phase === "failed" || auth?.phase === "cancelled" ? (
               accountDescription
             ) : (
-              "Code with your ChatGPT subscription."
+              translateWebSource(translationLocale, "Code with your ChatGPT subscription.")
             )
           }
           control={
@@ -922,7 +973,7 @@ function ManagedCodexSetup({
                 disabled={unavailable || busy}
                 onClick={() => void setup("chatgpt-change-account")}
               >
-                Use a different account
+                {translateWebSource(translationLocale, "Use a different account")}
               </Button>
             ) : !authActive && !authenticated && allowExistingCli ? (
               <Button
@@ -931,7 +982,7 @@ function ManagedCodexSetup({
                 disabled={readOnly || busy || existingCliDisabled}
                 onClick={() => onModeChange("existing")}
               >
-                Use existing CLI
+                {translateWebSource(translationLocale, "Use existing CLI")}
               </Button>
             ) : null
           }
@@ -1006,7 +1057,7 @@ function ManagedCodexSetup({
                       void run(() => startInstall({ environmentId, input: { instanceId } }))
                     }
                   >
-                    Update Codex
+                    {translateWebSource(translationLocale, "Update Codex")}
                   </Button>
                 ) : null}
                 <Button
@@ -1015,7 +1066,7 @@ function ManagedCodexSetup({
                   disabled={unavailable || busy}
                   onClick={() => setAccountPickerOpen(true)}
                 >
-                  Change account
+                  {translateWebSource(translationLocale, "Change account")}
                 </Button>
                 <Button
                   size="sm"
@@ -1053,7 +1104,7 @@ function ManagedCodexSetup({
                     disabled={unavailable || busy}
                     onClick={() => void setup("chatgpt-change-account")}
                   >
-                    Use a different account
+                    {translateWebSource(translationLocale, "Use a different account")}
                   </Button>
                 ) : null}
                 {allowExistingCli ? (
@@ -1063,7 +1114,7 @@ function ManagedCodexSetup({
                     disabled={readOnly || busy}
                     onClick={() => onModeChange("existing")}
                   >
-                    Use existing CLI
+                    {translateWebSource(translationLocale, "Use existing CLI")}
                   </Button>
                 ) : null}
               </>
@@ -1087,7 +1138,10 @@ function ManagedCodexSetup({
           {error ??
             (installation?.phase === "failed"
               ? installation.message
-              : "Could not read Codex setup status. Reconnect and try again.")}
+              : translateWebSource(
+                  translationLocale,
+                  "Could not read Codex setup status. Reconnect and try again.",
+                ))}
         </p>
       ) : null}
     </section>
@@ -1119,10 +1173,13 @@ export function CodexManagedRuntimeFields({
         control={
           <div className="w-full sm:w-80">
             <Input
-              aria-label="Codex binary path"
+              aria-label={translateWebSource(translationLocale, "Codex binary path")}
               value={executablePath}
               title={executablePath}
-              placeholder={installation.error ? "Could not read runtime path" : "Not installed"}
+              placeholder={translateWebSource(
+                translationLocale,
+                installation.error ? "Could not read runtime path" : "Not installed",
+              )}
               disabled
             />
           </div>
@@ -1134,7 +1191,7 @@ export function CodexManagedRuntimeFields({
         control={
           <div className="w-full sm:w-80">
             <Input
-              aria-label="Codex home path"
+              aria-label={translateWebSource(translationLocale, "Codex home path")}
               value={provider?.runtimePaths?.homePath ?? ""}
               title={provider?.runtimePaths?.homePath}
               placeholder={translateWebSource(translationLocale, "Unavailable")}
@@ -1153,10 +1210,13 @@ export function CodexManagedRuntimeFields({
         control={
           <div className="w-full sm:w-80">
             <Input
-              aria-label="Codex shadow home path"
+              aria-label={translateWebSource(translationLocale, "Codex shadow home path")}
               value={provider?.runtimePaths?.shadowHomePath ?? ""}
               title={provider?.runtimePaths?.shadowHomePath ?? undefined}
-              placeholder={provider?.runtimePaths ? "Not used" : "Unavailable"}
+              placeholder={translateWebSource(
+                translationLocale,
+                provider?.runtimePaths ? "Not used" : "Unavailable",
+              )}
               disabled
             />
           </div>
@@ -1167,7 +1227,7 @@ export function CodexManagedRuntimeFields({
 }
 
 function CodexSignInDescription({
-  label = "Complete sign-in in your browser.",
+  label,
   expanded = false,
   controls,
   onToggle,
@@ -1178,7 +1238,9 @@ function CodexSignInDescription({
   readonly onToggle?: () => void;
 }) {
   const { locale: i18nLocale } = useI18n();
-  if (!onToggle) return <div className="leading-relaxed">{label}</div>;
+  const resolvedLabel =
+    label ?? translateWebSource(i18nLocale, "Complete sign-in in your browser.");
+  if (!onToggle) return <div className="leading-relaxed">{resolvedLabel}</div>;
   return (
     <button
       type="button"
@@ -1188,7 +1250,7 @@ function CodexSignInDescription({
       aria-controls={controls}
       onClick={onToggle}
     >
-      {label}
+      {resolvedLabel}
       <ChevronRightIcon aria-hidden className={`size-3 shrink-0 ${expanded ? "rotate-90" : ""}`} />
     </button>
   );

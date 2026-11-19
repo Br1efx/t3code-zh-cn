@@ -398,7 +398,13 @@ function BrowserViewportSetting({ disabled }: { readonly disabled: boolean }) {
               className="w-full min-w-0 sm:w-44"
               aria-label={t("settings.item.browserDefaultViewport")}
             >
-              <SelectValue>{translateWebSource(locale, viewportSelectLabel(viewport))}</SelectValue>
+              <SelectValue>
+                {viewportSelectValue(viewport) === FILL_VALUE
+                  ? t("settings.integrations.browserDefaultViewport.fill")
+                  : viewportSelectValue(viewport) === RESPONSIVE_VALUE
+                    ? t("settings.integrations.browserDefaultViewport.responsive")
+                    : translateWebSource(locale, viewportSelectLabel(viewport))}
+              </SelectValue>
             </SelectTrigger>
             <SelectPopup align="end" alignItemWithTrigger={false}>
               <SelectItem value={FILL_VALUE}>

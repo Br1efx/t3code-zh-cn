@@ -1,4 +1,3 @@
-import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { ProcessSignalActions } from "./ProcessSignalActions";
 import { AuthEnvironmentMaintainScope } from "@t3tools/contracts";
@@ -93,7 +92,7 @@ function formatLocalizedSamplingStatus(
     return t("diagnostics.resource.samplingEvery", { interval: "..." });
   }
   if (sampleIntervalMs <= 0) {
-    return translateWebSource(locale, formatSamplingStatus(sampleIntervalMs));
+    return formatSamplingStatus(sampleIntervalMs, locale);
   }
   const seconds = sampleIntervalMs / 1_000;
   const interval =
@@ -169,11 +168,32 @@ function ioSemanticsLabel(semantics: ResourceTelemetryIoSemantics, t: WebTransla
 
 function booleanStateLabel(
   value: BackgroundBooleanState,
-  labels: { readonly true: string; readonly false: string },
+  labels: { readonly true: string; readonly false: string; readonly unknown?: string },
 ): string {
   if (value === "true") return labels.true;
   if (value === "false") return labels.false;
-  return "Unknown";
+  return labels.unknown ?? "Unknown";
+}
+
+function thermalStateLabel(
+  state: string,
+  locale: Parameters<typeof translateWebSource>[0],
+  unknownLabel: string,
+): string {
+  if (state === "unknown") return unknownLabel;
+  if (locale !== "zh-CN") return state;
+  switch (state) {
+    case "nominal":
+      return "正常";
+    case "fair":
+      return "轻度升温";
+    case "serious":
+      return "严重发热";
+    case "critical":
+      return "极度过热";
+    default:
+      return state;
+  }
 }
 
 function sourceStatusTone(status: ResourceTelemetrySourceStatus): "default" | "warning" | "danger" {
@@ -309,8 +329,8 @@ function AggregateCard({
   accentClass: string;
   aggregate: ResourceTelemetryAggregate;
 }) {
-  const { locale: translationLocale } = useI18n();
-  const { t } = useI18n();
+  const { locale: translationLocale, t } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   return (
     <div className="relative overflow-hidden border-t border-border/60 px-4 py-4 first:border-t-0 md:border-t-0 md:border-l md:first:border-l-0 sm:px-5">
       <span className={cn("absolute inset-x-5 top-0 h-0.5 rounded-full opacity-75", accentClass)} />
@@ -319,10 +339,9 @@ function AggregateCard({
           {label}
         </div>
         <div className="rounded-md bg-muted/55 px-1.5 py-0.5 font-mono text-3xs tabular-nums text-muted-foreground/70">
-          {aggregate.processCount}{" "}
-          {aggregate.processCount === 1
-            ? translateWebSource(translationLocale, "process")
-            : translateWebSource(translationLocale, "processes")}
+          {isZh
+            ? `${aggregate.processCount} 个进程`
+            : `${aggregate.processCount} ${aggregate.processCount === 1 ? "process" : "processes"}`}
         </div>
       </div>
       <div className="mt-3.5 grid grid-cols-2 gap-x-4 gap-y-2.5">
@@ -450,8 +469,8 @@ function ResourceHistoryChart({
 }: {
   buckets: ReadonlyArray<ResourceTelemetryHistoryBucket>;
 }) {
-  const { locale: translationLocale } = useI18n();
-  const { t } = useI18n();
+  const { locale: translationLocale, t } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const maxCpu = resourceHistoryCpuScaleMax(buckets);
   const maxIo = Math.max(1, ...buckets.map((bucket) => bucket.ioReadBytes + bucket.ioWriteBytes));
 
@@ -509,8 +528,16 @@ function ResourceHistoryChart({
               />
               <TooltipPopup side="top" className="text-left">
                 <div className="space-y-0.5">
-                  <div>CPU avg {bucket.avgCpuPercent.toFixed(1)}%</div>
-                  <div>CPU peak {bucket.maxCpuPercent.toFixed(1)}%</div>
+                  <div>
+                    {isZh
+                      ? `CPU 平均 ${bucket.avgCpuPercent.toFixed(1)}%`
+                      : `CPU avg ${bucket.avgCpuPercent.toFixed(1)}%`}
+                  </div>
+                  <div>
+                    {isZh
+                      ? `CPU 峰值 ${bucket.maxCpuPercent.toFixed(1)}%`
+                      : `CPU peak ${bucket.maxCpuPercent.toFixed(1)}%`}
+                  </div>
                   <div>
                     {t("diagnostics.column.read")} {formatBytes(bucket.ioReadBytes)}
                   </div>
@@ -536,6 +563,8 @@ function ProcessTreeName({
   collapsed: boolean;
   onToggle: (process: ResourceTelemetryProcess) => void;
 }) {
+  const { locale } = useI18n();
+  const isZh = locale === "zh-CN";
   const name = formatProcessName(process);
   const hasChildren = process.childPids.length > 0;
   return (
@@ -548,7 +577,15 @@ function ProcessTreeName({
           size="icon-micro"
           variant="ghost-muted"
           onClick={() => onToggle(process)}
-          aria-label={collapsed ? `Expand ${name}` : `Collapse ${name}`}
+          aria-label={
+            isZh
+              ? collapsed
+                ? `展开 ${name}`
+                : `折叠 ${name}`
+              : collapsed
+                ? `Expand ${name}`
+                : `Collapse ${name}`
+          }
         >
           {collapsed ? (
             <ChevronRightIcon className="size-3.5" />
@@ -614,8 +651,7 @@ function ProcessTable({
   signalingKeys: ReadonlySet<string>;
   onSignal: (process: ResourceTelemetryProcess, signal: ServerProcessSignal) => void;
 }) {
-  const { locale: translationLocale } = useI18n();
-  const { t } = useI18n();
+  const { locale: translationLocale, t } = useI18n();
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
   const visible = visibleResourceTelemetryProcesses(processes, collapsed);
   const toggle = (process: ResourceTelemetryProcess) => {
@@ -933,8 +969,8 @@ function ResourceTelemetryDiagnosticsBody({
 }: {
   environmentId: EnvironmentId | null;
 }) {
-  const { locale: i18nLocale, t } = useI18n();
-  const { locale: translationLocale } = useI18n();
+  const { locale: translationLocale, t } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const registry = useContext(RegistryContext);
   const [windowMs, setWindowMs] = useState(15 * 60_000);
   const selectedWindow =
@@ -1064,9 +1100,11 @@ function ResourceTelemetryDiagnosticsBody({
       .catch((error: unknown) => {
         toastManager.add({
           type: "error",
-          title: "Could not restart resource monitor",
+          title: translateWebSource(translationLocale, "Could not restart resource monitor"),
           description:
-            error instanceof Error ? error.message : "The resource monitor retry failed.",
+            error instanceof Error
+              ? error.message
+              : translateWebSource(translationLocale, "The resource monitor retry failed."),
         });
       })
       .finally(() => {
@@ -1086,6 +1124,7 @@ function ResourceTelemetryDiagnosticsBody({
       snapshot.power.idle !== "unknown" ||
       snapshot.power.locked !== "unknown" ||
       snapshot.power.thermalState !== "unknown");
+  const unknownLabel = t("diagnostics.state.unknown");
 
   return (
     <>
@@ -1217,7 +1256,7 @@ function ResourceTelemetryDiagnosticsBody({
               value={
                 snapshot
                   ? speedLimit === null
-                    ? t("diagnostics.state.unknown")
+                    ? unknownLabel
                     : `${speedLimit.toFixed(0)}%`
                   : "..."
               }
@@ -1226,7 +1265,11 @@ function ResourceTelemetryDiagnosticsBody({
                   ? snapshot.power.thermalState === "unknown"
                     ? t("diagnostics.resource.thermalStateUnknown")
                     : t("diagnostics.resource.thermalState", {
-                        state: snapshot.power.thermalState,
+                        state: thermalStateLabel(
+                          snapshot.power.thermalState,
+                          translationLocale,
+                          unknownLabel,
+                        ),
                       })
                   : undefined
               }
@@ -1284,24 +1327,27 @@ function ResourceTelemetryDiagnosticsBody({
             {hasHostPowerSignal && snapshot ? (
               <>
                 <DetailRow
-                  label="Power source"
+                  label={translateWebSource(translationLocale, "Power source")}
                   value={booleanStateLabel(snapshot.power.onBattery, {
-                    true: "Battery",
-                    false: "External power",
+                    true: translateWebSource(translationLocale, "Battery"),
+                    false: translateWebSource(translationLocale, "External power"),
+                    unknown: unknownLabel,
                   })}
                 />
                 <DetailRow
-                  label="Low power mode"
+                  label={translateWebSource(translationLocale, "Low power mode")}
                   value={booleanStateLabel(snapshot.power.lowPowerMode, {
-                    true: "Enabled",
-                    false: "Disabled",
+                    true: translateWebSource(translationLocale, "Enabled"),
+                    false: translateWebSource(translationLocale, "Disabled"),
+                    unknown: unknownLabel,
                   })}
                 />
                 <DetailRow
-                  label="Idle"
+                  label={translateWebSource(translationLocale, "Idle")}
                   value={`${booleanStateLabel(snapshot.power.idle, {
-                    true: "Idle",
-                    false: "Active",
+                    true: translateWebSource(translationLocale, "Idle"),
+                    false: translateWebSource(translationLocale, "Active"),
+                    unknown: unknownLabel,
                   })}${
                     snapshot.power.idleSeconds === null
                       ? ""
@@ -1309,19 +1355,24 @@ function ResourceTelemetryDiagnosticsBody({
                   }`}
                 />
                 <DetailRow
-                  label="Session"
+                  label={translateWebSource(translationLocale, "Session")}
                   value={
                     snapshot.power.suspended
-                      ? "Suspended"
+                      ? translateWebSource(translationLocale, "Suspended")
                       : booleanStateLabel(snapshot.power.locked, {
-                          true: "Locked",
-                          false: "Unlocked",
+                          true: translateWebSource(translationLocale, "Locked"),
+                          false: translateWebSource(translationLocale, "Unlocked"),
+                          unknown: unknownLabel,
                         })
                   }
                 />
                 <DetailRow
-                  label="Thermal"
-                  value={snapshot.power.thermalState}
+                  label={translateWebSource(translationLocale, "Thermal")}
+                  value={thermalStateLabel(
+                    snapshot.power.thermalState,
+                    translationLocale,
+                    unknownLabel,
+                  )}
                   valueClassName={
                     snapshot.power.thermalState === "serious" ||
                     snapshot.power.thermalState === "critical"
@@ -1442,9 +1493,9 @@ function ResourceTelemetryDiagnosticsBody({
         headerAction={
           snapshot ? (
             <span className="text-3xs text-muted-foreground/55">
-              {localizeWebString(i18nLocale, "Identity: ")}
+              {isZh ? "标识：" : "Identity: "}
               <span className="font-mono">
-                {translateWebSource(i18nLocale, "PID + start time")}
+                {translateWebSource(translationLocale, "PID + start time")}
               </span>
             </span>
           ) : null

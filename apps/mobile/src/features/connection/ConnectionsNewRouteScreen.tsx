@@ -20,6 +20,7 @@ import { cn } from "../../lib/cn";
 import { useUniwindTheme } from "../../lib/useUniwindTheme";
 import { useAppearancePreferences } from "../settings/appearance/AppearancePreferencesProvider";
 import { SettingsScreen } from "../settings/components/SettingsScreen";
+import { localizeMobileString, MOBILE_LOCALE } from "../../i18n/mobileStrings";
 import { AppText as Text, AppTextInput, type AppTextInputProps } from "../../components/ui/AppText";
 import { FrostedCutout } from "../../components/ui/FrostedCutout";
 import { buildPairingUrl, extractPairingUrlFromQrPayload, parsePairingUrl } from "./pairing";
@@ -229,7 +230,7 @@ function PairingForm({
               />
               <View className="ml-4 border-t border-border-subtle" />
               <PairingInputRow
-                label="Code"
+                label={MOBILE_LOCALE === "zh-CN" ? "Pairing code" : "Code"}
                 placeholder="Pairing code"
                 returnKeyType="go"
                 value={codeInput}
@@ -272,7 +273,7 @@ function PairingScanCard(props: {
   return (
     <Pressable
       accessibilityRole={props.cameraActive ? undefined : "button"}
-      accessibilityLabel={props.cameraActive ? undefined : "Scan QR code"}
+      accessibilityLabel={props.cameraActive ? undefined : localizeMobileString("Scan QR code")}
       disabled={props.cameraActive}
       onPress={props.onScanPress}
       className={cn(

@@ -15,7 +15,7 @@ function SettingsProvidersRoute() {
       <p className="p-8 text-sm text-muted-foreground">
         {scope.kind === "environment"
           ? translationLocale === "zh-CN"
-            ? `请重新连接 ${scope.label} 后再配置其 AI 服务。`
+            ? `请重新连接 ${scope.label} 后再配置其供应商。`
             : `Reconnect ${scope.label} to set up its providers.`
           : translateWebSource(
               translationLocale,

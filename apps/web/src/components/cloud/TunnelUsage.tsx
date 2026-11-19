@@ -1,6 +1,6 @@
 import { useI18n } from "~/i18n/WebI18nContext";
+import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import { translateWebSource } from "~/i18n/messages";
-import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { T3CHAT_PLAN_TUNNEL_LIMITS } from "@t3tools/contracts/relay";
 import { TriangleAlertIcon } from "lucide-react";
 import type { ReactNode } from "react";
@@ -15,8 +15,21 @@ const MAX_SEGMENTS = 10;
 
 export const T3CHAT_SUBSCRIPTION_URL = "https://t3.chat/settings/subscription";
 
-export function tunnelUpgradeCopy(upgrade: Exclude<ManagedTunnelUpgrade, null>): string {
+export function tunnelUpgradeCopy(
+  upgrade: Exclude<ManagedTunnelUpgrade, null>,
+  locale: ResolvedAppLocale = "en",
+): string {
   const { pro, premier } = T3CHAT_PLAN_TUNNEL_LIMITS;
+  if (locale === "zh-CN") {
+    switch (upgrade) {
+      case "link":
+        return `绑定 T3 Chat Pro 最多可使用 ${pro} 条远程通道，Premier 最多可使用 ${premier} 条。`;
+      case "pro":
+        return `升级到 T3 Chat Pro 最多可使用 ${pro} 条远程通道，Premier 最多可使用 ${premier} 条。`;
+      case "premier":
+        return `升级到 T3 Chat Premier 最多可使用 ${premier} 条远程通道。`;
+    }
+  }
   switch (upgrade) {
     case "link":
       return `Link T3 Chat Pro for up to ${pro} tunnels, or Premier for up to ${premier}.`;
@@ -46,10 +59,9 @@ export function TunnelUsageMeter({
     <div className={cn("flex max-w-sm flex-col gap-1.5", className)}>
       <div className="flex items-baseline justify-between gap-3 text-xs">
         <span className={cn("tabular-nums", full ? "text-warning-foreground" : "text-foreground")}>
-          {used}
-          {localizeWebString(i18nLocale, " of ")}
-          {limit}
-          {localizeWebString(i18nLocale, " tunnels in use")}
+          {i18nLocale === "zh-CN"
+            ? `已使用 ${used} / ${limit} 条远程通道`
+            : `${used} of ${limit} tunnels in use`}
         </span>
         {action}
       </div>

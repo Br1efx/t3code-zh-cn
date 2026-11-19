@@ -805,14 +805,18 @@ export function PullRequestDetailPanel({
       );
       toastManager.add({
         type: "error",
-        title: actionFailureLabels(terminology.singular)[action],
+        title: tx(actionFailureLabels(terminology.singular)[action]),
         description: readableFailure(failure, hint),
       });
       onActed?.(action, "failed");
       return false;
     }
     if (action === "revert") {
-      toastManager.add({ type: "success", title: `Revert ${terminology.singular} opened` });
+      toastManager.add({
+        type: "success",
+        title:
+          uiLocale === "zh-CN" ? "已创建回滚合并请求" : `Revert ${terminology.singular} opened`,
+      });
     }
     if (action === "delete-branch") {
       toastManager.add({ type: "success", title: translateWebSource(uiLocale, "Branch deleted") });
@@ -959,7 +963,10 @@ export function PullRequestDetailPanel({
       toastManager.add({
         type: "success",
         title: translateWebSource(translationLocale, "Added to the composer"),
-        description: "The task is in the composer. Read it over, then send.",
+        description: translateWebSource(
+          translationLocale,
+          "The task is in the composer. Read it over, then send.",
+        ),
       });
       return;
     }
@@ -979,7 +986,10 @@ export function PullRequestDetailPanel({
     setHandoff(kind);
     const toastId = toastManager.add({
       type: "loading",
-      title: `Preparing the ${terminology.singular} checkout...`,
+      title:
+        uiLocale === "zh-CN"
+          ? "正在准备合并请求检出…"
+          : `Preparing the ${terminology.singular} checkout...`,
     });
     const projectRef = scopeProjectRef(
       actingEnvironmentId,
@@ -1008,7 +1018,10 @@ export function PullRequestDetailPanel({
       setHandoff(null);
       toastManager.update(toastId, {
         type: "error",
-        title: `Could not prepare the ${terminology.singular} checkout`,
+        title:
+          uiLocale === "zh-CN"
+            ? "无法准备合并请求检出"
+            : `Could not prepare the ${terminology.singular} checkout`,
         description: checkoutFailureDescription(
           isAtomCommandInterrupted(prepared) ? undefined : squashAtomCommandFailure(prepared),
         ),
@@ -1985,7 +1998,13 @@ export function PullRequestDetailPanel({
               <div className={cn("absolute inset-0", tab !== "code" && "invisible")}>
                 <Suspense
                   fallback={
-                    <DiffPanelLoadingState label={`Loading ${terminology.singular} diff...`} />
+                    <DiffPanelLoadingState
+                      label={
+                        uiLocale === "zh-CN"
+                          ? "正在加载合并请求差异…"
+                          : `Loading ${terminology.singular} diff...`
+                      }
+                    />
                   }
                 >
                   <PullRequestCodeTab

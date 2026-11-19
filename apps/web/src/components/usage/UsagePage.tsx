@@ -417,7 +417,7 @@ export function UsagePage() {
           >
             {WINDOW_OPTIONS.map((option) => (
               <Toggle key={option.days} value={String(option.days)} title={shortcutTitle(option)}>
-                {option.label}
+                {optionLabel(option)}
               </Toggle>
             ))}
           </ToggleGroup>
@@ -470,7 +470,7 @@ export function UsagePage() {
                   value={String(option.days)}
                   title={shortcutTitle(option)}
                 >
-                  {option.label}
+                  {optionLabel(option)}
                 </SelectItem>
               ))}
             </SelectPopup>

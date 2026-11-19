@@ -1,6 +1,6 @@
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
-import { pipe } from "effect/Function";
+import { localizeRelayErrorMessage } from "~/cloud/relayFailureReason";
 import { ChevronsLeftRightEllipsisIcon, PlusIcon, TerminalIcon } from "lucide-react";
 import { useAtomValue } from "@effect/atom-react";
 import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from "react";
@@ -177,7 +177,12 @@ export function AddEnvironmentDialog({
     });
     if (result._tag === "Failure") {
       if (session === savedBackendSessionRef.current && !isAtomCommandInterrupted(result)) {
-        pipe(squashAtomCommandFailure(result), formatDesktopSshConnectionError, onErrorChange);
+        onErrorChange(
+          localizeRelayErrorMessage(
+            translationLocale,
+            formatDesktopSshConnectionError(squashAtomCommandFailure(result)),
+          ),
+        );
       }
       setIsAddingSavedBackend(false);
       return;
@@ -186,10 +191,18 @@ export function AddEnvironmentDialog({
     handleOpenChange(false);
     toastManager.add({
       type: "success",
-      title: routeTarget ? "Route added" : "Environment connected",
-      description: routeTarget
-        ? `${routeTarget.label} can now be reached over SSH ${target.alias}.`
-        : `${target.alias} is ready over an SSH-managed tunnel.`,
+      title: translateWebSource(
+        translationLocale,
+        routeTarget ? "Route added" : "Environment connected",
+      ),
+      description:
+        translationLocale === "zh-CN"
+          ? routeTarget
+            ? `现在可以通过 SSH ${target.alias} 连接到 ${routeTarget.label}。`
+            : `${target.alias} 已通过 SSH 托管通道准备就绪。`
+          : routeTarget
+            ? `${routeTarget.label} can now be reached over SSH ${target.alias}.`
+            : `${target.alias} is ready over an SSH-managed tunnel.`,
     });
     setIsAddingSavedBackend(false);
   };
@@ -204,7 +217,9 @@ export function AddEnvironmentDialog({
           port: savedBackendSshPort,
         });
       } catch (error) {
-        onErrorChange(formatDesktopSshConnectionError(error));
+        onErrorChange(
+          localizeRelayErrorMessage(translationLocale, formatDesktopSshConnectionError(error)),
+        );
         return;
       }
 
@@ -221,12 +236,13 @@ export function AddEnvironmentDialog({
         pairingCode: savedBackendPairingCode,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to add backend.";
+      const rawMessage = error instanceof Error ? error.message : "Failed to add backend.";
+      const message = localizeRelayErrorMessage(translationLocale, rawMessage);
       onErrorChange(message);
       toastManager.add(
         stackedThreadToast({
           type: "error",
-          title: "Could not add backend",
+          title: translateWebSource(translationLocale, "Could not add backend"),
           description: message,
         }),
       );
@@ -241,12 +257,13 @@ export function AddEnvironmentDialog({
     if (result._tag === "Failure") {
       if (!isAtomCommandInterrupted(result)) {
         const error = squashAtomCommandFailure(result);
-        const message = error instanceof Error ? error.message : "Failed to add backend.";
+        const rawMessage = error instanceof Error ? error.message : "Failed to add backend.";
+        const message = localizeRelayErrorMessage(translationLocale, rawMessage);
         onErrorChange(message);
         toastManager.add(
           stackedThreadToast({
             type: "error",
-            title: "Could not add backend",
+            title: translateWebSource(translationLocale, "Could not add backend"),
             description: message,
           }),
         );
@@ -260,13 +277,19 @@ export function AddEnvironmentDialog({
       routeTarget
         ? {
             type: "success",
-            title: "Route added",
-            description: `${routeTarget.label} now has another way to connect.`,
+            title: translateWebSource(translationLocale, "Route added"),
+            description:
+              translationLocale === "zh-CN"
+                ? `${routeTarget.label} 已添加新的连接方式。`
+                : `${routeTarget.label} now has another way to connect.`,
           }
         : {
             type: "success",
-            title: "Backend added",
-            description: "The environment is saved and will reconnect on app startup.",
+            title: translateWebSource(translationLocale, "Backend added"),
+            description: translateWebSource(
+              translationLocale,
+              "The environment is saved and will reconnect on app startup.",
+            ),
           },
     );
     setIsAddingSavedBackend(false);
@@ -292,7 +315,9 @@ export function AddEnvironmentDialog({
       resolved = await desktopBridge.resolveSshHost(target.alias);
     } catch (error) {
       if (session === savedBackendSessionRef.current) {
-        onErrorChange(formatDesktopSshConnectionError(error));
+        onErrorChange(
+          localizeRelayErrorMessage(translationLocale, formatDesktopSshConnectionError(error)),
+        );
       }
       setIsAddingSavedBackend(false);
       return;
@@ -457,15 +482,23 @@ export function AddEnvironmentDialog({
     if (result._tag === "Failure") {
       if (!isAtomCommandInterrupted(result)) {
         const error = squashAtomCommandFailure(result);
-        onErrorChange(error instanceof Error ? error.message : "Could not add the route.");
+        onErrorChange(
+          localizeRelayErrorMessage(
+            translationLocale,
+            error instanceof Error ? error.message : "Could not add the route.",
+          ),
+        );
       }
       return;
     }
     handleOpenChange(false);
     toastManager.add({
       type: "success",
-      title: "Route added",
-      description: `${routeTarget.label} falls back to T3 Connect when its other routes are unreachable.`,
+      title: translateWebSource(translationLocale, "Route added"),
+      description:
+        translationLocale === "zh-CN"
+          ? `当其他路由不可达时，${routeTarget.label} 将回退到 T3 Connect。`
+          : `${routeTarget.label} falls back to T3 Connect when its other routes are unreachable.`,
     });
   };
   const renderRemoteModeBody = () => (
@@ -489,7 +522,11 @@ export function AddEnvironmentDialog({
         </div>
       ) : null}
       {renderRemoteFields()}
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+      {error ? (
+        <p className="text-xs text-destructive">
+          {localizeRelayErrorMessage(translationLocale, error)}
+        </p>
+      ) : null}
       <Button
         variant="outline"
         className="w-full"
@@ -578,8 +615,9 @@ export function AddEnvironmentDialog({
                   </AutocompleteList>
                 ) : (
                   <AutocompleteEmpty className="break-all">
-                    {translateWebSource(translationLocale, 'No hosts match "')}
-                    {savedBackendSshHost.trim()}".
+                    {translationLocale === "zh-CN"
+                      ? `未找到匹配“${savedBackendSshHost.trim()}”的主机。`
+                      : `No hosts match "${savedBackendSshHost.trim()}".`}
                   </AutocompleteEmpty>
                 )}
               </AutocompletePopup>
@@ -617,7 +655,9 @@ export function AddEnvironmentDialog({
         </div>
         {error || discoveredSshHostsError ? (
           <Alert variant="error">
-            <AlertDescription>{error ?? discoveredSshHostsError}</AlertDescription>
+            <AlertDescription>
+              {localizeRelayErrorMessage(translationLocale, error ?? discoveredSshHostsError ?? "")}
+            </AlertDescription>
           </Alert>
         ) : null}
         <Button
@@ -659,7 +699,11 @@ export function AddEnvironmentDialog({
       <DialogPopup className="max-h-[80dvh] sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>
-            {routeTarget ? `Add a route to ${routeTarget.label}` : "Add Environment"}
+            {routeTarget
+              ? translationLocale === "zh-CN"
+                ? `为 ${routeTarget.label} 添加路由`
+                : `Add a route to ${routeTarget.label}`
+              : "Add Environment"}
           </DialogTitle>
           <DialogDescription>
             {routeTarget

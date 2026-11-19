@@ -25,6 +25,7 @@ import {
 } from "@t3tools/client-runtime/scheduled-task-webhook";
 import { scheduleTimeZoneLabel } from "@t3tools/client-runtime/scheduled-task-time-zone";
 
+import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import {
   resolveProjectSettings,
   type LegacyProjectSettingsFields,
@@ -34,8 +35,14 @@ import type { ProviderInstanceEntry } from "../../providerInstances";
 import type { ResolvedSettingsScope } from "./settingsScope";
 
 export const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+const WEEKDAY_LABELS_ZH = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"] as const;
 
 const ONCE_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
+const ONCE_FORMATTER_ZH = new Intl.DateTimeFormat("zh-CN", {
   dateStyle: "medium",
   timeStyle: "short",
 });
@@ -44,23 +51,43 @@ export function scheduleLabel(
   schedule: ScheduledTaskSchedule,
   timeZone?: string,
   runAt?: string | null,
+  locale: ResolvedAppLocale = "en",
 ): string {
-  if (schedule.type === "webhook") return "On webhook";
-  if (schedule.type === "once") return `Once, ${ONCE_FORMATTER.format(new Date(schedule.runAt))}`;
+  const isZh = locale === "zh-CN";
+  if (schedule.type === "webhook") return isZh ? "Webhook 触发" : "On webhook";
+  if (schedule.type === "once") {
+    return isZh
+      ? `单次，${ONCE_FORMATTER_ZH.format(new Date(schedule.runAt))}`
+      : `Once, ${ONCE_FORMATTER.format(new Date(schedule.runAt))}`;
+  }
   if (schedule.type === "interval") {
     const minutes = schedule.everyMs / 60_000;
+    if (isZh) {
+      return Number.isInteger(minutes)
+        ? `每 ${minutes} 分钟`
+        : `每 ${Math.round(schedule.everyMs / 1000)} 秒`;
+    }
     return Number.isInteger(minutes)
       ? `Every ${minutes} min`
       : `Every ${Math.round(schedule.everyMs / 1000)} sec`;
   }
   const weekdays = schedule.weekdays ?? [];
+  const zone = scheduleTimeZoneLabel(timeZone, runAt);
+  if (isZh) {
+    const days =
+      weekdays.length === 0
+        ? "每天"
+        : weekdays.length === 5 && weekdays.every((day) => day >= 1 && day <= 5)
+          ? "工作日"
+          : weekdays.map((day) => WEEKDAY_LABELS_ZH[day]).join("、");
+    return `${days} ${schedule.timeOfDay}${zone === undefined ? "" : ` ${zone}`}`;
+  }
   const days =
     weekdays.length === 0
       ? "Daily"
       : weekdays.length === 5 && weekdays.every((day) => day >= 1 && day <= 5)
         ? "Weekdays"
         : weekdays.map((day) => WEEKDAY_LABELS[day]).join(", ");
-  const zone = scheduleTimeZoneLabel(timeZone, runAt);
   return `${days} at ${schedule.timeOfDay}${zone === undefined ? "" : ` ${zone}`}`;
 }
 
@@ -144,63 +171,103 @@ export function toDateTimeLocalValue(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-export function scheduleDraftErrors(draft: DraftState) {
+export function scheduleDraftErrors(draft: DraftState, locale: ResolvedAppLocale = "en") {
+  const isZh = locale === "zh-CN";
   if (draft.scheduleMode === "once") {
     const runAt = new Date(draft.runAt);
     if (Number.isNaN(runAt.getTime()))
-      return [{ title: "Invalid run time", description: "Pick a date and time." }];
+      return [
+        {
+          title: isZh ? "运行时间无效" : "Invalid run time",
+          description: isZh ? "请选择日期和时间。" : "Pick a date and time.",
+        },
+      ];
     // A time skipped by a daylight saving change parses to a different clock time.
     if (toDateTimeLocalValue(runAt) !== draft.runAt)
       return [
-        { title: "Invalid run time", description: "That time does not exist in your time zone." },
+        {
+          title: isZh ? "运行时间无效" : "Invalid run time",
+          description: isZh
+            ? "你所在时区不存在该时间。"
+            : "That time does not exist in your time zone.",
+        },
       ];
     return [];
   }
   if (draft.scheduleMode === "fixed" && !draft.timeOfDay)
-    return [{ title: "Invalid run time", description: "Pick a time." }];
+    return [
+      {
+        title: isZh ? "运行时间无效" : "Invalid run time",
+        description: isZh ? "请选择时间。" : "Pick a time.",
+      },
+    ];
   if (draft.scheduleMode !== "webhook") return [];
   if (parseMaxDeliveryAge(draft.maxDeliveryAgeMinutes) === undefined)
     return [
       {
-        title: "Invalid age limit",
-        description: `Enter whole minutes from 1 to ${MAX_WEBHOOK_DELIVERY_AGE_MINUTES}, or leave it blank.`,
+        title: isZh ? "时效限制无效" : "Invalid age limit",
+        description: isZh
+          ? `请输入 1 到 ${MAX_WEBHOOK_DELIVERY_AGE_MINUTES} 之间的整分钟数，或留空。`
+          : `Enter whole minutes from 1 to ${MAX_WEBHOOK_DELIVERY_AGE_MINUTES}, or leave it blank.`,
       },
     ];
   const errors: Array<{ title: string; description: string }> = [];
   for (const [label, value] of [
-    ["Duplicate request key", draft.replayKey],
-    ["Coalesce key", draft.coalesceKey],
+    [isZh ? "重复请求键" : "Duplicate request key", draft.replayKey],
+    [isZh ? "合并键" : "Coalesce key", draft.coalesceKey],
   ] as const) {
     if (value.trim() && !isWebhookDedupeTemplate(value.trim()))
       errors.push({
-        title: "Invalid webhook settings",
-        description: `${label} must contain a valid request placeholder.`,
+        title: isZh ? "Webhook 设置无效" : "Invalid webhook settings",
+        description: isZh
+          ? `${label}必须包含有效的请求占位符。`
+          : `${label} must contain a valid request placeholder.`,
       });
   }
   const window = draft.coalesceWindowSeconds.trim();
   if (window && (!Number.isInteger(Number(window)) || Number(window) < 10 || Number(window) > 3600))
     errors.push({
-      title: "Invalid webhook settings",
-      description: "Coalesce window must be whole seconds from 10 to 3600.",
+      title: isZh ? "Webhook 设置无效" : "Invalid webhook settings",
+      description: isZh
+        ? "合并窗口必须是 10 到 3600 之间的整秒数。"
+        : "Coalesce window must be whole seconds from 10 to 3600.",
     });
   return errors;
 }
 
-export function webhookDeliveryLabel(delivery: {
-  readonly outcome: string;
-  readonly pendingWindow?: boolean | undefined;
-}) {
-  if (delivery.outcome === "accepted") return delivery.pendingWindow ? "Opened window" : "Ran";
-  const labels: Record<string, string> = {
-    dispatch_failed: "Run failed",
-    duplicate: "Duplicate",
-    coalesced: "Coalesced",
-    filtered: "Filtered",
-    rejected_signature: "Bad signature",
-    disabled: "Task paused",
-    rate_limited: "Rate limited",
-    expired: "Too old",
-  };
+export function webhookDeliveryLabel(
+  delivery: {
+    readonly outcome: string;
+    readonly pendingWindow?: boolean | undefined;
+  },
+  locale: ResolvedAppLocale = "en",
+) {
+  const isZh = locale === "zh-CN";
+  if (delivery.outcome === "accepted") {
+    if (isZh) return delivery.pendingWindow ? "已开启合并窗口" : "已运行";
+    return delivery.pendingWindow ? "Opened window" : "Ran";
+  }
+  const labels: Record<string, string> = isZh
+    ? {
+        dispatch_failed: "运行失败",
+        duplicate: "重复请求",
+        coalesced: "已合并",
+        filtered: "已过滤",
+        rejected_signature: "签名无效",
+        disabled: "任务已暂停",
+        rate_limited: "已限流",
+        expired: "已过期",
+      }
+    : {
+        dispatch_failed: "Run failed",
+        duplicate: "Duplicate",
+        coalesced: "Coalesced",
+        filtered: "Filtered",
+        rejected_signature: "Bad signature",
+        disabled: "Task paused",
+        rate_limited: "Rate limited",
+        expired: "Too old",
+      };
   return labels[delivery.outcome] ?? delivery.outcome.replaceAll("_", " ");
 }
 

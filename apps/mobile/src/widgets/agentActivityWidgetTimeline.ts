@@ -1,5 +1,6 @@
 import type { RelayAgentActivityAggregateState } from "@t3tools/contracts/relay";
 
+import { localizeMobileString } from "../i18n/mobileStrings";
 import type { AgentActivityProps } from "./AgentActivity";
 
 // The widget only refreshes while the app is open, so after this long it stops
@@ -17,7 +18,7 @@ export function agentActivityWidgetTimeline(source: AgentActivityWidgetSource, n
   if (source.kind !== "snapshot" || !source.aggregate) {
     const props: AgentActivityProps = {
       title: "T3 Code",
-      subtitle:
+      subtitle: localizeMobileString(
         source.kind === "signed-out"
           ? "Sign in to T3 Connect to see agents"
           : source.kind === "unavailable"
@@ -25,6 +26,7 @@ export function agentActivityWidgetTimeline(source: AgentActivityWidgetSource, n
             : source.kind === "loading"
               ? "Loading agents…"
               : "No active agents",
+      ),
       activeCount: 0,
       updatedAt,
       activities: [],
@@ -51,7 +53,7 @@ export function agentActivityWidgetTimeline(source: AgentActivityWidgetSource, n
     activities: props.activities.map((row) =>
       row.phase === "completed" || row.phase === "failed"
         ? row
-        : { ...row, phase: "stale", status: "Out of date" },
+        : { ...row, phase: "stale", status: localizeMobileString("Out of date") },
     ),
   };
   return [

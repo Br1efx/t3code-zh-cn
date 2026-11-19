@@ -1,4 +1,3 @@
-import { localizeWebString } from "~/i18n/localizeWebChildren";
 import { translateWebSource } from "~/i18n/messages";
 import { useI18n } from "~/i18n/WebI18nContext";
 import { useAtomRefresh, useAtomValue } from "@effect/atom-react";
@@ -145,9 +144,9 @@ function ModelPicker({
       </Combobox>
       {delisted ? (
         <p className="text-sm text-destructive" role="alert">
-          {localizeWebString(i18nLocale, "OpenRouter no longer lists ")}
-          {current}
-          {translateWebSource(i18nLocale, ". Dictation stays off until you choose another model.")}
+          {i18nLocale === "zh-CN"
+            ? `OpenRouter 已不再提供 ${current}。在你选择其他模型前，语音输入将保持关闭。`
+            : `OpenRouter no longer lists ${current}. Dictation stays off until you choose another model.`}
         </p>
       ) : selected ? (
         <p className="truncate text-xs text-muted-foreground">{selected.id}</p>
@@ -168,6 +167,7 @@ export function CloudVoiceConfiguration({
   close: () => void;
 }) {
   const { locale: translationLocale } = useI18n();
+  const isZh = translationLocale === "zh-CN";
   const id = environment.environmentId;
   const name = CLOUD_SPEECH_LABELS[provider];
   const company = CLOUD_SPEECH_PROVIDER_NAMES[provider];
@@ -244,7 +244,12 @@ export function CloudVoiceConfiguration({
       commit?.();
       close();
     } catch {
-      setError("Couldn’t save this change. Check your connection and try again.");
+      setError(
+        translateWebSource(
+          translationLocale,
+          "Couldn’t save this change. Check your connection and try again.",
+        ),
+      );
     }
     setBusy(false);
   };
@@ -260,13 +265,15 @@ export function CloudVoiceConfiguration({
 
   const keyField = (
     <>
-      <Label htmlFor="voice-cloud-key">{routed && saved ? "Replace API key" : "API key"}</Label>
+      <Label htmlFor="voice-cloud-key">
+        {translateWebSource(translationLocale, routed && saved ? "Replace API key" : "API key")}
+      </Label>
       <div className="flex min-w-0 items-start gap-2">
         {sources.length > 0 && (
           <SecretSourceSelect
             value={sourceId}
             sources={sources}
-            label={`${company} API key`}
+            label={isZh ? `${company} API 密钥` : `${company} API key`}
             disabled={busy}
             onValueChange={(next) => {
               setSourceId(next);
@@ -281,7 +288,7 @@ export function CloudVoiceConfiguration({
               key={sourceId}
               id="voice-cloud-key"
               name="reference"
-              aria-label={`${company} API key reference`}
+              aria-label={isZh ? `${company} API 密钥引用` : `${company} API key reference`}
               autoFocus={!routed}
               placeholder={source?.referencePlaceholder}
               value={draft}
@@ -294,7 +301,7 @@ export function CloudVoiceConfiguration({
             <SecretInput
               id="voice-cloud-key"
               name="key"
-              aria-label={`${company} API key`}
+              aria-label={isZh ? `${company} API 密钥` : `${company} API key`}
               autoFocus={!routed}
               placeholder={translateWebSource(translationLocale, "Enter API key")}
               value={draft}
@@ -308,12 +315,18 @@ export function CloudVoiceConfiguration({
       </div>
       <p className="text-sm text-muted-foreground">
         {draft.trim() && !credential
-          ? (source?.invalidReferenceMessage ?? "Enter an API key, not a URL or secret reference.")
+          ? (source?.invalidReferenceMessage ??
+            translateWebSource(
+              translationLocale,
+              "Enter an API key, not a URL or secret reference.",
+            ))
           : active && !routed
             ? translateWebSource(translationLocale, "Updating the key keeps dictation enabled.")
             : routed && saved
               ? translateWebSource(translationLocale, "Leave blank to keep the saved key.")
-              : `Anyone with dictation access to ${environment.label} can bill this key.`}
+              : isZh
+                ? `所有在 ${environment.label} 上拥有语音输入权限的成员都会使用此密钥计费。`
+                : `Anyone with dictation access to ${environment.label} can bill this key.`}
       </p>
     </>
   );
@@ -329,40 +342,55 @@ export function CloudVoiceConfiguration({
         <DialogHeader>
           <DialogTitle>
             {remove
-              ? `Remove the ${company} key?`
+              ? isZh
+                ? `要移除 ${company} 密钥吗？`
+                : `Remove the ${company} key?`
               : active
                 ? routed
-                  ? "Manage OpenRouter dictation"
-                  : `Manage ${company} key`
-                : `Use ${name} for dictation?`}
+                  ? translateWebSource(translationLocale, "Manage OpenRouter dictation")
+                  : isZh
+                    ? `管理 ${company} 密钥`
+                    : `Manage ${company} key`
+                : isZh
+                  ? `要使用 ${name} 进行语音输入吗？`
+                  : `Use ${name} for dictation?`}
           </DialogTitle>
           <DialogDescription>
             {remove
-              ? `Everyone using ${name} for dictation on ${environment.label} will lose access.`
+              ? isZh
+                ? `在 ${environment.label} 上使用 ${name} 进行语音输入的所有成员都将失去访问权限。`
+                : `Everyone using ${name} for dictation on ${environment.label} will lose access.`
               : active && !routed
-                ? `Anyone with dictation access to ${environment.label} can use this API key.`
-                : cloudSpeechDisclosure(provider, environment.label)}
+                ? isZh
+                  ? `所有在 ${environment.label} 上拥有语音输入权限的成员都可以使用此 API 密钥。`
+                  : `Anyone with dictation access to ${environment.label} can use this API key.`
+                : isZh
+                  ? routed
+                    ? `停止录音后，${environment.label} 会将录音发送至 OpenRouter。OpenRouter 会决定由哪家服务运行你的模型。T3 Code 会请求零数据留存，但你的 OpenRouter 账号可能允许安全留存。`
+                    : `停止录音后，${environment.label} 会将你的录音以及包含项目名称在内的词表提示发送至 ${company}。`
+                  : cloudSpeechDisclosure(provider, environment.label)}
           </DialogDescription>
         </DialogHeader>
         {!remove && (
           <DialogPanel>
             {!connected ? (
               <p>
-                {localizeWebString(translationLocale, "Connect to ")}
-                {environment.label}
-                {localizeWebString(translationLocale, " with dictation access to continue.")}
+                {isZh
+                  ? `请先连接到 ${environment.label} 并确保拥有语音输入权限以继续。`
+                  : `Connect to ${environment.label} with dictation access to continue.`}
               </p>
             ) : AsyncResult.isFailure(presence) && saved === undefined ? (
               <Button size="sm" variant="outline" onClick={refresh}>
-                Retry loading API key
+                {translateWebSource(translationLocale, "Retry loading API key")}
               </Button>
             ) : routed &&
               AsyncResult.isSuccess(presence) &&
               presence.value &&
               saved === undefined ? (
               <p>
-                {translateWebSource(translationLocale, "Update")} {environment.label}
-                {localizeWebString(translationLocale, " to use OpenRouter dictation.")}
+                {isZh
+                  ? `请更新 ${environment.label} 以使用 OpenRouter 语音输入。`
+                  : `Update ${environment.label} to use OpenRouter dictation.`}
               </p>
             ) : saved === undefined ? (
               <p role="status">
@@ -391,7 +419,7 @@ export function CloudVoiceConfiguration({
                     />
                   ) : AsyncResult.isFailure(models) ? (
                     <Button size="sm" variant="outline" type="button" onClick={refreshModels}>
-                      Retry loading models
+                      {translateWebSource(translationLocale, "Retry loading models")}
                     </Button>
                   ) : (
                     <p role="status" className="text-sm text-muted-foreground">
@@ -403,18 +431,15 @@ export function CloudVoiceConfiguration({
                   <div className="grid gap-2">{keyField}</div>
                 ) : !saved ? (
                   <p>
-                    {localizeWebString(translationLocale, "Ask an administrator on ")}
-                    {environment.label}
-                    {localizeWebString(translationLocale, " to add an API key.")}
+                    {isZh
+                      ? `请联系 ${environment.label} 的管理员添加 API 密钥。`
+                      : `Ask an administrator on ${environment.label} to add an API key.`}
                   </p>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    {localizeWebString(translationLocale, "Uses the API key saved on ")}
-                    {environment.label}
-                    {translateWebSource(
-                      translationLocale,
-                      ". This choice applies only to this device.",
-                    )}
+                    {isZh
+                      ? `使用保存在 ${environment.label} 上的 API 密钥。此选择仅适用于当前设备。`
+                      : `Uses the API key saved on ${environment.label}. This choice applies only to this device.`}
                   </p>
                 )}
               </form>
@@ -431,9 +456,9 @@ export function CloudVoiceConfiguration({
               </form>
             ) : !saved ? (
               <p>
-                {localizeWebString(translationLocale, "Ask an administrator on ")}
-                {environment.label}
-                {localizeWebString(translationLocale, " to add an API key.")}
+                {isZh
+                  ? `请联系 ${environment.label} 的管理员添加 API 密钥。`
+                  : `Ask an administrator on ${environment.label} to add an API key.`}
               </p>
             ) : (
               <p className="text-sm text-muted-foreground">
@@ -460,7 +485,7 @@ export function CloudVoiceConfiguration({
                 disabled={busy}
                 onClick={() => setRemove(true)}
               >
-                Remove key…
+                {translateWebSource(translationLocale, "Remove key…")}
               </Button>
             </div>
           )}
@@ -476,17 +501,17 @@ export function CloudVoiceConfiguration({
                 disabled={busy}
                 onClick={() => void saveKey(null, false)}
               >
-                Remove key
+                {translateWebSource(translationLocale, "Remove key")}
               </Button>
             ) : routed ? (
               saved !== undefined && (saved || canManage) ? (
                 <Button type="submit" form={formId} size="sm" disabled={busy || !canSubmit}>
-                  {active ? "Save" : "Save and enable"}
+                  {translateWebSource(translationLocale, active ? "Save" : "Save and enable")}
                 </Button>
               ) : null
             ) : editingKey ? (
               <Button type="submit" form={formId} size="sm" disabled={busy || !credential}>
-                {active ? "Save key" : "Save and enable"}
+                {translateWebSource(translationLocale, active ? "Save key" : "Save and enable")}
               </Button>
             ) : saved && !active ? (
               <Button
@@ -497,7 +522,7 @@ export function CloudVoiceConfiguration({
                   close();
                 }}
               >
-                Use {name}
+                {isZh ? `使用 ${name}` : `Use ${name}`}
               </Button>
             ) : null)}
         </DialogFooter>

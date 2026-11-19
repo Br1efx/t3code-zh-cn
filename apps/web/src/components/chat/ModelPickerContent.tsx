@@ -1079,13 +1079,14 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
             <ModelPickerProviderNotices
               setupEntries={providerSetupEntries}
               updateRequiredNotices={updateRequiredNotices}
-              emptyLabel={
+              emptyLabel={translateWebSource(
+                i18nLocale,
                 selectedInstanceId === "favorites" && !isSearching
                   ? "No favorites yet"
                   : workspaceModelsScanning
                     ? "Searching project models..."
-                    : "No models found"
-              }
+                    : "No models found",
+              )}
               onRequestClose={onRequestClose}
               onOpenProviderSetup={onOpenProviderSetup}
             />

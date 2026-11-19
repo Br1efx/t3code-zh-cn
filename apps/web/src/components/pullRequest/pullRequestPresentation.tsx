@@ -391,13 +391,23 @@ export function pullRequestReviewOutcomeRingClassName(
 export function pullRequestReviewOutcomeStaleLabel(
   outcome: PullRequestReviewOutcome,
   t?: WebTranslate,
+  locale?: string,
 ): string {
-  if (!t) return `${REVIEW_OUTCOME_PRESENTATION[outcome].label} earlier changes`;
-  return outcome === "approved"
-    ? t("pullRequests.review.approvedEarlier")
-    : outcome === "changes-requested"
-      ? t("pullRequests.review.changesRequestedEarlier")
-      : t("pullRequests.review.dismissedEarlier");
+  if (t) {
+    return outcome === "approved"
+      ? t("pullRequests.review.approvedEarlier")
+      : outcome === "changes-requested"
+        ? t("pullRequests.review.changesRequestedEarlier")
+        : t("pullRequests.review.dismissedEarlier");
+  }
+  if (locale === "zh-CN") {
+    return outcome === "approved"
+      ? "曾批准较早的更改"
+      : outcome === "changes-requested"
+        ? "曾要求修改较早的更改"
+        : "较早的评审已撤销";
+  }
+  return `${REVIEW_OUTCOME_PRESENTATION[outcome].label} earlier changes`;
 }
 
 export function PullRequestReviewOutcomeIcon({

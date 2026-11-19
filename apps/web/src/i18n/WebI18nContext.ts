@@ -23,6 +23,20 @@ export const WebI18nContext = createContext<WebI18nContextValue>({
   t: translateEnglish,
 });
 
+let activeWebLocale: ResolvedAppLocale | null = null;
+
+export function setActiveWebLocale(locale: ResolvedAppLocale): void {
+  activeWebLocale = locale;
+}
+
+export function getActiveWebLocale(): ResolvedAppLocale {
+  if (activeWebLocale !== null) return activeWebLocale;
+  if (typeof document !== "undefined" && document.documentElement?.lang === "zh-CN") {
+    return "zh-CN";
+  }
+  return "en";
+}
+
 /** Read locale state without importing the settings store or connection runtime. */
 export function useI18n(): WebI18nContextValue {
   return useContext(WebI18nContext);

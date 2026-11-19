@@ -499,7 +499,11 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
               className="flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-(--control-radius) px-2 font-medium text-base text-foreground/80 tabular-nums outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-64 sm:text-sm aria-pressed:bg-accent/60 aria-pressed:text-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:text-muted-foreground"
               {...pointerFocusProps}
               aria-pressed={!keepFullHistory}
-              aria-label={`Compact ${compactTokens} tokens of history before sending`}
+              aria-label={
+                uiLocale === "zh-CN"
+                  ? `发送前压缩 ${compactTokens} tokens 历史记录`
+                  : `Compact ${compactTokens} tokens of history before sending`
+              }
               disabled={!canOperateThread}
               onClick={onToggleKeepFullHistory}
             />
@@ -515,11 +519,20 @@ export const ComposerPrimaryActions = memo(function ComposerPrimaryActions({
         </TooltipTrigger>
         <TooltipPopup>
           <div>
-            {keepFullHistory
-              ? `Next send keeps all ${compactTokens} tokens.`
-              : `Next send compacts ${compactTokens} tokens first.`}
+            {uiLocale === "zh-CN"
+              ? keepFullHistory
+                ? `下次发送将保留全部 ${compactTokens} tokens。`
+                : `下次发送将先压缩 ${compactTokens} tokens。`
+              : keepFullHistory
+                ? `Next send keeps all ${compactTokens} tokens.`
+                : `Next send compacts ${compactTokens} tokens first.`}
           </div>
-          <div>{keepFullHistory ? "Click to compact first" : "Click to keep full history"}</div>
+          <div>
+            {translateWebSource(
+              uiLocale,
+              keepFullHistory ? "Click to compact first" : "Click to keep full history",
+            )}
+          </div>
         </TooltipPopup>
       </Tooltip>
       {children}

@@ -1,6 +1,6 @@
 import { useI18n } from "~/i18n/WebI18nContext";
+import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
 import { translateWebSource } from "~/i18n/messages";
-import { localizeWebString } from "~/i18n/localizeWebChildren";
 import type { AuthConnectDevice, EnvironmentId } from "@t3tools/contracts";
 import {
   isAtomCommandInterrupted,
@@ -9,6 +9,7 @@ import {
 import * as DateTime from "effect/DateTime";
 import { useState } from "react";
 
+import { localizeRelayErrorMessage } from "~/cloud/relayFailureReason";
 import type { ServerPairingLinkRecord } from "~/environments/primary";
 import { authEnvironment } from "~/state/auth";
 import { useAtomCommand } from "~/state/use-atom-command";
@@ -22,14 +23,21 @@ import {
 import { ITEM_ROW_CLASSNAME, ITEM_ROW_INNER_CLASSNAME } from "./itemRows";
 import { SettingsSection } from "./settingsLayout";
 
-function reportFailure(title: string, result: Parameters<typeof isAtomCommandInterrupted>[0]) {
+function reportFailure(
+  locale: ResolvedAppLocale,
+  title: string,
+  result: Parameters<typeof isAtomCommandInterrupted>[0],
+) {
   if (result._tag !== "Failure" || isAtomCommandInterrupted(result)) return;
   const error = squashAtomCommandFailure(result);
   toastManager.add(
     stackedThreadToast({
       type: "error",
-      title,
-      description: error instanceof Error ? error.message : "An error occurred.",
+      title: translateWebSource(locale, title),
+      description:
+        error instanceof Error
+          ? localizeRelayErrorMessage(locale, error.message)
+          : translateWebSource(locale, "An error occurred."),
     }),
   );
 }
@@ -71,15 +79,13 @@ export function ConnectDeviceApprovalSettings({
             <div className={ITEM_ROW_INNER_CLASSNAME}>
               <div className="min-w-0 flex-1 space-y-1">
                 <p className="text-sm font-medium text-foreground">
-                  {translateWebSource(i18nLocale, "Waiting for approval ·")}{" "}
+                  {translateWebSource(i18nLocale, "Waiting for approval")} ·{" "}
                   <span className="font-mono tabular-nums">{connectRequest.verificationCode}</span>
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {describeConnectDeviceClient(connectRequest)}
-                  {translateWebSource(
-                    i18nLocale,
-                    ". Approve only if the device in front of you shows this code.",
-                  )}
+                  {i18nLocale === "zh-CN"
+                    ? `${describeConnectDeviceClient(connectRequest, i18nLocale)}。仅在你面前的设备显示此验证码时再批准。`
+                    : `${describeConnectDeviceClient(connectRequest, i18nLocale)}. Approve only if the device in front of you shows this code.`}
                 </p>
               </div>
               <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto sm:justify-end">
@@ -90,6 +96,7 @@ export function ConnectDeviceApprovalSettings({
                   onClick={() =>
                     void run(request.id, async () =>
                       reportFailure(
+                        i18nLocale,
                         "Could not deny the device",
                         await deny({ environmentId, input: { id: request.id } }),
                       ),
@@ -104,6 +111,7 @@ export function ConnectDeviceApprovalSettings({
                   onClick={() =>
                     void run(request.id, async () =>
                       reportFailure(
+                        i18nLocale,
                         "Could not approve the device",
                         await approve({ environmentId, input: { pairingLinkId: request.id } }),
                       ),
@@ -119,18 +127,20 @@ export function ConnectDeviceApprovalSettings({
       })}
       {devices.map((device) => {
         const busy = busyId === device.proofKeyThumbprint;
+        const deviceName = connectDeviceName(device, i18nLocale);
         return (
           <div key={device.proofKeyThumbprint} className={ITEM_ROW_CLASSNAME}>
             <div className={ITEM_ROW_INNER_CLASSNAME}>
               <div className="min-w-0 flex-1 space-y-1">
                 <p className="text-sm font-medium text-foreground">
-                  {describeConnectDeviceClient(device)}
+                  {describeConnectDeviceClient(device, i18nLocale)}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   <span className="font-mono tabular-nums">{device.verificationCode}</span>
                   <span aria-hidden> · </span>
-                  {localizeWebString(i18nLocale, "Trusted since ")}
-                  {formatAccessTimestamp(DateTime.formatIso(device.approvedAt))}
+                  {i18nLocale === "zh-CN"
+                    ? `自 ${formatAccessTimestamp(DateTime.formatIso(device.approvedAt), i18nLocale)} 起受信任`
+                    : `Trusted since ${formatAccessTimestamp(DateTime.formatIso(device.approvedAt), i18nLocale)}`}
                 </p>
               </div>
               <div className="flex w-full shrink-0 items-center gap-2 sm:w-auto sm:justify-end">
@@ -139,16 +149,21 @@ export function ConnectDeviceApprovalSettings({
                   variant="destructive-outline"
                   disabled={!canWrite || busy}
                   onClick={() =>
-                    requestRevoke(`Revoke ${connectDeviceName(device)}?`, () =>
-                      run(device.proofKeyThumbprint, async () =>
-                        reportFailure(
-                          "Could not revoke the device",
-                          await revoke({
-                            environmentId,
-                            input: { proofKeyThumbprint: device.proofKeyThumbprint },
-                          }),
+                    requestRevoke(
+                      i18nLocale === "zh-CN"
+                        ? `撤销 ${deviceName} 的访问权限？`
+                        : `Revoke ${deviceName}?`,
+                      () =>
+                        run(device.proofKeyThumbprint, async () =>
+                          reportFailure(
+                            i18nLocale,
+                            "Could not revoke the device",
+                            await revoke({
+                              environmentId,
+                              input: { proofKeyThumbprint: device.proofKeyThumbprint },
+                            }),
+                          ),
                         ),
-                      ),
                     )
                   }
                 >

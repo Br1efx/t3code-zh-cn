@@ -10,20 +10,29 @@ import {
   unlinkManagedRelayT3ChatCommand,
   useManagedRelayT3ChatLink,
 } from "../../cloud/managedRelayState";
+import { localizeRelayErrorMessage, relayFailureReason } from "../../cloud/relayFailureReason";
+import type { ResolvedAppLocale } from "@t3tools/shared/appLocale";
+import { translateWebSource } from "../../i18n/messages";
+import { useI18n } from "../../i18n/WebI18nContext";
 import { readLocalApi } from "../../localApi";
 import { useAtomCommand } from "../../state/use-atom-command";
 import { toastManager } from "../ui/toast";
 
-function reportFailure(title: string, cause: unknown) {
+function reportFailure(locale: ResolvedAppLocale, title: string, cause: unknown) {
   const traceId = findErrorTraceId(cause);
+  const description =
+    relayFailureReason(cause, locale) ??
+    (cause instanceof Error
+      ? localizeRelayErrorMessage(locale, cause.message)
+      : translateWebSource(locale, "Try again."));
   toastManager.add({
     type: "error",
-    title,
-    description: cause instanceof Error ? cause.message : "Try again.",
+    title: translateWebSource(locale, title),
+    description,
     data: traceId
       ? {
           secondaryActionProps: {
-            children: "Copy trace ID",
+            children: translateWebSource(locale, "Copy trace ID"),
             onClick: () => void navigator.clipboard?.writeText(traceId),
           },
         }
@@ -33,6 +42,7 @@ function reportFailure(title: string, cause: unknown) {
 
 /** Starts and removes the T3 Chat link that raises the T3 Connect tunnel cap. */
 export function useT3ChatLink() {
+  const { locale } = useI18n();
   const linkState = useManagedRelayT3ChatLink();
   const createLinkRequest = useAtomCommand(createManagedRelayT3ChatLinkRequestCommand, {
     reportFailure: false,
@@ -53,7 +63,7 @@ export function useT3ChatLink() {
         ?.shell.openExternal(result.value)
         .catch(() => undefined);
     } else if (!isAtomCommandInterrupted(result)) {
-      reportFailure("Could not start linking", squashAtomCommandFailure(result));
+      reportFailure(locale, "Could not start linking", squashAtomCommandFailure(result));
     }
     setPending(null);
   };
@@ -67,7 +77,7 @@ export function useT3ChatLink() {
       setLinkUrl(null);
       linkState.refresh();
     } else if (!isAtomCommandInterrupted(result)) {
-      reportFailure("Could not unlink T3 Chat", squashAtomCommandFailure(result));
+      reportFailure(locale, "Could not unlink T3 Chat", squashAtomCommandFailure(result));
     }
     setPending(null);
   };

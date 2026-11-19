@@ -108,11 +108,17 @@ export function PullRequestCheckoutMenu({
                 <Button
                   size="xs"
                   variant="outline"
-                  aria-label={handoff?.startsWith("checkout") ? "Checking out..." : "Check out"}
+                  aria-label={translateWebSource(
+                    translationLocale,
+                    handoff?.startsWith("checkout") ? "Checking out..." : "Check out",
+                  )}
                 >
                   <GitBranchIcon aria-hidden className="size-3.5" />
                   <span className="@max-[35rem]/pr-header:hidden">
-                    {handoff?.startsWith("checkout") ? "Checking out..." : "Check out"}
+                    {translateWebSource(
+                      translationLocale,
+                      handoff?.startsWith("checkout") ? "Checking out..." : "Check out",
+                    )}
                   </span>
                   <ChevronDownIcon aria-hidden className="size-3.5 text-muted-foreground" />
                 </Button>
@@ -120,7 +126,9 @@ export function PullRequestCheckoutMenu({
             />
           }
         />
-        <TooltipPopup>Check out this {term}</TooltipPopup>
+        <TooltipPopup>
+          {translationLocale === "zh-CN" ? "检出此合并请求" : `Check out this ${term}`}
+        </TooltipPopup>
       </Tooltip>
       <MenuPopup align="end" side="bottom">
         <MenuItem disabled={!canPrepareWorktree} onClick={() => onCheckout("worktree")}>
@@ -140,7 +148,7 @@ export function PullRequestCheckoutMenu({
           <span className="flex min-w-0 flex-col">
             <span>{translateWebSource(translationLocale, "In this repository")}</span>
             <span className="text-xs text-muted-foreground">
-              Switches the branch you are working in.
+              {translateWebSource(translationLocale, "Switches the branch you are working in.")}
             </span>
           </span>
         </MenuItem>
@@ -166,6 +174,7 @@ export function PullRequestResolveConflictsButton({
   unavailable: boolean;
   onResolve: () => void;
 }) {
+  const { locale: translationLocale } = useI18n();
   return (
     <Tooltip>
       <TooltipTrigger
@@ -176,18 +185,27 @@ export function PullRequestResolveConflictsButton({
               variant="destructive-outline"
               disabled={handoff !== null || unavailable}
               onClick={onResolve}
-              aria-label={handoff === "conflicts" ? "Preparing..." : "Resolve conflicts"}
+              aria-label={translateWebSource(
+                translationLocale,
+                handoff === "conflicts" ? "Preparing..." : "Resolve conflicts",
+              )}
             >
               <PullRequestGlyph.conflicting aria-hidden className="size-3.5" />
               <span className="@max-[30rem]/pr-header:hidden">
-                {handoff === "conflicts" ? "Preparing..." : "Resolve conflicts"}
+                {translateWebSource(
+                  translationLocale,
+                  handoff === "conflicts" ? "Preparing..." : "Resolve conflicts",
+                )}
               </span>
             </Button>
           </span>
         }
       />
       <TooltipPopup side="top">
-        {handoff === "conflicts" ? "Preparing..." : "Resolve conflicts"}
+        {translateWebSource(
+          translationLocale,
+          handoff === "conflicts" ? "Preparing..." : "Resolve conflicts",
+        )}
       </TooltipPopup>
     </Tooltip>
   );
@@ -224,21 +242,39 @@ export function PullRequestPrimaryAction({
   const { locale: translationLocale } = useI18n();
   const inlineConfirm = useInlineActionConfirm(pullRequestKey);
   const actionPending = pendingAction !== null;
+  const localizedArmedAutoMergeLabel = translateWebSource(translationLocale, armedAutoMergeLabel);
+  const localizedPendingAutoMergeLabel = translateWebSource(
+    translationLocale,
+    pendingAutoMergeLabel,
+  );
+  const localizedSelectedMergeMethodLabel = translateWebSource(
+    translationLocale,
+    selectedMergeMethodLabel,
+  );
+  const autoMergeArmedTooltip =
+    translationLocale === "zh-CN"
+      ? `${localizedArmedAutoMergeLabel}：满足要求后托管平台将自动合并此更改`
+      : `${armedAutoMergeLabel}: the host will merge this on its own once its requirements are met`;
   return (
     <>
       {autoMergeArmed && primaryAction !== "auto-merge-armed" ? (
         <Tooltip>
           <TooltipTrigger
             render={
-              <Badge size="control" variant="info" role="img" aria-label={armedAutoMergeLabel}>
+              <Badge
+                size="control"
+                variant="info"
+                role="img"
+                aria-label={localizedArmedAutoMergeLabel}
+              >
                 <PullRequestGlyph.merged aria-hidden className="size-3.5" />
-                <span className="@max-[30rem]/pr-header:hidden">{armedAutoMergeLabel}</span>
+                <span className="@max-[30rem]/pr-header:hidden">
+                  {localizedArmedAutoMergeLabel}
+                </span>
               </Badge>
             }
           />
-          <TooltipPopup side="top">
-            {armedAutoMergeLabel}: the host will merge this on its own once its requirements are met
-          </TooltipPopup>
+          <TooltipPopup side="top">{autoMergeArmedTooltip}</TooltipPopup>
         </Tooltip>
       ) : null}
       {primaryAction === "resolve" ? (
@@ -286,10 +322,10 @@ export function PullRequestPrimaryAction({
                     : {})}
                   aria-label={
                     pendingAction === "enable-auto-merge"
-                      ? "Enabling..."
+                      ? translateWebSource(translationLocale, "Enabling...")
                       : inlineConfirm.isArmed("enable-auto-merge")
-                        ? "Confirm auto-merge?"
-                        : pendingAutoMergeLabel
+                        ? translateWebSource(translationLocale, "Confirm auto-merge?")
+                        : localizedPendingAutoMergeLabel
                   }
                 >
                   {inlineConfirm.isArmed("enable-auto-merge") ? (
@@ -300,14 +336,14 @@ export function PullRequestPrimaryAction({
                   <AnimatedWidth className="@max-[30rem]/pr-header:hidden">
                     <span className="grid">
                       <span aria-hidden className="invisible col-start-1 row-start-1">
-                        {pendingAutoMergeLabel}
+                        {localizedPendingAutoMergeLabel}
                       </span>
                       <span className="col-start-1 row-start-1">
                         {pendingAction === "enable-auto-merge"
-                          ? "Enabling..."
+                          ? translateWebSource(translationLocale, "Enabling...")
                           : inlineConfirm.isArmed("enable-auto-merge")
-                            ? "Confirm auto-merge?"
-                            : pendingAutoMergeLabel}
+                            ? translateWebSource(translationLocale, "Confirm auto-merge?")
+                            : localizedPendingAutoMergeLabel}
                       </span>
                     </span>
                   </AnimatedWidth>
@@ -318,25 +354,30 @@ export function PullRequestPrimaryAction({
           <TooltipPopup side="top">
             {mergeBlockedReason ??
               (pendingAction === "enable-auto-merge"
-                ? "Enabling..."
+                ? translateWebSource(translationLocale, "Enabling...")
                 : inlineConfirm.isArmed("enable-auto-merge")
-                  ? "Confirm auto-merge?"
-                  : pendingAutoMergeLabel)}
+                  ? translateWebSource(translationLocale, "Confirm auto-merge?")
+                  : localizedPendingAutoMergeLabel)}
           </TooltipPopup>
         </Tooltip>
       ) : primaryAction === "auto-merge-armed" ? (
         <Tooltip>
           <TooltipTrigger
             render={
-              <Badge size="control" variant="info" role="img" aria-label={armedAutoMergeLabel}>
+              <Badge
+                size="control"
+                variant="info"
+                role="img"
+                aria-label={localizedArmedAutoMergeLabel}
+              >
                 <PullRequestGlyph.merged aria-hidden className="size-3.5" />
-                <span className="@max-[30rem]/pr-header:hidden">{armedAutoMergeLabel}</span>
+                <span className="@max-[30rem]/pr-header:hidden">
+                  {localizedArmedAutoMergeLabel}
+                </span>
               </Badge>
             }
           />
-          <TooltipPopup side="top">
-            {armedAutoMergeLabel}: the host will merge this on its own once its requirements are met
-          </TooltipPopup>
+          <TooltipPopup side="top">{autoMergeArmedTooltip}</TooltipPopup>
         </Tooltip>
       ) : primaryAction === "merge" ? (
         <Tooltip>
@@ -354,10 +395,10 @@ export function PullRequestPrimaryAction({
                     : {})}
                   aria-label={
                     pendingAction === "merge"
-                      ? "Merging..."
+                      ? translateWebSource(translationLocale, "Merging...")
                       : inlineConfirm.isArmed("merge")
-                        ? "Confirm merge?"
-                        : selectedMergeMethodLabel
+                        ? translateWebSource(translationLocale, "Confirm merge?")
+                        : localizedSelectedMergeMethodLabel
                   }
                 >
                   {inlineConfirm.isArmed("merge") ? (
@@ -368,14 +409,14 @@ export function PullRequestPrimaryAction({
                   <AnimatedWidth className="@max-[30rem]/pr-header:hidden">
                     <span className="grid">
                       <span aria-hidden className="invisible col-start-1 row-start-1">
-                        {selectedMergeMethodLabel}
+                        {localizedSelectedMergeMethodLabel}
                       </span>
                       <span className="col-start-1 row-start-1">
                         {pendingAction === "merge"
-                          ? "Merging..."
+                          ? translateWebSource(translationLocale, "Merging...")
                           : inlineConfirm.isArmed("merge")
-                            ? "Confirm merge?"
-                            : selectedMergeMethodLabel}
+                            ? translateWebSource(translationLocale, "Confirm merge?")
+                            : localizedSelectedMergeMethodLabel}
                       </span>
                     </span>
                   </AnimatedWidth>
@@ -386,10 +427,10 @@ export function PullRequestPrimaryAction({
           <TooltipPopup side="top">
             {mergeBlockedReason ??
               (pendingAction === "merge"
-                ? "Merging..."
+                ? translateWebSource(translationLocale, "Merging...")
                 : inlineConfirm.isArmed("merge")
-                  ? "Confirm merge?"
-                  : selectedMergeMethodLabel)}
+                  ? translateWebSource(translationLocale, "Confirm merge?")
+                  : localizedSelectedMergeMethodLabel)}
           </TooltipPopup>
         </Tooltip>
       ) : (primaryAction === "merged" || primaryAction === "closed") &&
@@ -417,6 +458,14 @@ export function PullRequestApproveWorkflowsButton({
   const { locale: translationLocale } = useI18n();
   const inlineConfirm = useInlineActionConfirm(pullRequestKey);
   const actionPending = pendingAction !== null;
+  const buttonLabel = translateWebSource(
+    translationLocale,
+    pendingAction === "approve-workflows"
+      ? "Approving..."
+      : inlineConfirm.isArmed("approve-workflows")
+        ? "Confirm approve?"
+        : "Approve workflows to run",
+  );
   return (
     <Tooltip>
       <TooltipTrigger
@@ -427,13 +476,7 @@ export function PullRequestApproveWorkflowsButton({
               variant="warning-outline"
               disabled={actionPending}
               {...inlineConfirm.props("approve-workflows", () => void perform("approve-workflows"))}
-              aria-label={
-                pendingAction === "approve-workflows"
-                  ? "Approving..."
-                  : inlineConfirm.isArmed("approve-workflows")
-                    ? "Confirm approve?"
-                    : "Approve workflows to run"
-              }
+              aria-label={buttonLabel}
             >
               <PlayIcon aria-hidden className="size-3.5" />
               <span className="inline-grid">
@@ -443,25 +486,13 @@ export function PullRequestApproveWorkflowsButton({
                 <span aria-hidden className="invisible col-start-1 row-start-1">
                   {translateWebSource(translationLocale, "Confirm approve?")}
                 </span>
-                <span className="col-start-1 row-start-1">
-                  {pendingAction === "approve-workflows"
-                    ? "Approving..."
-                    : inlineConfirm.isArmed("approve-workflows")
-                      ? "Confirm approve?"
-                      : "Approve workflows to run"}
-                </span>
+                <span className="col-start-1 row-start-1">{buttonLabel}</span>
               </span>
             </Button>
           </span>
         }
       />
-      <TooltipPopup side="top">
-        {pendingAction === "approve-workflows"
-          ? "Approving..."
-          : inlineConfirm.isArmed("approve-workflows")
-            ? "Confirm approve?"
-            : "Approve workflows to run"}
-      </TooltipPopup>
+      <TooltipPopup side="top">{buttonLabel}</TooltipPopup>
     </Tooltip>
   );
 }

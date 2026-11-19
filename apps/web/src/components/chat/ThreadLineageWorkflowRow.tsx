@@ -163,7 +163,11 @@ export function ThreadLineageWorkflowRow({
                     variant="ghost"
                     part="icon"
                     tone="destructive"
-                    aria-label={`Stop workflow ${label}`}
+                    aria-label={
+                      translationLocale === "zh-CN"
+                        ? `停止工作流 ${label}`
+                        : `Stop workflow ${label}`
+                    }
                     disabled={stopDisabled}
                     onClick={onStop}
                   />
@@ -175,7 +179,9 @@ export function ThreadLineageWorkflowRow({
                   <SquareIcon aria-hidden className="size-3 fill-current" />
                 )}
               </TooltipTrigger>
-              <TooltipPopup side="left">Stop entire workflow</TooltipPopup>
+              <TooltipPopup side="left">
+                {translationLocale === "zh-CN" ? "停止整个工作流" : "Stop entire workflow"}
+              </TooltipPopup>
             </Tooltip>
           </div>
         ) : null}
@@ -185,7 +191,11 @@ export function ThreadLineageWorkflowRow({
           variant="ghost"
           part="secondary"
           aria-expanded={expanded}
-          aria-label={`${expanded ? "Collapse" : "Expand"} ${label}`}
+          aria-label={
+            translationLocale === "zh-CN"
+              ? `${expanded ? "收起" : "展开"} ${label}`
+              : `${expanded ? "Collapse" : "Expand"} ${label}`
+          }
           onClick={() => setExpanded((value) => !value)}
         >
           <ChevronDownIcon
