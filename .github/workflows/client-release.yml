@@ -245,6 +245,7 @@ jobs:
     needs: [source, quality, mobile_static, tests]
     if: >-
       always() &&
+      !cancelled() &&
       github.event_name == 'workflow_dispatch' &&
       inputs.build_clients &&
       needs.source.result == 'success' &&
@@ -299,6 +300,11 @@ jobs:
   linux:
     name: Linux x64 and embedded Windows WSL runtime
     needs: [source, bundle]
+    if: >-
+      always() &&
+      !cancelled() &&
+      needs.source.result == 'success' &&
+      needs.bundle.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
@@ -374,6 +380,12 @@ jobs:
   desktop:
     name: Desktop ${{ matrix.platform }} ${{ matrix.arch }} (unsigned)
     needs: [source, bundle, linux]
+    if: >-
+      always() &&
+      !cancelled() &&
+      needs.source.result == 'success' &&
+      needs.bundle.result == 'success' &&
+      needs.linux.result == 'success'
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
     defaults:
