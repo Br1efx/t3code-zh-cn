@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200" height="400" viewBox="0 0 1200 400"
+     role="img" aria-labelledby="hero-title hero-desc">
+  <title id="hero-title">T3 Code 简体中文版</title>
+  <desc id="hero-desc">T3 Code 简体中文社区预览版封面：左侧是带制图标注线的 T3 标志、标题与一句话说明，以及 v0.1.11-preview.1、520+ commits、14,500+ strings 三项事实；右侧示意图展示 Antigravity、Claude、Codex、OpenCode 汇入中文精校工作台，再经公开中继连接 T3 Connect 手机端审批。</desc>
+
+  <defs>
+    <marker id="dim-a" markerWidth="5" markerHeight="5" refX="1.2" refY="2.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M4.5 0.6L1 2.5L4.5 4.4" fill="none" stroke="#1E4E8C" stroke-width="0.8" stroke-linecap="round"/>
+    </marker>
+    <marker id="dim-b" markerWidth="5" markerHeight="5" refX="3.8" refY="2.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0.5 0.6L4 2.5L0.5 4.4" fill="none" stroke="#1E4E8C" stroke-width="0.8" stroke-linecap="round"/>
+    </marker>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M1 1L6 4L1 7" fill="none" stroke="#1E4E8C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <path id="t3-glyph" d="M33.4509 93V47.56H15.5309V37H64.3309V47.56H46.4109V93H33.4509ZM86.7253 93.96C82.832 93.96 78.9653 93.4533 75.1253 92.44C71.2853 91.3733 68.032 89.88 65.3653 87.96L70.4053 78.04C72.5386 79.5867 75.0186 80.8133 77.8453 81.72C80.672 82.6267 83.5253 83.08 86.4053 83.08C89.6586 83.08 92.2186 82.44 94.0853 81.16C95.952 79.88 96.8853 78.12 96.8853 75.88C96.8853 73.7467 96.0586 72.0667 94.4053 70.84C92.752 69.6133 90.0853 69 86.4053 69H80.4853V60.44L96.0853 42.76L97.5253 47.4H68.1653V37H107.365V45.4L91.8453 63.08L85.2853 59.32H89.0453C95.9253 59.32 101.125 60.8667 104.645 63.96C108.165 67.0533 109.925 71.0267 109.925 75.88C109.925 79.0267 109.099 81.9867 107.445 84.76C105.792 87.48 103.259 89.6933 99.8453 91.4C96.432 93.1067 92.0586 93.96 86.7253 93.96Z"/>
+  </defs>
+
+  <!-- Paper canvas -->
+  <rect x="0.5" y="0.5" width="1199" height="399" rx="20" fill="#F6F3EC" stroke="#DDD6C8"/>
+
+  <!-- Crop marks -->
+  <g stroke="#8E8980" stroke-width="1" opacity="0.7">
+    <path d="M16 36H28M36 16V28"/>
+    <path d="M1184 36H1172M1164 16V28"/>
+    <path d="M16 364H28M36 384V372"/>
+    <path d="M1184 364H1172M1164 384V372"/>
+  </g>
+
+  <!-- Running header -->
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16" letter-spacing="1">
+    <text x="64" y="58" fill="#66625B">Br1efx / t3code-zh-cn</text>
+    <text x="1136" y="58" fill="#8E8980" text-anchor="end">WINDOWS x64 · MIT</text>
+  </g>
+  <line x1="64" y1="76" x2="1136" y2="76" stroke="#151514" stroke-width="1"/>
+
+  <!-- LEFT: native T3 mark with drafting annotations -->
+  <g id="mark" transform="translate(47 86) scale(1.12)">
+    <use href="#t3-glyph" fill="#151514"/>
+    <g stroke="#1E4E8C" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <g stroke-width="0.9">
+        <path d="M15.5309 31V25.6M64.3309 31V25.6M68.1653 31V25.6M107.365 31V25.6"/>
+        <path d="M16.9 27.2H62.96" marker-start="url(#dim-a)" marker-end="url(#dim-b)"/>
+        <path d="M69.54 27.2H105.99" marker-start="url(#dim-a)" marker-end="url(#dim-b)"/>
+        <path d="M33.4509 97.3V103M46.4109 97.3V103M65.3653 97.3V103M109.925 97.3V103"/>
+        <path d="M34.82 101.1H45.04" marker-start="url(#dim-a)" marker-end="url(#dim-b)"/>
+        <path d="M66.74 101.1H108.55" marker-start="url(#dim-a)" marker-end="url(#dim-b)"/>
+        <path d="M13.2 37H9.1M13.2 47.6H9.1M13.2 93H9.1"/>
+        <path d="M10.9 38.4V46.2" marker-start="url(#dim-a)" marker-end="url(#dim-b)"/>
+        <path d="M10.9 49V91.6" marker-start="url(#dim-a)" marker-end="url(#dim-b)"/>
+      </g>
+      <g stroke-width="0.7" opacity="0.55">
+        <path d="M65.3653 65.2H109.925M87.2 32.7V98.2" stroke-dasharray="1.6 2"/>
+        <circle cx="87.2" cy="65.2" r="20.8"/>
+      </g>
+      <g stroke-width="0.8" opacity="0.8">
+        <path d="M24 16V20M22 18H26M114 106V110M112 108H116"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- LEFT: title block -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif">
+    <text x="196" y="160" fill="#151514" font-size="58" font-weight="700" letter-spacing="-1">T3 Code</text>
+    <text x="198" y="210" fill="#151514" font-size="42" font-weight="600" letter-spacing="2">简体中文版</text>
+  </g>
+
+  <line x1="64" y1="238" x2="640" y2="238" stroke="#DDD6C8" stroke-width="1"/>
+
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif" font-size="22">
+    <text x="64" y="276" fill="#151514" font-weight="500">一个桌面端，驱动你已有的全部 AI 编程助手；</text>
+    <text x="64" y="308" fill="#66625B">界面精校为自然中文，手机上也能随时审批。</text>
+  </g>
+
+  <!-- LEFT: quiet factual strip -->
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17">
+    <text x="64" y="348" fill="#151514">v0.1.11-preview.1</text>
+    <line x1="258" y1="333" x2="258" y2="352" stroke="#DDD6C8"/>
+    <text x="278" y="348" fill="#151514">520+<tspan fill="#66625B"> commits</tspan></text>
+    <line x1="420" y1="333" x2="420" y2="352" stroke="#DDD6C8"/>
+    <text x="440" y="348" fill="#151514">14,500+<tspan fill="#66625B"> strings</tspan></text>
+  </g>
+
+  <!-- Column rule -->
+  <line x1="680" y1="100" x2="680" y2="352" stroke="#DDD6C8" stroke-width="1"/>
+
+  <!-- RIGHT: drafting specimen of how it works -->
+  <g id="figure">
+    <text x="712" y="118" fill="#8E8980" font-size="16" letter-spacing="1" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">FIG. 1</text>
+    <text x="1136" y="118" fill="#8E8980" font-size="16" letter-spacing="1" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">LOCAL → REMOTE</text>
+
+    <!-- Local agents -->
+    <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" font-weight="500" fill="#151514" text-anchor="middle">
+      <text x="772" y="164">Antigravity</text>
+      <text x="884" y="164">Claude</text>
+      <text x="976" y="164">Codex</text>
+      <text x="1084" y="164">OpenCode</text>
+    </g>
+
+    <!-- Bus wiring -->
+    <g fill="none" stroke="#66625B" stroke-width="1">
+      <path d="M772 182V200M884 182V200M976 182V200M1084 182V200"/>
+      <path d="M772 200H1084"/>
+      <path d="M928 200V224"/>
+    </g>
+    <g fill="#FCFBF8" stroke="#151514" stroke-width="1.25">
+      <circle cx="772" cy="180" r="3.5"/>
+      <circle cx="884" cy="180" r="3.5"/>
+      <circle cx="976" cy="180" r="3.5"/>
+      <circle cx="1084" cy="180" r="3.5"/>
+    </g>
+
+    <!-- Workbench node -->
+    <rect x="808" y="224" width="240" height="54" rx="3" fill="#FCFBF8" stroke="#151514" stroke-width="1.25"/>
+    <circle cx="928" cy="224" r="3" fill="#1E4E8C"/>
+    <rect x="828" y="238" width="26" height="26" rx="4" fill="#151514"/>
+    <use href="#t3-glyph" fill="#F6F3EC" transform="translate(828 238) scale(0.2031)"/>
+    <text x="866" y="259" fill="#151514" font-size="22" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">中文精校工作台</text>
+
+    <!-- Relay to mobile -->
+    <path d="M860 278V304" fill="none" stroke="#1E4E8C" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+    <text x="874" y="298" fill="#1E4E8C" font-size="16" letter-spacing="1" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">relay</text>
+    <rect x="850" y="310" width="20" height="34" rx="4" fill="#FCFBF8" stroke="#151514" stroke-width="1.5"/>
+    <path d="M857 315H863" stroke="#151514" stroke-width="1.25" stroke-linecap="round"/>
+    <text x="886" y="336" fill="#151514" font-size="20" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">T3 Connect<tspan fill="#66625B" font-weight="400"> · 手机端审批</tspan></text>
+  </g>
+</svg>

@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200" height="360" viewBox="0 0 1200 360"
+     role="img" aria-labelledby="hl-title hl-desc">
+  <title id="hl-title">社区预览版的三项工程增强</title>
+  <desc id="hl-desc">三栏说明：一、T3 Connect 开箱直连，编译期注入官方公开中继，装好即可与手机 App 配对；二、Antigravity 后台热更新，定时检测新版 CLI 并原子切换；三、同步 v0.1.11 全新内核，跟进上游主干 520+ 个提交。</desc>
+
+  <!-- Paper canvas -->
+  <rect x="0.5" y="0.5" width="1199" height="359" rx="20" fill="#F6F3EC" stroke="#DDD6C8"/>
+
+  <!-- Crop marks -->
+  <g stroke="#8E8980" stroke-width="1" opacity="0.7">
+    <path d="M16 36H28M36 16V28"/>
+    <path d="M1184 36H1172M1164 16V28"/>
+    <path d="M16 324H28M36 344V332"/>
+    <path d="M1184 324H1172M1164 344V332"/>
+  </g>
+
+  <!-- Running header -->
+  <text x="64" y="58" fill="#66625B" font-size="16" letter-spacing="1" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">FIG. 3<tspan dx="14" fill="#151514" letter-spacing="0" font-size="18" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">三项工程增强</tspan></text>
+  <text x="1136" y="58" fill="#8E8980" font-size="16" letter-spacing="1" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">UPSTREAM pingdotgg/t3code</text>
+  <line x1="64" y1="76" x2="1136" y2="76" stroke="#151514" stroke-width="1"/>
+
+  <!-- Column hairlines -->
+  <g stroke="#DDD6C8" stroke-width="1">
+    <line x1="420" y1="104" x2="420" y2="312"/>
+    <line x1="780" y1="104" x2="780" y2="312"/>
+  </g>
+
+  <!-- Column A: T3 Connect -->
+  <g transform="translate(64 108)">
+    <g fill="none" stroke="#151514" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="0.75" y="12" width="32" height="22" rx="2"/>
+      <path d="M10 42H24M17 34V42"/>
+      <rect x="42" y="16" width="14" height="26" rx="3"/>
+      <path d="M47 20H51"/>
+    </g>
+    <path d="M17 11C20 1 44 0 49 15" fill="none" stroke="#1E4E8C" stroke-width="1.5" stroke-dasharray="3 3" stroke-linecap="round"/>
+    <circle cx="17" cy="11" r="2.5" fill="#1E4E8C"/>
+  </g>
+
+  <!-- Column B: Antigravity hot swap -->
+  <g transform="translate(452 108)">
+    <g fill="none" stroke="#151514" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M43 15A20 20 0 1 0 45 33"/>
+      <path d="M17 19L23 24L17 29M26 30H32"/>
+    </g>
+    <path d="M43 6V15H34" fill="none" stroke="#1E4E8C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Column C: upstream core sync -->
+  <g transform="translate(812 108)">
+    <g fill="none" stroke="#151514" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 2V46"/>
+      <path d="M10 14C10 24 38 18 38 28V46"/>
+    </g>
+    <g fill="#F6F3EC" stroke="#151514" stroke-width="1.5">
+      <circle cx="10" cy="8" r="3.5"/>
+      <circle cx="10" cy="26" r="3.5"/>
+      <circle cx="10" cy="40" r="3.5"/>
+    </g>
+    <circle cx="38" cy="38" r="4.5" fill="#1E4E8C"/>
+  </g>
+
+  <!-- Titles -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="24" font-weight="600" fill="#151514">
+    <text x="64" y="198">T3 Connect 开箱直连</text>
+    <text x="452" y="198">Antigravity 后台热更新</text>
+    <text x="812" y="198">同步 v0.1.11 全新内核</text>
+  </g>
+
+  <!-- Body -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="20" fill="#66625B">
+    <text x="64" y="234">编译期注入官方公开中继，</text>
+    <text x="64" y="264">装好即可与手机 App 配对。</text>
+    <text x="452" y="234">后台定时检测新版 CLI，</text>
+    <text x="452" y="264">原子切换，无需手动点更新。</text>
+    <text x="812" y="234">跟进上游主干 520+ 个提交：</text>
+    <text x="812" y="264">议题面板、远程预览、MCP。</text>
+  </g>
+
+  <!-- Mono facts -->
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16" letter-spacing="0.5" fill="#8E8980">
+    <text x="64" y="304">relay · built-in</text>
+    <text x="452" y="304">check · swap · keep</text>
+    <text x="812" y="304">v0.1.10 → v0.1.11</text>
+  </g>
+</svg>

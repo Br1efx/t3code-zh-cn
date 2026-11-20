@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1200" height="420" viewBox="0 0 1200 420"
+     role="img" aria-labelledby="polish-title polish-desc">
+  <title id="polish-title">简体中文术语精校对照</title>
+  <desc id="polish-desc">四项术语精校前后对照表：工作树改为独立目录；智能体提供方改为供应商；已收尾改为已完成与移回进行中；issue 与混用的代理/智能体统一为议题、全端一致用词与「你」。旧译以删除线显示，新译以粗体墨色显示。</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M1 1L6 4L1 7" fill="none" stroke="#1E4E8C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <!-- Paper canvas -->
+  <rect x="0.5" y="0.5" width="1199" height="419" rx="20" fill="#F6F3EC" stroke="#DDD6C8"/>
+
+  <!-- Crop marks -->
+  <g stroke="#8E8980" stroke-width="1" opacity="0.7">
+    <path d="M16 36H28M36 16V28"/>
+    <path d="M1184 36H1172M1164 16V28"/>
+    <path d="M16 384H28M36 404V392"/>
+    <path d="M1184 384H1172M1164 404V392"/>
+  </g>
+
+  <!-- Running header -->
+  <text x="64" y="58" fill="#66625B" font-size="16" letter-spacing="1" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">FIG. 2<tspan dx="14" fill="#151514" letter-spacing="0" font-size="18" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">术语精校对照</tspan></text>
+  <text x="1136" y="58" fill="#8E8980" font-size="16" letter-spacing="1" text-anchor="end" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">WEB · DESKTOP · MOBILE</text>
+  <line x1="64" y1="76" x2="1136" y2="76" stroke="#151514" stroke-width="1"/>
+
+  <!-- Column heads -->
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16" letter-spacing="1" fill="#8E8980">
+    <text x="64" y="108">SOURCE</text>
+    <text x="248" y="108">BEFORE</text>
+    <text x="628" y="108">AFTER</text>
+  </g>
+  <line x1="64" y1="124" x2="1136" y2="124" stroke="#DDD6C8"/>
+
+  <!-- Row rules -->
+  <g stroke="#DDD6C8" stroke-width="1">
+    <line x1="64" y1="184" x2="1136" y2="184"/>
+    <line x1="64" y1="244" x2="1136" y2="244"/>
+    <line x1="64" y1="304" x2="1136" y2="304"/>
+  </g>
+  <line x1="64" y1="364" x2="1136" y2="364" stroke="#151514" stroke-width="1"/>
+
+  <!-- Source keys -->
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17" fill="#66625B">
+    <text x="64" y="161">Worktree</text>
+    <text x="64" y="221">Provider</text>
+    <text x="64" y="281">Settled</text>
+    <text x="64" y="341">Issue · Agent</text>
+  </g>
+
+  <!-- Before (struck) -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="22" fill="#8E8980">
+    <text x="248" y="162">工作树</text>
+    <text x="248" y="222">智能体提供方</text>
+    <text x="248" y="282">已收尾</text>
+    <text x="248" y="342">issue · 代理 / 智能体混用</text>
+  </g>
+  <g stroke="#8E8980" stroke-width="1.25">
+    <line x1="246" y1="155" x2="316" y2="155"/>
+    <line x1="246" y1="215" x2="382" y2="215"/>
+    <line x1="246" y1="275" x2="316" y2="275"/>
+    <line x1="246" y1="335" x2="492" y2="335"/>
+  </g>
+
+  <!-- Arrows -->
+  <g fill="none" stroke="#1E4E8C" stroke-width="1.5" marker-end="url(#arrow)">
+    <path d="M544 155H592"/>
+    <path d="M544 215H592"/>
+    <path d="M544 275H592"/>
+    <path d="M544 335H592"/>
+  </g>
+
+  <!-- After (refined) -->
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="26" font-weight="600" fill="#151514">
+    <text x="628" y="164">独立目录</text>
+    <text x="628" y="224">供应商</text>
+    <text x="628" y="284">已完成<tspan fill="#8E8980" font-weight="400" dx="6">/</tspan><tspan dx="6">移回进行中</tspan></text>
+    <text x="628" y="344">议题<tspan fill="#8E8980" font-weight="400" dx="6">·</tspan><tspan dx="6">统一用词与「你」</tspan></text>
+  </g>
+
+</svg>
